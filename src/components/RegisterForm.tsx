@@ -59,6 +59,7 @@ export function RegisterForm() {
       description: 'Você será redirecionado para a página principal.',
     });
     router.push('/');
+    router.refresh();
   }
 
   return (
