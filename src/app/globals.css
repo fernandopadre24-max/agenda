@@ -67,6 +67,6 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-gray-100 dark:bg-gray-900 text-foreground;
+    @apply text-foreground;
   }
 }
