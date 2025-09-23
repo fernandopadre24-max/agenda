@@ -3,6 +3,7 @@ import './globals.css';
 import { MobileLayout } from '@/components/MobileLayout';
 import { Toaster } from '@/components/ui/toaster';
 import { AppFooter } from '@/components/AppFooter';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'AgendaFácil',
@@ -15,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -25,11 +26,18 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <MobileLayout>
-          <div className="flex-1 flex flex-col pb-16">{children}</div>
-          <AppFooter />
-        </MobileLayout>
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <MobileLayout>
+            <div className="flex-1 flex flex-col pb-16">{children}</div>
+            <AppFooter />
+          </MobileLayout>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
