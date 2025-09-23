@@ -13,10 +13,9 @@ const eventSchema = z.object({
   hora: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido.'),
   entrada: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido.'),
   saida: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido.'),
-  valorReceber: z.coerce.number().optional(),
-  statusReceber: z.enum(['pendente', 'recebido']).optional(),
-  valorPagar: z.coerce.number().optional(),
-  statusPagar: z.enum(['pendente', 'pago']).optional(),
+  financeType: z.enum(['receber', 'pagar', 'nenhum']).default('nenhum'),
+  valor: z.coerce.number().optional(),
+  status: z.enum(['pendente', 'concluido']).optional(),
 });
 
 export type FormState = {
@@ -35,17 +34,18 @@ const createEventFromForm = (data: z.infer<typeof eventSchema>): Omit<Event, 'id
         entrada: data.entrada,
         saida: data.saida,
     };
-    if (data.valorReceber && data.statusReceber) {
-        event.receber = { valor: data.valorReceber, status: data.statusReceber };
+    if (data.financeType === 'receber' && data.valor && data.status) {
+        event.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
     }
-    if (data.valorPagar && data.statusPagar) {
-        event.pagar = { valor: data.valorPagar, status: data.statusPagar };
+    if (data.financeType === 'pagar' && data.valor && data.status) {
+        event.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
     }
     return event;
 }
 
 export async function createEventAction(prevState: FormState, formData: FormData): Promise<FormState> {
-  const validatedFields = eventSchema.safeParse(Object.fromEntries(formData.entries()));
+  const rawData = Object.fromEntries(formData.entries());
+  const validatedFields = eventSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
     return {
@@ -66,7 +66,8 @@ export async function createEventAction(prevState: FormState, formData: FormData
 }
 
 export async function updateEventAction(id: string, prevState: FormState, formData: FormData): Promise<FormState> {
-    const validatedFields = eventSchema.safeParse(Object.fromEntries(formData.entries()));
+    const rawData = Object.fromEntries(formData.entries());
+    const validatedFields = eventSchema.safeParse(rawData);
 
     if (!validatedFields.success) {
         return {
