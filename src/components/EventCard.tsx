@@ -37,17 +37,18 @@ export function EventCard({ event }: { event: Event }) {
     toast({ title: 'Excluindo evento...' });
     await deleteEventAction(event.id);
     toast({ title: 'Evento excluído com sucesso.' });
-    // No redirect here, just revalidation should update the list
     router.refresh();
   };
 
 
   if (!isMounted) {
-    return null; // ou um skeleton/placeholder
+    return null;
   }
 
   const eventDate = new Date(event.date);
-  const isPast = new Date() > eventDate;
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  const isPast = eventDate < now;
   
   const day = eventDate.toLocaleDateString('pt-BR', { day: '2-digit' });
   const month = eventDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
@@ -72,53 +73,55 @@ export function EventCard({ event }: { event: Event }) {
   }
 
   return (
-      <Card className={`hover:border-primary transition-all duration-200 ${isPast ? 'opacity-50' : ''}`}>
-        <Link href={`/events/${event.id}`} className="block">
-            <div className="flex">
-                <div className="flex flex-col items-center justify-center p-3 bg-secondary/50 border-r border-border">
-                    <span className="text-xs uppercase font-bold text-primary">{month}</span>
-                    <span className="text-2xl font-bold">{day}</span>
+      <Card className={`hover:border-primary transition-all duration-200 ${isPast ? 'opacity-60' : ''}`}>
+        <div className="flex">
+            <Link href={`/events/${event.id}`} className="flex-1">
+                <div className="flex">
+                    <div className="flex flex-col items-center justify-center p-2.5 bg-secondary/50 border-r border-border w-16">
+                        <span className="text-xs uppercase font-bold text-primary">{month}</span>
+                        <span className="text-2xl font-bold">{day}</span>
+                    </div>
+                    <div className="flex-1 p-3">
+                      <div className="flex justify-between items-start">
+                          <CardTitle className="font-headline text-base leading-tight">{event.artista}</CardTitle>
+                          {renderFinancials()}
+                      </div>
+                      <CardDescription className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+                          <Briefcase className="h-3 w-3" />
+                          {event.contratante}
+                      </CardDescription>
+                      <div className="text-xs text-muted-foreground mt-1.5">{time}</div>
+                    </div>
                 </div>
-                <div className="flex-1 p-3">
-                  <div className="flex justify-between items-start">
-                      <CardTitle className="font-headline text-lg">{event.artista}</CardTitle>
-                      {renderFinancials()}
-                  </div>
-                  <CardDescription className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
-                      <Briefcase className="h-4 w-4" />
-                      {event.contratante}
-                  </CardDescription>
-                  <div className="text-sm text-muted-foreground mt-2">{time}</div>
-                </div>
+            </Link>
+            <div className="p-2 border-l flex flex-col justify-center">
+                <Button variant="ghost" size="icon" asChild className="h-8 w-8">
+                    <Link href={`/events/${event.id}/edit`}>
+                        <Edit className="h-4 w-4" />
+                        <span className="sr-only">Editar</span>
+                    </Link>
+                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8">
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Excluir</span>
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o evento.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="bg-destructive hover:bg-destructive/90">Continuar</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
-        </Link>
-        <div className="px-3 pb-2 flex justify-end gap-1">
-            <Button variant="ghost" size="icon" asChild className="h-8 w-8">
-                <Link href={`/events/${event.id}/edit`}>
-                    <Edit className="h-4 w-4" />
-                    <span className="sr-only">Editar</span>
-                </Link>
-            </Button>
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8">
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Excluir</span>
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Esta ação não pode ser desfeita. Isso excluirá permanentemente o evento.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="bg-destructive hover:bg-destructive/90">Continuar</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
       </Card>
   );

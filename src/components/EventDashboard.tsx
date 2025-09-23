@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ListFilter } from 'lucide-react';
+import { Search, Loader2, ListFilter, Calendar as CalendarIcon, X } from 'lucide-react';
 import { smartSearch } from '@/ai/flows/smart-search';
 import { EventList } from './EventList';
 import type { Event } from '@/lib/types';
@@ -13,14 +13,19 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Calendar } from '@/components/ui/calendar';
+import { isSameDay } from 'date-fns';
+import { Card } from './ui/card';
 
 export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [events, setEvents] = useState(initialEvents);
   const [aiResponse, setAiResponse] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('upcoming');
   const [isMounted, setIsMounted] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -60,15 +65,28 @@ export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
   const displayedEvents = useMemo(() => {
     if (!isMounted) return [];
     
+    let filteredEvents = events;
+    
     const now = new Date();
+    now.setHours(0,0,0,0);
+    
     if (filter === 'past') {
-      return events.filter(e => new Date(e.date) < now);
+      filteredEvents = events.filter(e => new Date(e.date) < now);
     }
     if (filter === 'upcoming') {
-      return events.filter(e => new Date(e.date) >= now);
+      filteredEvents = events.filter(e => new Date(e.date) >= now);
     }
-    return events;
-  }, [filter, events, isMounted]);
+
+    if (selectedDate) {
+        return filteredEvents.filter(e => isSameDay(new Date(e.date), selectedDate));
+    }
+
+    return filteredEvents;
+  }, [filter, events, isMounted, selectedDate]);
+
+  const eventDates = useMemo(() => {
+    return initialEvents.map(event => new Date(event.date));
+  }, [initialEvents]);
 
   return (
     <div className="space-y-4">
@@ -100,7 +118,37 @@ export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
+         <Button variant="outline" size="icon" onClick={() => setShowCalendar(!showCalendar)}>
+            <CalendarIcon />
+            <span className="sr-only">Calendário</span>
+        </Button>
       </div>
+
+       {showCalendar && (
+         <Card className="p-0">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            modifiers={{ event: eventDates }}
+            modifiersClassNames={{
+              event: 'bg-primary/20 rounded-full',
+              selected: 'bg-primary text-primary-foreground',
+            }}
+            className="w-full"
+          />
+         </Card>
+      )}
+
+      {selectedDate && (
+          <div className="flex justify-start">
+             <Button variant="outline" size="sm" onClick={() => setSelectedDate(undefined)}>
+                <X className="mr-2 h-4 w-4" />
+                Limpar seleção
+            </Button>
+          </div>
+      )}
+
       {aiResponse && <p className="text-sm text-muted-foreground italic px-1">"{aiResponse}"</p>}
       <EventList events={displayedEvents} />
     </div>

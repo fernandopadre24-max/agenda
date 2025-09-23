@@ -7,12 +7,12 @@ export function EventList({ events }: { events: Event[] }) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <CalendarX className="mx-auto h-12 w-12" />
-        <p className="mt-4">Nenhum evento encontrado.</p>
+        <p className="mt-4">Nenhum evento encontrado para os filtros selecionados.</p>
       </div>
     );
   }
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {events.map(event => (
         <EventCard key={event.id} event={event} />
       ))}
