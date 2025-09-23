@@ -1,31 +1,41 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { addEvent as dbAddEvent, deleteEvent as dbDeleteEvent, updateEvent as dbUpdateEvent } from './data';
+import { addEvent as dbAddEvent, deleteEvent as dbDeleteEvent, updateEvent as dbUpdateEvent, getEvents } from './data';
 import type { Event } from './types';
+import { redirect } from 'next/navigation';
 
-const eventSchema = z.object({
+const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
   artista: z.string().min(1, 'O nome do artista é obrigatório.'),
   date: z.coerce.date({ required_error: 'A data do evento é obrigatória.' }),
-  hora: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido.'),
-  entrada: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido.'),
-  saida: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido.'),
+  hora: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:MM).'),
+  entrada: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:MM).'),
+  saida: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:MM).'),
   financeType: z.enum(['receber', 'pagar', 'nenhum']).default('nenhum'),
   valor: z.coerce.number().optional(),
   status: z.enum(['pendente', 'concluido']).optional(),
+}).refine(data => {
+    if (data.financeType !== 'nenhum') {
+        return data.valor !== undefined && data.status !== undefined;
+    }
+    return true;
+}, {
+    message: 'Valor e status são obrigatórios para transações financeiras.',
+    path: ['valor'],
 });
 
-export type FormState = {
+export type EventFormValues = z.infer<typeof eventFormSchema>;
+
+export type ActionResponse = {
+    success: boolean;
     message: string;
-    errors?: {
-        [key: string]: string[] | undefined;
-    };
+    redirectPath?: string;
+    errors?: { [key: string]: string[] | undefined; };
 }
 
-const createEventFromForm = (data: z.infer<typeof eventSchema>): Omit<Event, 'id'> => {
+const createEventFromForm = (data: EventFormValues): Omit<Event, 'id'> => {
     const event: Omit<Event, 'id'> = {
         date: data.date,
         hora: data.hora,
@@ -44,17 +54,12 @@ const createEventFromForm = (data: z.infer<typeof eventSchema>): Omit<Event, 'id
     return event;
 }
 
-export async function createEventAction(prevState: FormState, formData: FormData): Promise<FormState> {
-  const rawData = Object.fromEntries(formData.entries());
-  
-  if (rawData.valor === '') {
-    delete rawData.valor;
-  }
-
-  const validatedFields = eventSchema.safeParse(rawData);
+export async function createEventAction(rawData: EventFormValues): Promise<ActionResponse> {
+  const validatedFields = eventFormSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
     return {
+      success: false,
       message: 'Por favor, corrija os erros abaixo.',
       errors: validatedFields.error.flatten().fieldErrors,
     };
@@ -64,24 +69,19 @@ export async function createEventAction(prevState: FormState, formData: FormData
     const newEvent = createEventFromForm(validatedFields.data);
     await dbAddEvent(newEvent);
   } catch (e) {
-    return { message: 'Ocorreu um erro ao criar o evento.' };
+    return { success: false, message: 'Ocorreu um erro ao criar o evento.' };
   }
   
   revalidatePath('/');
-  redirect('/');
+  return { success: true, message: 'Evento criado!', redirectPath: '/' };
 }
 
-export async function updateEventAction(id: string, prevState: FormState, formData: FormData): Promise<FormState> {
-    const rawData = Object.fromEntries(formData.entries());
-    
-    if (rawData.valor === '') {
-      delete rawData.valor;
-    }
-    
-    const validatedFields = eventSchema.safeParse(rawData);
+export async function updateEventAction(id: string, rawData: EventFormValues): Promise<ActionResponse> {
+    const validatedFields = eventFormSchema.safeParse(rawData);
 
     if (!validatedFields.success) {
         return {
+            success: false,
             message: "Por favor, corrija os erros abaixo.",
             errors: validatedFields.error.flatten().fieldErrors,
         };
@@ -91,12 +91,12 @@ export async function updateEventAction(id: string, prevState: FormState, formDa
         const eventUpdate = createEventFromForm(validatedFields.data);
         await dbUpdateEvent(id, eventUpdate);
     } catch (e) {
-        return { message: 'Ocorreu um erro ao atualizar o evento.' };
+        return { success: false, message: 'Ocorreu um erro ao atualizar o evento.' };
     }
 
     revalidatePath('/');
     revalidatePath(`/events/${id}`);
-    redirect(`/events/${id}`);
+    return { success: true, message: 'Evento atualizado!', redirectPath: `/events/${id}` };
 }
 
 

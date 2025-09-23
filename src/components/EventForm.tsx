@@ -1,12 +1,12 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,7 @@ import type { Event } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
@@ -38,28 +39,31 @@ const eventFormSchema = z.object({
   financeType: z.enum(['receber', 'pagar', 'nenhum']).default('nenhum'),
   valor: z.coerce.number().optional(),
   status: z.enum(['pendente', 'concluido']).optional(),
+}).refine(data => {
+    if (data.financeType !== 'nenhum') {
+        return data.valor !== undefined && data.status !== undefined;
+    }
+    return true;
+}, {
+    message: 'Valor e status são obrigatórios para transações financeiras.',
+    path: ['valor'], // you can point to one field
 });
 
-type EventFormValues = z.infer<typeof eventFormSchema>;
+export type EventFormValues = z.infer<typeof eventFormSchema>;
 
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full bg-accent hover:bg-accent/90">
-      {pending ? (isEditing ? 'Salvando...' : 'Criando...') : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
-    </Button>
-  );
-}
 
 export function EventForm({ event }: { event?: Event }) {
   const isEditing = !!event;
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       contratante: event?.contratante ?? '',
       artista: event?.artista ?? '',
-      date: event?.date ?? new Date(),
+      date: event?.date ? new Date(event.date) : new Date(),
       hora: event?.hora ?? '',
       entrada: event?.entrada ?? '',
       saida: event?.saida ?? '',
@@ -69,30 +73,35 @@ export function EventForm({ event }: { event?: Event }) {
     },
   });
 
-  const [financeType, setFinanceType] = useState<string>(form.getValues('financeType'));
+  const financeType = form.watch('financeType');
+  
+  const onSubmit = async (data: EventFormValues) => {
+    setIsLoading(true);
+    const action = isEditing
+      ? updateEventAction.bind(null, event.id)
+      : createEventAction;
 
-  const action = isEditing ? updateEventAction.bind(null, event.id) : createEventAction;
-  const [state, formAction] = useFormState(action, { message: '' });
+    const result = await action(data);
 
-  const transformAndSubmit = (data: EventFormValues) => {
-    const formData = new FormData();
-    formData.append('contratante', data.contratante);
-    formData.append('artista', data.artista);
-    formData.append('date', data.date.toISOString());
-    formData.append('hora', data.hora);
-    formData.append('entrada', data.entrada);
-    formData.append('saida', data.saida);
-    formData.append('financeType', data.financeType);
-    if (data.financeType !== 'nenhum' && data.valor && data.status) {
-        formData.append('valor', String(data.valor));
-        formData.append('status', data.status);
+    if (result.success) {
+      toast({
+        title: `Evento ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
+      });
+      router.push(result.redirectPath ?? '/');
+      router.refresh();
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao salvar o evento.',
+        description: result.message,
+      });
     }
-    formAction(formData);
+    setIsLoading(false);
   };
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(transformAndSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
             <CardHeader><CardTitle className="font-headline">Informações do Evento</CardTitle></CardHeader>
             <CardContent className="space-y-4">
@@ -107,7 +116,7 @@ export function EventForm({ event }: { event?: Event }) {
                         <FormItem className="flex flex-col"><FormLabel>Data</FormLabel>
                         <Popover><PopoverTrigger asChild>
                             <FormControl>
-                            <Button variant={'outline'} className={cn(!field.value && 'text-muted-foreground')}>
+                            <Button variant={'outline'} className={cn('justify-start text-left font-normal',!field.value && 'text-muted-foreground')}>
                                 {field.value ? format(field.value, 'PPP', { locale: ptBR }) : <span>Escolha uma data</span>}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -138,7 +147,7 @@ export function EventForm({ event }: { event?: Event }) {
                 <FormField control={form.control} name="financeType" render={({ field }) => (
                     <FormItem className="space-y-3"><FormLabel>Tipo de Transação</FormLabel>
                     <FormControl>
-                        <RadioGroup onValueChange={(value) => { field.onChange(value); setFinanceType(value); }} defaultValue={field.value} className="flex space-x-4">
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="nenhum" /></FormControl><FormLabel className="font-normal">Nenhum</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="receber" /></FormControl><FormLabel className="font-normal">A Receber</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pagar" /></FormControl><FormLabel className="font-normal">A Pagar</FormLabel></FormItem>
@@ -148,7 +157,7 @@ export function EventForm({ event }: { event?: Event }) {
                 {financeType !== 'nenhum' && (
                     <>
                         <FormField control={form.control} name="valor" render={({ field }) => (
-                            <FormItem><FormLabel>Valor</FormLabel><FormControl><Input type="number" placeholder="0,00" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Valor</FormLabel><FormControl><Input type="number" placeholder="0,00" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} /></FormControl><FormMessage /></FormItem>
                         )}/>
                         <FormField control={form.control} name="status" render={({ field }) => (
                             <FormItem className="space-y-3"><FormLabel>Status</FormLabel>
@@ -164,8 +173,9 @@ export function EventForm({ event }: { event?: Event }) {
             </CardContent>
         </Card>
 
-        {state?.message && <p className={cn('text-sm', state.errors ? 'text-red-500' : 'text-green-500')}>{state.message}</p>}
-        <SubmitButton isEditing={isEditing} />
+        <Button type="submit" disabled={isLoading} className="w-full bg-accent hover:bg-accent/90">
+            {isLoading ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
+        </Button>
       </form>
     </Form>
   );
