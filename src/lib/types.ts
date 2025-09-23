@@ -1,3 +1,19 @@
+export type Contratante = {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+};
+
+export type Artista = {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  serviceType?: string;
+};
+
+
 export type Event = {
   id: string;
   date: Date;

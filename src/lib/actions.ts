@@ -2,7 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { addEvent as dbAddEvent, deleteEvent as dbDeleteEvent, updateEvent as dbUpdateEvent, getEvents } from './data';
+import { 
+    addEvent as dbAddEvent, 
+    deleteEvent as dbDeleteEvent, 
+    updateEvent as dbUpdateEvent,
+    addContratante as dbAddContratante,
+    addArtista as dbAddArtista
+} from './data';
 import type { Event } from './types';
 import { redirect } from 'next/navigation';
 
@@ -26,7 +32,24 @@ const eventFormSchema = z.object({
     path: ['valor'],
 });
 
+const contratanteFormSchema = z.object({
+    name: z.string().min(1, 'O nome é obrigatório.'),
+    email: z.string().email('Formato de e-mail inválido.').optional().or(z.literal('')),
+    phone: z.string().optional(),
+});
+
+const artistaFormSchema = z.object({
+    name: z.string().min(1, 'O nome é obrigatório.'),
+    email: z.string().email('Formato de e-mail inválido.').optional().or(z.literal('')),
+    phone: z.string().optional(),
+    serviceType: z.string().optional(),
+});
+
+
 export type EventFormValues = z.infer<typeof eventFormSchema>;
+export type ContratanteFormValues = z.infer<typeof contratanteFormSchema>;
+export type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
+
 
 export type ActionResponse = {
     success: boolean;
@@ -54,8 +77,8 @@ const createEventFromForm = (data: EventFormValues): Omit<Event, 'id'> => {
     return event;
 }
 
-export async function createEventAction(rawData: EventFormValues): Promise<ActionResponse> {
-  const validatedFields = eventFormSchema.safeParse(rawData);
+export async function createEventAction(data: EventFormValues): Promise<ActionResponse> {
+  const validatedFields = eventFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
     return {
@@ -73,11 +96,11 @@ export async function createEventAction(rawData: EventFormValues): Promise<Actio
   }
   
   revalidatePath('/');
-  return { success: true, message: 'Evento criado!', redirectPath: '/' };
+  redirect('/');
 }
 
-export async function updateEventAction(id: string, rawData: EventFormValues): Promise<ActionResponse> {
-    const validatedFields = eventFormSchema.safeParse(rawData);
+export async function updateEventAction(id: string, data: EventFormValues): Promise<ActionResponse> {
+    const validatedFields = eventFormSchema.safeParse(data);
 
     if (!validatedFields.success) {
         return {
@@ -96,7 +119,7 @@ export async function updateEventAction(id: string, rawData: EventFormValues): P
 
     revalidatePath('/');
     revalidatePath(`/events/${id}`);
-    return { success: true, message: 'Evento atualizado!', redirectPath: `/events/${id}` };
+    redirect(`/events/${id}`);
 }
 
 
@@ -105,11 +128,7 @@ export async function deleteEventAction(id: string) {
     try {
         await dbDeleteEvent(id);
         revalidatePath('/');
-        // We only redirect if the function is called from a page that will no longer exist
-        // This is a simple way to check, in a real app this might need more robust logic
-        if (!id.startsWith('temp-')) { // A bit of a hack to decide when to redirect
-             shouldRedirect = true;
-        }
+        shouldRedirect = true;
     } catch (e) {
         return { message: 'Ocorreu um erro ao deletar o evento.' };
     }
@@ -117,4 +136,40 @@ export async function deleteEventAction(id: string) {
     if (shouldRedirect) {
         redirect('/');
     }
+}
+
+export async function createContratanteAction(data: ContratanteFormValues): Promise<ActionResponse> {
+    const validatedFields = contratanteFormSchema.safeParse(data);
+    if(!validatedFields.success) {
+        return {
+            success: false,
+            message: 'Por favor, corrija os erros abaixo.',
+            errors: validatedFields.error.flatten().fieldErrors,
+        };
+    }
+    try {
+        await dbAddContratante(validatedFields.data);
+    } catch (e) {
+        return { success: false, message: 'Ocorreu um erro ao criar o contratante.' };
+    }
+    revalidatePath('/contratantes');
+    redirect('/contratantes');
+}
+
+export async function createArtistaAction(data: ArtistaFormValues): Promise<ActionResponse> {
+    const validatedFields = artistaFormSchema.safeParse(data);
+    if(!validatedFields.success) {
+        return {
+            success: false,
+            message: 'Por favor, corrija os erros abaixo.',
+            errors: validatedFields.error.flatten().fieldErrors,
+        };
+    }
+    try {
+        await dbAddArtista(validatedFields.data);
+    } catch (e) {
+        return { success: false, message: 'Ocorreu um erro ao criar o artista.' };
+    }
+    revalidatePath('/artistas');
+    redirect('/artistas');
 }

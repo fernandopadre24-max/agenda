@@ -1,4 +1,20 @@
-import type { Event } from './types';
+import type { Event, Contratante, Artista } from './types';
+
+let contratantes: Contratante[] = [
+  { id: '1', name: 'Casamento Joana & Miguel', email: 'joana@email.com', phone: '11987654321' },
+  { id: '2', name: 'Aniversário de 50 anos do Sr. Roberto', email: 'roberto@email.com', phone: '21987654321' },
+  { id: '3', name: 'Evento Corporativo TechCorp', email: 'contato@techcorp.com', phone: '31987654321' },
+  { id: '4', name: 'Festa Infantil - Lucas 5 anos', email: 'familia.lucas@email.com', phone: '41987654321' },
+  { id: '5', name: 'Bar Acústico', email: 'baracustico@email.com', phone: '51987654321' },
+];
+
+let artistas: Artista[] = [
+    { id: '1', name: 'Banda Sinfonia', serviceType: 'Banda Completa' },
+    { id: '2', name: 'DJ Festa', serviceType: 'DJ' },
+    { id: '3', name: 'Palestrante Convidado', serviceType: 'Palestra' },
+    { id: '4', name: 'Mágico Ilusionista', serviceType: 'Entretenimento' },
+    { id: '5', name: 'Violão e Voz - Ana Júlia', serviceType: 'Música Acústica' },
+];
 
 let events: Event[] = [
   {
@@ -56,6 +72,7 @@ let events: Event[] = [
 // Simulate API latency
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
+// Event functions
 export async function getEvents(): Promise<Event[]> {
   await delay(500);
   return events.sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -91,4 +108,36 @@ export async function deleteEvent(id: string): Promise<boolean> {
   const initialLength = events.length;
   events = events.filter(event => event.id !== id);
   return events.length < initialLength;
+}
+
+// Contratante functions
+export async function getContratantes(): Promise<Contratante[]> {
+  await delay(300);
+  return contratantes;
+}
+
+export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
+  await delay(300);
+  const newContratante: Contratante = {
+    id: String(Date.now()),
+    ...contratanteData,
+  };
+  contratantes.push(newContratante);
+  return newContratante;
+}
+
+// Artista functions
+export async function getArtistas(): Promise<Artista[]> {
+  await delay(300);
+  return artistas;
+}
+
+export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Artista> {
+  await delay(300);
+  const newArtista: Artista = {
+    id: String(Date.now()),
+    ...artistaData,
+  };
+  artistas.push(newArtista);
+  return newArtista;
 }
