@@ -12,7 +12,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { createArtistaAction, type ArtistaFormValues } from '@/lib/actions';
+import { createArtistaAction, updateArtistaAction, type ArtistaFormValues } from '@/lib/actions';
+import { type Artista } from '@/lib/types';
 
 const artistaFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
@@ -22,7 +23,8 @@ const artistaFormSchema = z.object({
 });
 
 
-export function ArtistaForm() {
+export function ArtistaForm({ artista }: { artista?: Artista }) {
+  const isEditing = !!artista;
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -30,27 +32,31 @@ export function ArtistaForm() {
   const form = useForm<ArtistaFormValues>({
     resolver: zodResolver(artistaFormSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      serviceType: '',
+      name: artista?.name ?? '',
+      email: artista?.email ?? '',
+      phone: artista?.phone ?? '',
+      serviceType: artista?.serviceType ?? '',
     },
   });
 
   const onSubmit = async (data: ArtistaFormValues) => {
     setIsLoading(true);
-    const result = await createArtistaAction(data);
+    const action = isEditing 
+        ? updateArtistaAction.bind(null, artista.id) 
+        : createArtistaAction;
+        
+    const result = await action(data);
 
     if (result.success) {
       toast({
-        title: 'Artista criado com sucesso!',
+        title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
       });
       router.push(result.redirectPath ?? '/artistas');
       router.refresh();
     } else {
       toast({
         variant: 'destructive',
-        title: 'Erro ao criar o artista.',
+        title: `Erro ao ${isEditing ? 'atualizar' : 'criar'} o artista.`,
         description: result.message,
       });
     }
@@ -79,7 +85,7 @@ export function ArtistaForm() {
         </Card>
         
         <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? <Loader2 className="animate-spin" /> : 'Criar Artista'}
+            {isLoading ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Artista')}
         </Button>
       </form>
     </Form>

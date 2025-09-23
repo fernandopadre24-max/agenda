@@ -7,7 +7,12 @@ import {
     deleteEvent as dbDeleteEvent, 
     updateEvent as dbUpdateEvent,
     addContratante as dbAddContratante,
-    addArtista as dbAddArtista
+    updateContratante as dbUpdateContratante,
+    deleteContratante as dbDeleteContratante,
+    addArtista as dbAddArtista,
+    updateArtista as dbUpdateArtista,
+    deleteArtista as dbDeleteArtista,
+    getEvents
 } from './data';
 import type { Event } from './types';
 import { redirect } from 'next/navigation';
@@ -156,6 +161,44 @@ export async function createContratanteAction(data: ContratanteFormValues): Prom
     redirect('/contratantes');
 }
 
+export async function updateContratanteAction(id: string, data: ContratanteFormValues): Promise<ActionResponse> {
+    const validatedFields = contratanteFormSchema.safeParse(data);
+    if(!validatedFields.success) {
+        return {
+            success: false,
+            message: 'Por favor, corrija os erros abaixo.',
+            errors: validatedFields.error.flatten().fieldErrors,
+        };
+    }
+    try {
+        await dbUpdateContratante(id, validatedFields.data);
+    } catch (e) {
+        return { success: false, message: 'Ocorreu um erro ao atualizar o contratante.' };
+    }
+    revalidatePath('/contratantes');
+    redirect('/contratantes');
+}
+
+export async function deleteContratanteAction(id: string): Promise<ActionResponse> {
+    try {
+        // Check if contratante is associated with any event
+        const events = await getEvents();
+        const contratante = (await dbUpdateContratante(id, {}));
+        const isAssociated = events.some(event => event.contratante === contratante?.name);
+        if (isAssociated) {
+            return {
+                success: false,
+                message: 'Este contratante está associado a um ou mais eventos e não pode ser excluído.',
+            };
+        }
+        await dbDeleteContratante(id);
+    } catch (e) {
+        return { success: false, message: 'Ocorreu um erro ao deletar o contratante.' };
+    }
+    revalidatePath('/contratantes');
+    return { success: true, message: 'Contratante deletado com sucesso.' };
+}
+
 export async function createArtistaAction(data: ArtistaFormValues): Promise<ActionResponse> {
     const validatedFields = artistaFormSchema.safeParse(data);
     if(!validatedFields.success) {
@@ -172,4 +215,42 @@ export async function createArtistaAction(data: ArtistaFormValues): Promise<Acti
     }
     revalidatePath('/artistas');
     redirect('/artistas');
+}
+
+export async function updateArtistaAction(id: string, data: ArtistaFormValues): Promise<ActionResponse> {
+    const validatedFields = artistaFormSchema.safeParse(data);
+    if(!validatedFields.success) {
+        return {
+            success: false,
+            message: 'Por favor, corrija os erros abaixo.',
+            errors: validatedFields.error.flatten().fieldErrors,
+        };
+    }
+    try {
+        await dbUpdateArtista(id, validatedFields.data);
+    } catch (e) {
+        return { success: false, message: 'Ocorreu um erro ao atualizar o artista.' };
+    }
+    revalidatePath('/artistas');
+    redirect('/artistas');
+}
+
+export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
+    try {
+        // Check if artista is associated with any event
+        const events = await getEvents();
+        const artista = await dbUpdateArtista(id, {});
+        const isAssociated = events.some(event => event.artista === artista?.name);
+        if (isAssociated) {
+            return {
+                success: false,
+                message: 'Este artista está associado a um ou mais eventos e não pode ser excluído.',
+            };
+        }
+        await dbDeleteArtista(id);
+    } catch (e) {
+        return { success: false, message: 'Ocorreu um erro ao deletar o artista.' };
+    }
+    revalidatePath('/artistas');
+    return { success: true, message: 'Artista deletado com sucesso.' };
 }

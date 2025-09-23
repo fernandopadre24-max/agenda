@@ -12,7 +12,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { createContratanteAction, type ContratanteFormValues } from '@/lib/actions';
+import { createContratanteAction, updateContratanteAction, type ContratanteFormValues } from '@/lib/actions';
+import { type Contratante } from '@/lib/types';
+
 
 const contratanteFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
@@ -21,7 +23,8 @@ const contratanteFormSchema = z.object({
 });
 
 
-export function ContratanteForm() {
+export function ContratanteForm({ contratante }: { contratante?: Contratante }) {
+  const isEditing = !!contratante;
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -29,26 +32,30 @@ export function ContratanteForm() {
   const form = useForm<ContratanteFormValues>({
     resolver: zodResolver(contratanteFormSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
+      name: contratante?.name ?? '',
+      email: contratante?.email ?? '',
+      phone: contratante?.phone ?? '',
     },
   });
 
   const onSubmit = async (data: ContratanteFormValues) => {
     setIsLoading(true);
-    const result = await createContratanteAction(data);
+    const action = isEditing
+        ? updateContratanteAction.bind(null, contratante.id)
+        : createContratanteAction;
+
+    const result = await action(data);
 
     if (result.success) {
       toast({
-        title: 'Contratante criado com sucesso!',
+        title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
       });
       router.push(result.redirectPath ?? '/contratantes');
       router.refresh();
     } else {
       toast({
         variant: 'destructive',
-        title: 'Erro ao criar o contratante.',
+        title: `Erro ao ${isEditing ? 'atualizar' : 'criar'} o contratante.`,
         description: result.message,
       });
     }
@@ -74,7 +81,7 @@ export function ContratanteForm() {
         </Card>
         
         <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? <Loader2 className="animate-spin" /> : 'Criar Contratante'}
+            {isLoading ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Contratante')}
         </Button>
       </form>
     </Form>

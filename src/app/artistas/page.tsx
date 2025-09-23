@@ -1,9 +1,23 @@
 import { getArtistas } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Mic, Mail, Phone, Music } from 'lucide-react';
+import { Plus, Mic, Mail, Phone, Music, Edit, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/PageHeader';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { deleteArtistaAction } from '@/lib/actions';
+import { ArtistaActions } from '@/components/ArtistaActions';
+
 
 export default async function ArtistasPage() {
   const artistas = await getArtistas();
@@ -24,13 +38,16 @@ export default async function ArtistasPage() {
         <div className="space-y-4">
           {artistas.map(artista => (
             <Card key={artista.id}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mic className="h-5 w-5 text-primary" />
-                  {artista.name}
-                </CardTitle>
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                    <CardTitle className="flex items-center gap-2">
+                        <Mic className="h-5 w-5 text-primary" />
+                        {artista.name}
+                    </CardTitle>
+                    <ArtistaActions artistaId={artista.id} />
+                </div>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm">
+              <CardContent className="space-y-2 text-sm pt-0">
                  {artista.serviceType && (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Music className="h-4 w-4" />

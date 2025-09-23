@@ -116,6 +116,11 @@ export async function getContratantes(): Promise<Contratante[]> {
   return contratantes;
 }
 
+export async function getContratanteById(id: string): Promise<Contratante | undefined> {
+    await delay(200);
+    return contratantes.find(c => c.id === id);
+}
+
 export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
   await delay(300);
   const newContratante: Contratante = {
@@ -126,10 +131,32 @@ export async function addContratante(contratanteData: Omit<Contratante, 'id'>): 
   return newContratante;
 }
 
+export async function updateContratante(id: string, contratanteData: Partial<Contratante>): Promise<Contratante | undefined> {
+    await delay(300);
+    const contratanteIndex = contratantes.findIndex(c => c.id === id);
+    if (contratanteIndex === -1) return undefined;
+
+    contratantes[contratanteIndex] = { ...contratantes[contratanteIndex], ...contratanteData };
+    return contratantes[contratanteIndex];
+}
+
+export async function deleteContratante(id: string): Promise<boolean> {
+    await delay(300);
+    const initialLength = contratantes.length;
+    contratantes = contratantes.filter(c => c.id !== id);
+    return contratantes.length < initialLength;
+}
+
+
 // Artista functions
 export async function getArtistas(): Promise<Artista[]> {
   await delay(300);
   return artistas;
+}
+
+export async function getArtistaById(id: string): Promise<Artista | undefined> {
+    await delay(200);
+    return artistas.find(a => a.id === id);
 }
 
 export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Artista> {
@@ -140,4 +167,20 @@ export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Arti
   };
   artistas.push(newArtista);
   return newArtista;
+}
+
+export async function updateArtista(id: string, artistaData: Partial<Artista>): Promise<Artista | undefined> {
+    await delay(300);
+    const artistaIndex = artistas.findIndex(a => a.id === id);
+    if (artistaIndex === -1) return undefined;
+    
+    artistas[artistaIndex] = { ...artistas[artistaIndex], ...artistaData };
+    return artistas[artistaIndex];
+}
+
+export async function deleteArtista(id: string): Promise<boolean> {
+    await delay(300);
+    const initialLength = artistas.length;
+    artistas = artistas.filter(a => a.id !== id);
+    return artistas.length < initialLength;
 }
