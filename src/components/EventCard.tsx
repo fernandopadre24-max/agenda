@@ -1,16 +1,23 @@
+'use client';
+
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { type Event } from '@/lib/types';
 import { Calendar, Clock, User, Briefcase, ArrowUp, ArrowDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
 export function EventCard({ event }: { event: Event }) {
+  const [isPast, setIsPast] = useState(false);
   const eventDate = new Date(event.date);
+
+  useEffect(() => {
+    setIsPast(new Date() > eventDate);
+  }, [eventDate]);
+
   const day = eventDate.toLocaleDateString('pt-BR', { day: '2-digit' });
   const month = eventDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
-
-  const isPast = new Date() > eventDate;
 
   const renderFinancials = () => {
     if (event.receber) {
