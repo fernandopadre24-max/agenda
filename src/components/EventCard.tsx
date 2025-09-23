@@ -75,11 +75,11 @@ export function EventCard({ event }: { event: Event }) {
       <Card className={`hover:border-primary transition-all duration-200 ${isPast ? 'opacity-50' : ''}`}>
         <Link href={`/events/${event.id}`} className="block">
             <div className="flex">
-                <div className="flex flex-col items-center justify-center p-4 bg-secondary/50 border-r border-border">
+                <div className="flex flex-col items-center justify-center p-3 bg-secondary/50 border-r border-border">
                     <span className="text-xs uppercase font-bold text-primary">{month}</span>
                     <span className="text-2xl font-bold">{day}</span>
                 </div>
-                <div className="flex-1 p-4">
+                <div className="flex-1 p-3">
                   <div className="flex justify-between items-start">
                       <CardTitle className="font-headline text-lg">{event.artista}</CardTitle>
                       {renderFinancials()}
@@ -92,8 +92,8 @@ export function EventCard({ event }: { event: Event }) {
                 </div>
             </div>
         </Link>
-        <div className="p-4 pt-0 mt-2 flex justify-end gap-2">
-            <Button variant="ghost" size="icon" asChild>
+        <div className="px-3 pb-2 flex justify-end gap-1">
+            <Button variant="ghost" size="icon" asChild className="h-8 w-8">
                 <Link href={`/events/${event.id}/edit`}>
                     <Edit className="h-4 w-4" />
                     <span className="sr-only">Editar</span>
@@ -101,7 +101,7 @@ export function EventCard({ event }: { event: Event }) {
             </Button>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8">
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Excluir</span>
                     </Button>
