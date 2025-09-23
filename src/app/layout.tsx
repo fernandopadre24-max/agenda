@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { MobileLayout } from '@/components/MobileLayout';
 import { Toaster } from '@/components/ui/toaster';
+import { AppFooter } from '@/components/AppFooter';
 
 export const metadata: Metadata = {
   title: 'AgendaFácil',
@@ -24,7 +25,10 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <MobileLayout>{children}</MobileLayout>
+        <MobileLayout>
+          <div className="flex-1 flex flex-col pb-16">{children}</div>
+          <AppFooter />
+        </MobileLayout>
         <Toaster />
       </body>
     </html>

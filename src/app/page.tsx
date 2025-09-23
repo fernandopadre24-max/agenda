@@ -15,7 +15,7 @@ export default async function HomePage() {
       </main>
       <Link
         href="/events/new"
-        className="absolute bottom-6 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:bg-primary/90 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="absolute bottom-20 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:bg-primary/90 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label="Adicionar Novo Evento"
       >
         <Plus className="h-6 w-6" />
