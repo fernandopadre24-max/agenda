@@ -30,7 +30,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
 
   return (
     <div className="flex flex-col min-h-full">
-      <PageHeader title={event.artista} />
+      <PageHeader title={event.artista} showBackButton={true} />
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <Card>
           <CardHeader>

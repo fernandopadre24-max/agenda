@@ -1,11 +1,16 @@
+'use client';
+
 import { getEvents } from '@/lib/data';
-import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { DollarSign, TrendingUp, TrendingDown, CheckCircle, Clock } from 'lucide-react';
+import { DollarSign, CheckCircle, Clock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Event } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import { FinancialChart } from '@/components/FinancialChart';
+import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/PageHeader';
 
 function SummaryCard({ title, value, icon: Icon, colorClass = 'text-primary' }: { title: string, value: number, icon: React.ElementType, colorClass?: string }) {
     return (
@@ -49,8 +54,36 @@ function TransactionList({ title, events, type }: { title: string, events: Event
 }
 
 
-export default async function FinanceiroPage() {
-    const events = await getEvents();
+export default function FinanceiroPage() {
+    const [events, setEvents] = useState<Event[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchEvents() {
+            const fetchedEvents = await getEvents();
+            setEvents(fetchedEvents);
+            setLoading(false);
+        }
+        fetchEvents();
+    }, []);
+
+    if (loading) {
+         return (
+            <div className="flex flex-col min-h-full bg-background">
+                <PageHeader title="Financeiro" showBackButton={true}/>
+                <main className="flex-1 p-4 md:p-6 space-y-6">
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <div className="grid grid-cols-2 gap-4">
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                    </div>
+                </main>
+            </div>
+        )
+    }
 
     const aReceberPendente = events.reduce((acc, event) => {
         if (event.receber?.status === 'pendente') {
@@ -84,8 +117,15 @@ export default async function FinanceiroPage() {
 
     return (
         <div className="flex flex-col min-h-full bg-background">
-            <PageHeader title="Financeiro" />
+            <PageHeader title="Financeiro" showBackButton={true}/>
             <main className="flex-1 p-4 md:p-6 space-y-6">
+                <FinancialChart
+                    recebido={recebido}
+                    pago={pago}
+                    aReceberPendente={aReceberPendente}
+                    aPagarPendente={aPagarPendente}
+                />
+
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg font-headline flex items-center gap-2">

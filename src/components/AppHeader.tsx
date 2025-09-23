@@ -1,13 +1,8 @@
-'use client';
 import Link from 'next/link';
 import { DollarSign } from 'lucide-react';
 import { Button } from './ui/button';
-import { usePathname } from 'next/navigation';
 
 export function AppHeader() {
-  const pathname = usePathname();
-  const isFinancePage = pathname === '/financeiro';
-
   return (
     <header className="bg-background border-b border-border p-4 sticky top-0 z-20 flex items-center justify-between">
       <div className="flex-1">
@@ -19,14 +14,12 @@ export function AppHeader() {
         </h1>
       </Link>
       <div className="flex-1 flex justify-end">
-        {!isFinancePage && (
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/financeiro">
-              <DollarSign />
-              <span className="sr-only">Financeiro</span>
-            </Link>
-          </Button>
-        )}
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/financeiro">
+            <DollarSign />
+            <span className="sr-only">Financeiro</span>
+          </Link>
+        </Button>
       </div>
     </header>
   );
