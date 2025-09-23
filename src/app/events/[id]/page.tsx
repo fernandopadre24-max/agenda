@@ -29,7 +29,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const isReceiving = !!event.receber;
 
   return (
-    <div className="flex flex-col min-h-full bg-background">
+    <div className="flex flex-col min-h-full">
       <PageHeader title={event.artista} />
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <Card>
@@ -64,7 +64,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
                     <DetailItem 
                         icon={isReceiving ? ArrowUp : ArrowDown}
                         label="Status" 
-                        value={<Badge variant={financialInfo.status === 'pendente' ? 'destructive' : 'default'} className={financialInfo.status !== 'pendente' ? "bg-green-500" : ""}>{financialInfo.status}</Badge>}
+                        value={<Badge variant={financialInfo.status === 'pendente' ? 'destructive' : 'default'} className={financialInfo.status !== 'pendente' ? "bg-green-500/80" : ""}>{financialInfo.status}</Badge>}
                     />
                 </CardContent>
             </Card>

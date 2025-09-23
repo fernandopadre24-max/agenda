@@ -7,6 +7,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +27,6 @@ import { createEventAction, updateEventAction } from '@/lib/actions';
 import type { Event } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const eventFormSchema = z.object({
@@ -46,11 +46,10 @@ const eventFormSchema = z.object({
     return true;
 }, {
     message: 'Valor e status são obrigatórios para transações financeiras.',
-    path: ['valor'], // you can point to one field
+    path: ['valor'],
 });
 
 export type EventFormValues = z.infer<typeof eventFormSchema>;
-
 
 export function EventForm({ event }: { event?: Event }) {
   const isEditing = !!event;
@@ -173,7 +172,7 @@ export function EventForm({ event }: { event?: Event }) {
             </CardContent>
         </Card>
 
-        <Button type="submit" disabled={isLoading} className="w-full bg-accent hover:bg-accent/90">
+        <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
         </Button>
       </form>

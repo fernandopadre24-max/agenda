@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Loader2, ListFilter } from 'lucide-react';
@@ -18,9 +18,13 @@ export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [events, setEvents] = useState(initialEvents);
-  const [displayedEvents, setDisplayedEvents] = useState(initialEvents);
   const [aiResponse, setAiResponse] = useState('');
   const [filter, setFilter] = useState('all');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSearch = async () => {
     if (!query) {
@@ -53,21 +57,18 @@ export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
     }
   };
 
-  useEffect(() => {
+  const displayedEvents = useMemo(() => {
+    if (!isMounted) return [];
+    
     const now = new Date();
-    let filteredEvents = events;
     if (filter === 'past') {
-      filteredEvents = events.filter(e => new Date(e.date) < now);
-    } else if (filter === 'upcoming') {
-      filteredEvents = events.filter(e => new Date(e.date) >= now);
+      return events.filter(e => new Date(e.date) < now);
     }
-    setDisplayedEvents(filteredEvents);
-  }, [filter, events]);
-
-  const handleFilterChange = (value: string) => {
-    setFilter(value);
-    // The filtering logic is now in useEffect
-  };
+    if (filter === 'upcoming') {
+      return events.filter(e => new Date(e.date) >= now);
+    }
+    return events;
+  }, [filter, events, isMounted]);
 
   return (
     <div className="space-y-4">
@@ -92,7 +93,7 @@ export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuRadioGroup value={filter} onValueChange={handleFilterChange}>
+            <DropdownMenuRadioGroup value={filter} onValueChange={setFilter}>
               <DropdownMenuRadioItem value="all">Todos</DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="upcoming">Próximos</DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="past">Passados</DropdownMenuRadioItem>
