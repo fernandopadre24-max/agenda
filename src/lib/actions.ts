@@ -9,9 +9,11 @@ import {
     addContratante as dbAddContratante,
     updateContratante as dbUpdateContratante,
     deleteContratante as dbDeleteContratante,
+    getContratantes as dbGetContratantes,
     addArtista as dbAddArtista,
     updateArtista as dbUpdateArtista,
     deleteArtista as dbDeleteArtista,
+    getArtistas as dbGetArtistas,
     getEvents
 } from './data';
 import type { Event } from './types';
@@ -181,16 +183,20 @@ export async function updateContratanteAction(id: string, data: ContratanteFormV
 
 export async function deleteContratanteAction(id: string): Promise<ActionResponse> {
     try {
-        // Check if contratante is associated with any event
         const events = await getEvents();
-        const contratante = (await dbUpdateContratante(id, {}));
-        const isAssociated = events.some(event => event.contratante === contratante?.name);
-        if (isAssociated) {
-            return {
-                success: false,
-                message: 'Este contratante está associado a um ou mais eventos e não pode ser excluído.',
-            };
+        const contratantes = await dbGetContratantes();
+        const contratante = contratantes.find(c => c.id === id);
+
+        if (contratante) {
+            const isAssociated = events.some(event => event.contratante === contratante.name);
+            if (isAssociated) {
+                return {
+                    success: false,
+                    message: 'Este contratante está associado a um ou mais eventos e não pode ser excluído.',
+                };
+            }
         }
+        
         await dbDeleteContratante(id);
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao deletar o contratante.' };
@@ -237,15 +243,18 @@ export async function updateArtistaAction(id: string, data: ArtistaFormValues): 
 
 export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
     try {
-        // Check if artista is associated with any event
         const events = await getEvents();
-        const artista = await dbUpdateArtista(id, {});
-        const isAssociated = events.some(event => event.artista === artista?.name);
-        if (isAssociated) {
-            return {
-                success: false,
-                message: 'Este artista está associado a um ou mais eventos e não pode ser excluído.',
-            };
+        const artistas = await dbGetArtistas();
+        const artista = artistas.find(a => a.id === id);
+
+        if (artista) {
+            const isAssociated = events.some(event => event.artista === artista.name);
+            if (isAssociated) {
+                return {
+                    success: false,
+                    message: 'Este artista está associado a um ou mais eventos e não pode ser excluído.',
+                };
+            }
         }
         await dbDeleteArtista(id);
     } catch (e) {
