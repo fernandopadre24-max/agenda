@@ -101,11 +101,20 @@ export async function updateEventAction(id: string, rawData: EventFormValues): P
 
 
 export async function deleteEventAction(id: string) {
+    let shouldRedirect = false;
     try {
         await dbDeleteEvent(id);
         revalidatePath('/');
-        redirect('/');
+        // We only redirect if the function is called from a page that will no longer exist
+        // This is a simple way to check, in a real app this might need more robust logic
+        if (!id.startsWith('temp-')) { // A bit of a hack to decide when to redirect
+             shouldRedirect = true;
+        }
     } catch (e) {
         return { message: 'Ocorreu um erro ao deletar o evento.' };
+    }
+
+    if (shouldRedirect) {
+        redirect('/');
     }
 }

@@ -15,10 +15,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useRouter } from 'next/navigation';
 
 
 export function EventActions({ eventId }: { eventId: string }) {
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleReminder = () => {
     toast({
@@ -32,6 +34,8 @@ export function EventActions({ eventId }: { eventId: string }) {
     toast({ title: 'Excluindo evento...' });
     await deleteEventAction(eventId);
     toast({ title: 'Evento excluído com sucesso.' });
+    router.push('/');
+    router.refresh();
   };
 
   return (
