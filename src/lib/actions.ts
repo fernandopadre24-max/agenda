@@ -34,10 +34,11 @@ const createEventFromForm = (data: z.infer<typeof eventSchema>): Omit<Event, 'id
         entrada: data.entrada,
         saida: data.saida,
     };
-    if (data.financeType === 'receber' && data.valor && data.status) {
+
+    if (data.financeType === 'receber' && data.valor !== undefined && data.status) {
         event.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
     }
-    if (data.financeType === 'pagar' && data.valor && data.status) {
+    if (data.financeType === 'pagar' && data.valor !== undefined && data.status) {
         event.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
     }
     return event;
@@ -45,6 +46,11 @@ const createEventFromForm = (data: z.infer<typeof eventSchema>): Omit<Event, 'id
 
 export async function createEventAction(prevState: FormState, formData: FormData): Promise<FormState> {
   const rawData = Object.fromEntries(formData.entries());
+  
+  if (rawData.valor === '') {
+    delete rawData.valor;
+  }
+
   const validatedFields = eventSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
@@ -67,6 +73,11 @@ export async function createEventAction(prevState: FormState, formData: FormData
 
 export async function updateEventAction(id: string, prevState: FormState, formData: FormData): Promise<FormState> {
     const rawData = Object.fromEntries(formData.entries());
+    
+    if (rawData.valor === '') {
+      delete rawData.valor;
+    }
+    
     const validatedFields = eventSchema.safeParse(rawData);
 
     if (!validatedFields.success) {

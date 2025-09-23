@@ -82,13 +82,10 @@ export function EventForm({ event }: { event?: Event }) {
     formData.append('hora', data.hora);
     formData.append('entrada', data.entrada);
     formData.append('saida', data.saida);
-    if (data.financeType === 'receber' && data.valor && data.status) {
-        formData.append('valorReceber', String(data.valor));
-        formData.append('statusReceber', data.status === 'concluido' ? 'recebido' : 'pendente');
-    }
-    if (data.financeType === 'pagar' && data.valor && data.status) {
-        formData.append('valorPagar', String(data.valor));
-        formData.append('statusPagar', data.status === 'concluido' ? 'pago' : 'pendente');
+    formData.append('financeType', data.financeType);
+    if (data.financeType !== 'nenhum' && data.valor && data.status) {
+        formData.append('valor', String(data.valor));
+        formData.append('status', data.status);
     }
     formAction(formData);
   };
@@ -151,7 +148,7 @@ export function EventForm({ event }: { event?: Event }) {
                 {financeType !== 'nenhum' && (
                     <>
                         <FormField control={form.control} name="valor" render={({ field }) => (
-                            <FormItem><FormLabel>Valor</FormLabel><FormControl><Input type="number" placeholder="0,00" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Valor</FormLabel><FormControl><Input type="number" placeholder="0,00" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} /></FormControl><FormMessage /></FormItem>
                         )}/>
                         <FormField control={form.control} name="status" render={({ field }) => (
                             <FormItem className="space-y-3"><FormLabel>Status</FormLabel>
