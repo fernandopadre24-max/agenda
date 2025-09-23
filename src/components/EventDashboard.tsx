@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Loader2, ListFilter } from 'lucide-react';
@@ -17,13 +17,14 @@ import {
 export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [events, setEvents] = useState(initialEvents);
   const [displayedEvents, setDisplayedEvents] = useState(initialEvents);
   const [aiResponse, setAiResponse] = useState('');
   const [filter, setFilter] = useState('all');
 
   const handleSearch = async () => {
     if (!query) {
-      setDisplayedEvents(initialEvents);
+      setEvents(initialEvents);
       setAiResponse('');
       return;
     }
@@ -42,26 +43,30 @@ export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
         )
       );
       
-      setDisplayedEvents(filtered.length > 0 ? filtered : []);
+      setEvents(filtered.length > 0 ? filtered : []);
     } catch (error) {
       console.error("Search failed:", error);
       setAiResponse('Ocorreu um erro na busca. Tente novamente.');
-      setDisplayedEvents([]);
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    const now = new Date();
+    let filteredEvents = events;
+    if (filter === 'past') {
+      filteredEvents = events.filter(e => new Date(e.date) < now);
+    } else if (filter === 'upcoming') {
+      filteredEvents = events.filter(e => new Date(e.date) >= now);
+    }
+    setDisplayedEvents(filteredEvents);
+  }, [filter, events]);
+
   const handleFilterChange = (value: string) => {
     setFilter(value);
-    const now = new Date();
-    if (value === 'past') {
-      setDisplayedEvents(initialEvents.filter(e => e.date < now));
-    } else if (value === 'upcoming') {
-      setDisplayedEvents(initialEvents.filter(e => e.date >= now));
-    } else {
-      setDisplayedEvents(initialEvents);
-    }
+    // The filtering logic is now in useEffect
   };
 
   return (
