@@ -7,7 +7,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,10 +24,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { createEventAction, updateEventAction } from '@/lib/actions';
-import type { Event } from '@/lib/types';
+import type { Event, Contratante, Artista } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { getArtistas, getContratantes } from '@/lib/data';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
@@ -56,6 +58,20 @@ export function EventForm({ event }: { event?: Event }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [contratantes, setContratantes] = useState<Contratante[]>([]);
+  const [artistas, setArtistas] = useState<Artista[]>([]);
+
+  useEffect(() => {
+    async function fetchData() {
+        const [contratantesData, artistasData] = await Promise.all([
+            getContratantes(),
+            getArtistas()
+        ]);
+        setContratantes(contratantesData);
+        setArtistas(artistasData);
+    }
+    fetchData();
+  }, []);
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -105,10 +121,36 @@ export function EventForm({ event }: { event?: Event }) {
             <CardHeader><CardTitle className="font-headline">Informações do Evento</CardTitle></CardHeader>
             <CardContent className="space-y-4">
                 <FormField control={form.control} name="contratante" render={({ field }) => (
-                    <FormItem><FormLabel>Contratante</FormLabel><FormControl><Input placeholder="Ex: Casamento Joana & Miguel" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem>
+                        <FormLabel>Contratante</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione um contratante" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {contratantes.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
                 )}/>
                 <FormField control={form.control} name="artista" render={({ field }) => (
-                    <FormItem><FormLabel>Artista / Serviço</FormLabel><FormControl><Input placeholder="Ex: Banda Sinfonia" {...field} /></FormControl><FormMessage /></FormItem>
+                     <FormItem>
+                        <FormLabel>Artista / Serviço</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione um artista" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {artistas.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
                 )}/>
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="date" render={({ field }) => (
