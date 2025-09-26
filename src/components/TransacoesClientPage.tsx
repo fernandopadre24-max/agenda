@@ -74,8 +74,8 @@ export function TransacoesClientPage({
   >(null);
   const { toast } = useToast();
 
-  const eventBalance = useMemo(() => {
-    return initialEvents.reduce((acc, event) => {
+  const generalBalance = useMemo(() => {
+    const eventBalance = initialEvents.reduce((acc, event) => {
       if (event.receber?.status === 'recebido') {
         acc += event.receber.valor;
       }
@@ -84,7 +84,20 @@ export function TransacoesClientPage({
       }
       return acc;
     }, 0);
-  }, [initialEvents]);
+
+    const transactionBalance = transactions.reduce((acc, tx) => {
+        if(tx.status === 'concluido') {
+            if (tx.type === 'receber') {
+                acc += tx.value;
+            } else { // pagar
+                acc -= tx.value;
+            }
+        }
+        return acc;
+    }, 0);
+
+    return eventBalance + transactionBalance;
+  }, [initialEvents, transactions]);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
@@ -198,13 +211,13 @@ export function TransacoesClientPage({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
-            <Banknote className="h-4 w-4" /> Saldo Disponível de Eventos
+            <Banknote className="h-4 w-4" /> Saldo Geral Disponível
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold">{formatCurrency(eventBalance)}</p>
+          <p className="text-2xl font-bold">{formatCurrency(generalBalance)}</p>
           <p className="text-xs text-muted-foreground">
-            (Recebimentos - Pagamentos de eventos concluídos)
+            (Eventos concluídos + Transações manuais)
           </p>
         </CardContent>
       </Card>
@@ -330,7 +343,7 @@ export function TransacoesClientPage({
       )}
 
       <div className="space-y-3">
-        <h3 className="text-lg font-headline">Histórico de Transações</h3>
+        <h3 className="text-lg font-headline">Histórico de Transações Manuais</h3>
         {transactions.length > 0 ? (
           transactions.map(tx => (
             <Card key={tx.id}>

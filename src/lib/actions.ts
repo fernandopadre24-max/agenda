@@ -307,6 +307,7 @@ export async function updateEventStatusAction(eventId: string, type: 'pagar' | '
 
         revalidatePath('/');
         revalidatePath('/financeiro');
+        revalidatePath('/transacoes');
         revalidatePath(`/events/${eventId}`);
         
         return { success: true, message: 'Status do evento atualizado com sucesso!' };
