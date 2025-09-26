@@ -60,7 +60,7 @@ interface EventFormProps {
     pastEvents: string[];
 }
 
-export function EventForm({ event, artistas, contratantes, pastEvents }: EventFormProps) {
+export function EventForm({ event, artistas, contratantes }: EventFormProps) {
   const isEditing = !!event;
   const router = useRouter();
   const { toast } = useToast();
