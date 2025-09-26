@@ -26,6 +26,7 @@ export type Event = {
   saida: string;
   cidade: string;
   local: string;
+  status: 'pendente' | 'realizado';
   pagar?: {
     valor: number;
     status: 'pendente' | 'pago';

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { type Event } from '@/lib/types';
-import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, CheckCircle, Mic } from 'lucide-react';
+import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, CheckCircle, Mic, DollarSign, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { useEffect, useState, useTransition } from 'react';
@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { deleteEventAction, updateEventStatusAction } from '@/lib/actions';
+import { deleteEventAction, updateEventCompletionStatusAction, updateEventStatusAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -41,12 +41,25 @@ export function EventCard({ event }: { event: Event }) {
     router.refresh();
   };
 
-  const handleStatusUpdate = (type: 'pagar' | 'receber') => {
+  const handleFinancialStatusUpdate = (type: 'pagar' | 'receber') => {
     startTransition(async () => {
         toast({ title: 'Atualizando status...' });
         const result = await updateEventStatusAction(event.id, type);
         if (result.success) {
             toast({ title: type === 'receber' ? 'Recebimento confirmado!' : 'Pagamento confirmado!' });
+            router.refresh();
+        } else {
+            toast({ variant: 'destructive', title: 'Erro ao atualizar status.', description: result.message });
+        }
+    });
+  }
+
+  const handleCompletionStatusUpdate = () => {
+    startTransition(async () => {
+        toast({ title: 'Marcando como realizado...' });
+        const result = await updateEventCompletionStatusAction(event.id);
+        if (result.success) {
+            toast({ title: 'Evento marcado como realizado!'});
             router.refresh();
         } else {
             toast({ variant: 'destructive', title: 'Erro ao atualizar status.', description: result.message });
@@ -62,7 +75,7 @@ export function EventCard({ event }: { event: Event }) {
   const eventDate = new Date(event.date);
   const now = new Date();
   now.setHours(0,0,0,0);
-  const isPast = eventDate < now;
+  const isPastEvent = eventDate < now;
   
   const day = eventDate.toLocaleDateString('pt-BR', { day: '2-digit' });
   const month = eventDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
@@ -98,12 +111,13 @@ export function EventCard({ event }: { event: Event }) {
     return null;
   }
   
-  const showReceberAction = event.receber?.status === 'pendente' && !isPast;
-  const showPagarAction = event.pagar?.status === 'pendente' && !isPast;
+  const showReceberAction = event.receber?.status === 'pendente';
+  const showPagarAction = event.pagar?.status === 'pendente';
+  const showCompletionAction = event.status === 'pendente';
 
 
   return (
-      <Card className={`hover:border-primary transition-all duration-200 ${isPast ? 'opacity-60' : ''}`}>
+      <Card className={`hover:border-primary transition-all duration-200 ${event.status === 'realizado' ? 'opacity-60' : ''}`}>
         <div className="flex">
             <Link href={`/events/${event.id}`} className="flex-1">
                 <div className="flex">
@@ -123,21 +137,36 @@ export function EventCard({ event }: { event: Event }) {
                           <Mic className="h-3 w-3" />
                           {event.artista}
                       </CardDescription>
-                      <div className="text-xs text-muted-foreground mt-1.5 pl-1">{time}</div>
+                       <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1 pl-1">
+                        {time}
+                        {event.status === 'realizado' && <Badge variant="outline">Realizado</Badge>}
+                       </div>
                     </div>
                 </div>
             </Link>
             <div className="p-1 border-l flex flex-col justify-center items-center">
+                {showCompletionAction && (
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10" 
+                        onClick={handleCompletionStatusUpdate}
+                        disabled={isPending}
+                        aria-label={"Marcar como Realizado"}
+                      >
+                        <Check className="h-4 w-4" />
+                    </Button>
+                )}
                 {(showReceberAction || showPagarAction) && (
                      <Button 
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-green-500 hover:text-green-500 hover:bg-green-500/10" 
-                        onClick={() => handleStatusUpdate(showReceberAction ? 'receber' : 'pagar')}
+                        onClick={() => handleFinancialStatusUpdate(showReceberAction ? 'receber' : 'pagar')}
                         disabled={isPending}
                         aria-label={showReceberAction ? "Marcar como Recebido" : "Marcar como Pago"}
                       >
-                        <CheckCircle className="h-4 w-4" />
+                        <DollarSign className="h-4 w-4" />
                     </Button>
                 )}
                 <Button variant="ghost" size="icon" asChild className="h-8 w-8">

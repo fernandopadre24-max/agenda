@@ -75,8 +75,8 @@ export type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
 export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
 
-const createEventFromForm = (data: EventFormValues): Omit<Event, 'id'> => {
-    const event: Omit<Event, 'id'> = {
+const createEventFromForm = (data: EventFormValues): Omit<Event, 'id' | 'status'> => {
+    const event: Omit<Event, 'id' | 'status'> = {
         date: data.date,
         hora: data.hora,
         contratante: data.contratante,
@@ -109,7 +109,7 @@ export async function createEventAction(data: EventFormValues): Promise<ActionRe
 
   try {
     const newEvent = createEventFromForm(validatedFields.data);
-    await dbAddEvent(newEvent);
+    await dbAddEvent({...newEvent, status: 'pendente'});
     revalidatePath('/');
     revalidatePath('/agenda');
     revalidatePath('/financeiro');
@@ -311,6 +311,28 @@ export async function updateEventStatusAction(eventId: string, type: 'pagar' | '
         revalidatePath(`/events/${eventId}`);
         
         return { success: true, message: 'Status do evento atualizado com sucesso!' };
+
+    } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Ocorreu um erro ao atualizar o status: ${errorMessage}` };
+    }
+}
+
+export async function updateEventCompletionStatusAction(eventId: string): Promise<ActionResponse> {
+    try {
+        const event = await getEventById(eventId);
+        if (!event) {
+            return { success: false, message: 'Evento não encontrado.' };
+        }
+
+        await dbUpdateEvent(eventId, { status: 'realizado' });
+
+        revalidatePath('/');
+        revalidatePath('/financeiro');
+        revalidatePath('/transacoes');
+        revalidatePath(`/events/${eventId}`);
+        
+        return { success: true, message: 'Status do evento atualizado para "realizado"!' };
 
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
