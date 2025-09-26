@@ -327,21 +327,35 @@ export async function createTransactionAction(data: TransactionFormValues): Prom
 
     if (validatedFields.data.type === 'pagar') {
         const allTransactions = await getTransactions();
-        const balance = allTransactions.reduce((acc, tx) => {
+        const allEvents = await getEvents();
+        
+        const eventBalance = allEvents.reduce((acc, event) => {
+            if (event.receber?.status === 'recebido') {
+                acc += event.receber.valor;
+            }
+            if (event.pagar?.status === 'pago') {
+                acc -= event.pagar.valor;
+            }
+            return acc;
+        }, 0);
+
+        const transactionBalance = allTransactions.reduce((acc, tx) => {
             if (tx.status === 'concluido') {
                 if (tx.type === 'receber') return acc + tx.value;
                 if (tx.type === 'pagar') return acc - tx.value;
             }
             return acc;
         }, 0);
+        
+        const totalBalance = eventBalance + transactionBalance;
 
-        if (balance < validatedFields.data.value) {
+        if (totalBalance < validatedFields.data.value) {
             return { success: false, message: 'Saldo insuficiente para efetuar este pagamento.' };
         }
     }
 
     try {
-        const newTransaction = await dbAddTransaction({ ...validatedFields.data, status: 'pendente' });
+        const newTransaction = await dbAddTransaction({ ...validatedFields.data, status: 'concluido' });
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');
         return { success: true, message: 'Transação criada com sucesso.', data: newTransaction };
