@@ -134,18 +134,13 @@ export async function updateEventAction(id: string, data: EventFormValues): Prom
 
 
 export async function deleteEventAction(id: string) {
-    let shouldRedirect = false;
     try {
         await dbDeleteEvent(id);
         revalidatePath('/');
-        shouldRedirect = true;
     } catch (e) {
         return { message: 'Ocorreu um erro ao deletar o evento.' };
     }
-
-    if (shouldRedirect) {
-        redirect('/');
-    }
+    redirect('/');
 }
 
 export async function createContratanteAction(data: ContratanteFormValues): Promise<ActionResponse> {
@@ -182,6 +177,7 @@ export async function updateContratanteAction(id: string, data: ContratanteFormV
         return { success: false, message: 'Ocorreu um erro ao atualizar o contratante.' };
     }
     revalidatePath('/contratantes');
+    revalidatePath(`/contratantes/${id}/edit`);
     redirect('/contratantes');
 }
 
@@ -243,6 +239,7 @@ export async function updateArtistaAction(id: string, data: ArtistaFormValues): 
         return { success: false, message: 'Ocorreu um erro ao atualizar o artista.' };
     }
     revalidatePath('/artistas');
+    revalidatePath(`/artistas/${id}/edit`);
     redirect('/artistas');
 }
 

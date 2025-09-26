@@ -15,19 +15,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { useRouter } from 'next/navigation';
 
-
-export function ArtistaActions({ artistaId }: { artistaId: string }) {
+export function ArtistaActions({ artistaId, onDelete }: { artistaId: string, onDelete: () => void }) {
   const { toast } = useToast();
-  const router = useRouter();
 
   const handleDelete = async () => {
     toast({ title: 'Excluindo artista...' });
     const result = await deleteArtistaAction(artistaId);
     if(result.success) {
         toast({ title: 'Artista excluído com sucesso.' });
-        router.refresh();
+        onDelete();
     } else {
         toast({ variant: 'destructive', title: 'Erro ao excluir artista.', description: result.message })
     }

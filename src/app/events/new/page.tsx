@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { getArtistas, getContratantes, getEvents } from '@/lib/data';
 import type { Artista, Contratante, Event } from '@/lib/types';
 import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function NewEventPage() {
   const [data, setData] = useState<{
@@ -40,8 +41,9 @@ export default function NewEventPage() {
       <main className="flex-1 p-4 md:p-6">
         {loading || !data ? (
           <div className="space-y-6">
-            <div className="h-48 w-full animate-pulse rounded-md bg-muted"></div>
-            <div className="h-64 w-full animate-pulse rounded-md bg-muted"></div>
+             <Skeleton className="h-48 w-full" />
+             <Skeleton className="h-64 w-full" />
+             <Skeleton className="h-10 w-full" />
           </div>
         ) : (
           <EventForm

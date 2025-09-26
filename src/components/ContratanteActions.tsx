@@ -15,12 +15,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { useRouter } from 'next/navigation';
 
-
-export function ContratanteActions({ contratanteId }: { contratanteId: string }) {
+export function ContratanteActions({ contratanteId, onDelete }: { contratanteId: string, onDelete: () => void }) {
   const { toast } = useToast();
-  const router = useRouter();
 
   const handleDelete = async () => {
     toast({ title: 'Excluindo contratante...' });
@@ -28,7 +25,7 @@ export function ContratanteActions({ contratanteId }: { contratanteId: string })
 
     if (result.success) {
         toast({ title: 'Contratante excluído com sucesso.' });
-        router.refresh();
+        onDelete();
     } else {
         toast({ variant: 'destructive', title: 'Erro ao excluir contratante.', description: result.message })
     }

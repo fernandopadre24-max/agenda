@@ -46,7 +46,6 @@ export function ContratanteForm({ contratante, onSave }: { contratante?: Contrat
        if (result.success) {
         toast({ title: 'Contratante atualizado com sucesso!' });
         router.push('/contratantes');
-        router.refresh();
       } else {
         toast({
           variant: 'destructive',
@@ -56,11 +55,9 @@ export function ContratanteForm({ contratante, onSave }: { contratante?: Contrat
       }
     } else {
       const result = await createContratanteAction(data);
-      if (result.success && result.data) {
+      if (result.success && result.data && onSave) {
         toast({ title: 'Contratante criado com sucesso!' });
-        if (onSave) {
-          onSave(result.data as Contratante);
-        }
+        onSave(result.data as Contratante);
       } else {
         toast({
           variant: 'destructive',
@@ -76,10 +73,10 @@ export function ContratanteForm({ contratante, onSave }: { contratante?: Contrat
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex flex-col h-full">
-        <ScrollArea className="flex-1">
-            <Card className="border-none shadow-none">
-                <CardHeader><CardTitle className="font-headline">{isEditing ? "Editar Contratante" : "Novo Contratante"}</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
+        <ScrollArea className="flex-1 p-6">
+            <Card className="border-none shadow-none p-0">
+                <CardHeader className="p-0 mb-6"><CardTitle className="font-headline">{isEditing ? "Editar Contratante" : "Novo Contratante"}</CardTitle></CardHeader>
+                <CardContent className="space-y-4 p-0">
                     <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do contratante" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>

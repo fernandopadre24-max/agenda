@@ -48,7 +48,6 @@ export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: (
       if (result.success) {
         toast({ title: 'Artista atualizado com sucesso!' });
         router.push('/artistas');
-        router.refresh();
       } else {
         toast({
           variant: 'destructive',
@@ -58,11 +57,9 @@ export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: (
       }
     } else {
       const result = await createArtistaAction(data);
-      if (result.success && result.data) {
+      if (result.success && result.data && onSave) {
         toast({ title: 'Artista criado com sucesso!' });
-        if (onSave) {
-          onSave(result.data as Artista);
-        }
+        onSave(result.data as Artista);
       } else {
          toast({
           variant: 'destructive',
@@ -78,12 +75,12 @@ export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: (
   return (
     <Form {...form}>
        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex flex-col h-full">
-        <ScrollArea className="flex-1">
-          <Card className="border-none shadow-none">
-              <CardHeader>
+        <ScrollArea className="flex-1 p-6">
+          <Card className="border-none shadow-none p-0">
+              <CardHeader className="p-0 mb-6">
                 <CardTitle className="font-headline">{isEditing ? "Editar Artista" : "Novo Artista"}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-0">
                   <FormField control={form.control} name="name" render={({ field }) => (
                       <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
