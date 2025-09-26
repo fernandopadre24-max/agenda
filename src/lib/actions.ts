@@ -106,6 +106,7 @@ export async function createEventAction(data: EventFormValues): Promise<ActionRe
   }
   
   revalidatePath('/');
+  revalidatePath('/events/new');
   redirect('/');
 }
 
@@ -129,6 +130,7 @@ export async function updateEventAction(id: string, data: EventFormValues): Prom
 
     revalidatePath('/');
     revalidatePath(`/events/${id}`);
+    revalidatePath('/events/new');
     redirect(`/events/${id}`);
 }
 
@@ -137,6 +139,7 @@ export async function deleteEventAction(id: string) {
     try {
         await dbDeleteEvent(id);
         revalidatePath('/');
+        revalidatePath('/events/new');
     } catch (e) {
         return { message: 'Ocorreu um erro ao deletar o evento.' };
     }
@@ -159,6 +162,7 @@ export async function createContratanteAction(data: ContratanteFormValues): Prom
         return { success: false, message: 'Ocorreu um erro ao criar o contratante.' };
     }
     revalidatePath('/contratantes');
+    revalidatePath('/events/new');
     return { success: true, message: 'Contratante criado com sucesso.', data: newContratante };
 }
 
@@ -178,6 +182,7 @@ export async function updateContratanteAction(id: string, data: ContratanteFormV
     }
     revalidatePath('/contratantes');
     revalidatePath(`/contratantes/${id}/edit`);
+    revalidatePath('/events/new');
     redirect('/contratantes');
 }
 
@@ -202,6 +207,7 @@ export async function deleteContratanteAction(id: string): Promise<ActionRespons
         return { success: false, message: 'Ocorreu um erro ao deletar o contratante.' };
     }
     revalidatePath('/contratantes');
+    revalidatePath('/events/new');
     return { success: true, message: 'Contratante deletado com sucesso.' };
 }
 
@@ -221,6 +227,7 @@ export async function createArtistaAction(data: ArtistaFormValues): Promise<Acti
         return { success: false, message: 'Ocorreu um erro ao criar o artista.' };
     }
     revalidatePath('/artistas');
+    revalidatePath('/events/new');
     return { success: true, message: 'Artista criado com sucesso.', data: newArtista };
 }
 
@@ -240,6 +247,7 @@ export async function updateArtistaAction(id: string, data: ArtistaFormValues): 
     }
     revalidatePath('/artistas');
     revalidatePath(`/artistas/${id}/edit`);
+    revalidatePath('/events/new');
     redirect('/artistas');
 }
 
@@ -263,5 +271,6 @@ export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
         return { success: false, message: 'Ocorreu um erro ao deletar o artista.' };
     }
     revalidatePath('/artistas');
+    revalidatePath('/events/new');
     return { success: true, message: 'Artista deletado com sucesso.' };
 }
