@@ -70,20 +70,30 @@ export function EventCard({ event }: { event: Event }) {
 
   const renderFinancials = () => {
     if (event.receber) {
-      const isPending = event.receber.status === 'pendente';
-      return (
-        <Badge variant={isPending ? 'secondary' : 'default'} className="bg-green-600/20 text-green-400 border-green-600/30">
-          <ArrowUp className="mr-1 h-3 w-3" /> {formatCurrency(event.receber.valor)}
-        </Badge>
-      );
+      if (event.receber.status === 'pendente') {
+        return (
+          <Badge variant='secondary' className="bg-green-600/20 text-green-400 border-green-600/30">
+            <ArrowUp className="mr-1 h-3 w-3" /> {formatCurrency(event.receber.valor)}
+          </Badge>
+        );
+      } else {
+        return (
+           <Badge className="bg-green-500/80">Recebido</Badge>
+        )
+      }
     }
     if (event.pagar) {
-      const isPending = event.pagar.status === 'pendente';
-      return (
-        <Badge variant={isPending ? 'secondary' : 'default'} className="bg-red-600/20 text-red-400 border-red-600/30">
-          <ArrowDown className="mr-1 h-3 w-3" /> {formatCurrency(event.pagar.valor)}
-        </Badge>
-      );
+      if (event.pagar.status === 'pendente') {
+        return (
+          <Badge variant='secondary' className="bg-red-600/20 text-red-400 border-red-600/30">
+            <ArrowDown className="mr-1 h-3 w-3" /> {formatCurrency(event.pagar.valor)}
+          </Badge>
+        );
+      } else {
+        return (
+           <Badge variant="destructive">Pago</Badge>
+        )
+      }
     }
     return null;
   }
