@@ -46,6 +46,7 @@ export function ContratanteForm({ contratante, onSave }: { contratante?: Contrat
        if (result.success) {
         toast({ title: 'Contratante atualizado com sucesso!' });
         router.push('/contratantes');
+        router.refresh();
       } else {
         toast({
           variant: 'destructive',

@@ -1,13 +1,13 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useFormState } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { CalendarIcon, Check, ChevronsUpDown, Loader2, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -76,11 +76,19 @@ function useDebounce(value: string, delay: number) {
   return debouncedValue;
 }
 
+function SubmitButton({ isEditing }: { isEditing: boolean }) {
+    const { isSubmitting } = useFormState();
+    return (
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
+        </Button>
+    )
+}
+
 export function EventForm({ event, artistas, contratantes, pastEvents }: EventFormProps) {
   const isEditing = !!event;
   const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [contratantePopoverOpen, setContratantePopoverOpen] = useState(false);
   const [artistaPopoverOpen, setArtistaPopoverOpen] = useState(false);
@@ -169,7 +177,6 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
   const financeType = form.watch('financeType');
   
   const onSubmit = async (data: EventFormValues) => {
-    setIsLoading(true);
     const action = isEditing
       ? updateEventAction.bind(null, event!.id)
       : createEventAction;
@@ -180,12 +187,8 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
       toast({
         title: `Evento ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
       });
-      if (result.redirectPath) {
-        router.push(result.redirectPath);
-      } else if (!isEditing) {
-        router.push('/');
-      }
-      router.refresh();
+       router.push(result.redirectPath ?? '/');
+       router.refresh();
 
     } else {
       toast({
@@ -194,7 +197,6 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
         description: result.message,
       });
     }
-    setIsLoading(false);
   };
   
   return (
@@ -425,9 +427,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
             </CardContent>
         </Card>
 
-        <Button type="submit" disabled={isLoading || isSuggesting} className="w-full">
-            {(isLoading || isSuggesting) ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
-        </Button>
+        <SubmitButton isEditing={isEditing} />
       </form>
     </Form>
   );

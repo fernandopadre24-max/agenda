@@ -48,6 +48,7 @@ export function ArtistaForm({ artista, onSave }: { artista?: Artista; onSave?: (
       if (result.success) {
         toast({ title: 'Artista atualizado com sucesso!' });
         router.push('/artistas');
+        router.refresh();
       } else {
         toast({
           variant: 'destructive',
