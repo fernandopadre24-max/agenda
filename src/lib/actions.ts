@@ -19,6 +19,7 @@ import {
     addTransaction as dbAddTransaction,
     updateTransaction as dbUpdateTransaction,
     deleteTransaction as dbDeleteTransaction,
+    getTransactions,
 } from './data';
 import type { Event, Artista, Contratante, ActionResponse, Transaction } from './types';
 
@@ -323,6 +324,22 @@ export async function createTransactionAction(data: TransactionFormValues): Prom
     if (!validatedFields.success) {
         return { success: false, message: 'Dados inválidos.', errors: validatedFields.error.flatten().fieldErrors };
     }
+
+    if (validatedFields.data.type === 'pagar') {
+        const allTransactions = await getTransactions();
+        const balance = allTransactions.reduce((acc, tx) => {
+            if (tx.status === 'concluido') {
+                if (tx.type === 'receber') return acc + tx.value;
+                if (tx.type === 'pagar') return acc - tx.value;
+            }
+            return acc;
+        }, 0);
+
+        if (balance < validatedFields.data.value) {
+            return { success: false, message: 'Saldo insuficiente para efetuar este pagamento.' };
+        }
+    }
+
     try {
         const newTransaction = await dbAddTransaction({ ...validatedFields.data, status: 'pendente' });
         revalidatePath('/financeiro');
