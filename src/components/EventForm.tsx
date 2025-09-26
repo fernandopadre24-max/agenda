@@ -82,6 +82,8 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [contratantePopoverOpen, setContratantePopoverOpen] = useState(false);
+  const [artistaPopoverOpen, setArtistaPopoverOpen] = useState(false);
   
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -236,7 +238,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Contratante</FormLabel>
-                      <Popover>
+                      <Popover open={contratantePopoverOpen} onOpenChange={setContratantePopoverOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -266,8 +268,9 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                                     <CommandItem
                                     value={c.name}
                                     key={c.id}
-                                    onSelect={() => {
-                                        form.setValue("contratante", c.name)
+                                    onSelect={(currentValue) => {
+                                        form.setValue("contratante", currentValue === field.value ? "" : currentValue, { shouldValidate: true })
+                                        setContratantePopoverOpen(false)
                                     }}
                                     >
                                     <Check
@@ -296,7 +299,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Artista / Serviço</FormLabel>
-                      <Popover>
+                      <Popover open={artistaPopoverOpen} onOpenChange={setArtistaPopoverOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -326,8 +329,9 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                                     <CommandItem
                                     value={a.name}
                                     key={a.id}
-                                    onSelect={() => {
-                                        form.setValue("artista", a.name)
+                                    onSelect={(currentValue) => {
+                                        form.setValue("artista", currentValue === field.value ? "" : currentValue, { shouldValidate: true })
+                                        setArtistaPopoverOpen(false)
                                     }}
                                     >
                                     <Check
