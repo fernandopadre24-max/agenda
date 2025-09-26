@@ -14,7 +14,8 @@ import {
     updateArtista as dbUpdateArtista,
     deleteArtista as dbDeleteArtista,
     getArtistas as dbGetArtistas,
-    getEvents
+    getEvents,
+    getEventById
 } from './data';
 import type { Event, Artista, Contratante } from './types';
 
@@ -272,4 +273,34 @@ export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
     revalidatePath('/artistas');
     revalidatePath('/events/new');
     return { success: true, message: 'Artista deletado com sucesso.' };
+}
+
+export async function updateEventStatusAction(eventId: string, type: 'pagar' | 'receber'): Promise<ActionResponse> {
+    try {
+        const event = await getEventById(eventId);
+        if (!event) {
+            return { success: false, message: 'Evento não encontrado.' };
+        }
+
+        const updateData: Partial<Omit<Event, 'id'>> = {};
+        if (type === 'pagar' && event.pagar) {
+            updateData.pagar = { ...event.pagar, status: 'pago' };
+        } else if (type === 'receber' && event.receber) {
+            updateData.receber = { ...event.receber, status: 'recebido' };
+        } else {
+            return { success: false, message: 'Tipo de atualização inválida para este evento.' };
+        }
+
+        await dbUpdateEvent(eventId, updateData);
+
+        revalidatePath('/');
+        revalidatePath('/financeiro');
+        revalidatePath(`/events/${eventId}`);
+        
+        return { success: true, message: 'Status do evento atualizado com sucesso!' };
+
+    } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Ocorreu um erro ao atualizar o status: ${errorMessage}` };
+    }
 }

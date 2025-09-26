@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { type Event } from '@/lib/types';
-import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2 } from 'lucide-react';
+import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Button } from './ui/button';
 import {
   AlertDialog,
@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { deleteEventAction } from '@/lib/actions';
+import { deleteEventAction, updateEventStatusAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -28,6 +28,7 @@ export function EventCard({ event }: { event: Event }) {
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   
   useEffect(() => {
     setIsMounted(true);
@@ -39,6 +40,19 @@ export function EventCard({ event }: { event: Event }) {
     toast({ title: 'Evento excluído com sucesso.' });
     router.refresh();
   };
+
+  const handleStatusUpdate = (type: 'pagar' | 'receber') => {
+    startTransition(async () => {
+        toast({ title: 'Atualizando status...' });
+        const result = await updateEventStatusAction(event.id, type);
+        if (result.success) {
+            toast({ title: 'Status atualizado com sucesso!' });
+            router.refresh();
+        } else {
+            toast({ variant: 'destructive', title: 'Erro ao atualizar status.', description: result.message });
+        }
+    });
+  }
 
 
   if (!isMounted) {
@@ -56,21 +70,27 @@ export function EventCard({ event }: { event: Event }) {
 
   const renderFinancials = () => {
     if (event.receber) {
+      const isPending = event.receber.status === 'pendente';
       return (
-        <Badge variant={event.receber.status === 'recebido' ? 'default' : 'secondary'} className="bg-green-600/20 text-green-400 border-green-600/30">
+        <Badge variant={isPending ? 'secondary' : 'default'} className="bg-green-600/20 text-green-400 border-green-600/30">
           <ArrowUp className="mr-1 h-3 w-3" /> {formatCurrency(event.receber.valor)}
         </Badge>
       );
     }
     if (event.pagar) {
+      const isPending = event.pagar.status === 'pendente';
       return (
-        <Badge variant={event.pagar.status === 'pago' ? 'default' : 'secondary'} className="bg-red-600/20 text-red-400 border-red-600/30">
+        <Badge variant={isPending ? 'secondary' : 'default'} className="bg-red-600/20 text-red-400 border-red-600/30">
           <ArrowDown className="mr-1 h-3 w-3" /> {formatCurrency(event.pagar.valor)}
         </Badge>
       );
     }
     return null;
   }
+  
+  const showReceberAction = event.receber?.status === 'pendente' && !isPast;
+  const showPagarAction = event.pagar?.status === 'pendente' && !isPast;
+
 
   return (
       <Card className={`hover:border-primary transition-all duration-200 ${isPast ? 'opacity-60' : ''}`}>
@@ -94,7 +114,19 @@ export function EventCard({ event }: { event: Event }) {
                     </div>
                 </div>
             </Link>
-            <div className="p-2 border-l flex flex-col justify-center">
+            <div className="p-1 border-l flex flex-col justify-center items-center">
+                {(showReceberAction || showPagarAction) && (
+                     <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-green-500 hover:text-green-500 hover:bg-green-500/10" 
+                        onClick={() => handleStatusUpdate(showReceberAction ? 'receber' : 'pagar')}
+                        disabled={isPending}
+                        aria-label={showReceberAction ? "Marcar como Recebido" : "Marcar como Pago"}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                    </Button>
+                )}
                 <Button variant="ghost" size="icon" asChild className="h-8 w-8">
                     <Link href={`/events/${event.id}/edit`}>
                         <Edit className="h-4 w-4" />
