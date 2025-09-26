@@ -7,7 +7,7 @@ import { CalendarIcon, Loader2, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -31,7 +31,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { getEventSuggestions } from '@/ai/flows/intelligent-event-suggestions';
 import { Textarea } from './ui/textarea';
-import { getEvents } from '@/lib/data';
+import { getArtistas, getContratantes, getEvents } from '@/lib/data';
+import { Skeleton } from './ui/skeleton';
 
 
 const eventFormSchema = z.object({
@@ -59,8 +60,6 @@ export type EventFormValues = z.infer<typeof eventFormSchema>;
 
 interface EventFormProps {
     event?: Event;
-    artistas: Artista[];
-    contratantes: Contratante[];
 }
 
 // Debounce hook
@@ -77,13 +76,16 @@ function useDebounce(value: string, delay: number) {
   return debouncedValue;
 }
 
-export function EventForm({ event, artistas, contratantes }: EventFormProps) {
+export function EventForm({ event }: EventFormProps) {
   const isEditing = !!event;
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(!isEditing);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [pastEvents, setPastEvents] = useState<string[]>([]);
+  const [artistas, setArtistas] = useState<Artista[]>([]);
+  const [contratantes, setContratantes] = useState<Contratante[]>([]);
   
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -105,14 +107,24 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
   const debouncedDraft = useDebounce(draftValue ?? '', 1000);
 
   useEffect(() => {
-    async function fetchPastEvents() {
-      const allEvents = await getEvents();
+    async function fetchData() {
+      setIsDataLoading(true);
+      const [fetchedArtistas, fetchedContratantes, allEvents] = await Promise.all([
+        getArtistas(),
+        getContratantes(),
+        getEvents(),
+      ]);
+      
+      setArtistas(fetchedArtistas);
+      setContratantes(fetchedContratantes);
+
       const eventDescriptions = allEvents.map(e => 
         `Evento para ${e.contratante} com ${e.artista} em ${format(e.date, 'PPP', { locale: ptBR })} às ${e.hora}.`
       );
       setPastEvents(eventDescriptions);
+      setIsDataLoading(false);
     }
-    fetchPastEvents();
+    fetchData();
   }, []);
 
   const handleSuggestion = useCallback(async (draft: string) => {
@@ -183,7 +195,7 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
   const onSubmit = async (data: EventFormValues) => {
     setIsLoading(true);
     const action = isEditing
-      ? updateEventAction.bind(null, event.id)
+      ? updateEventAction.bind(null, event!.id)
       : createEventAction;
 
     const result = await action(data);
@@ -204,6 +216,17 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
     setIsLoading(false);
   };
   
+  if (isDataLoading) {
+    return (
+       <div className="space-y-6">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-10 w-full" />
+       </div>
+    )
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
