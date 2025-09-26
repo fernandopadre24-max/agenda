@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { createArtistaAction, updateArtistaAction, type ArtistaFormValues } from '@/lib/actions';
+import { createArtistaAction, updateArtistaAction } from '@/lib/actions';
 import { type Artista } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
 
@@ -23,12 +23,14 @@ const artistaFormSchema = z.object({
     serviceType: z.string().optional(),
 });
 
+type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
+
 
 export function ArtistaForm({ artista, onSave }: { artista?: Artista; onSave?: (newArtista: Artista) => void }) {
   const isEditing = !!artista;
   const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<ArtistaFormValues>({
     resolver: zodResolver(artistaFormSchema),
@@ -40,37 +42,35 @@ export function ArtistaForm({ artista, onSave }: { artista?: Artista; onSave?: (
     },
   });
 
-  const onSubmit = async (data: ArtistaFormValues) => {
-    setIsLoading(true);
-    
-    if (isEditing) {
-      const result = await updateArtistaAction(artista.id, data);
-      if (result.success) {
-        toast({ title: 'Artista atualizado com sucesso!' });
-        router.push('/artistas');
-        router.refresh();
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Erro ao atualizar o artista.',
-          description: result.message,
-        });
-      }
-    } else {
-      const result = await createArtistaAction(data);
-      if (result.success && result.data && onSave) {
-        toast({ title: 'Artista criado com sucesso!' });
-        onSave(result.data as Artista);
-      } else {
-         toast({
-          variant: 'destructive',
-          title: 'Erro ao criar o artista.',
-          description: result.message,
-        });
-      }
-    }
-    
-    setIsLoading(false);
+  const onSubmit = (data: ArtistaFormValues) => {
+    startTransition(async () => {
+        if (isEditing) {
+          const result = await updateArtistaAction(artista.id, data);
+          if (result.success) {
+            toast({ title: 'Artista atualizado com sucesso!' });
+            router.push('/artistas');
+            router.refresh();
+          } else {
+            toast({
+              variant: 'destructive',
+              title: 'Erro ao atualizar o artista.',
+              description: result.message,
+            });
+          }
+        } else {
+          const result = await createArtistaAction(data);
+          if (result.success && result.data && onSave) {
+            toast({ title: 'Artista criado com sucesso!' });
+            onSave(result.data as Artista);
+          } else {
+             toast({
+              variant: 'destructive',
+              title: 'Erro ao criar o artista.',
+              description: result.message,
+            });
+          }
+        }
+    });
   };
   
   return (
@@ -99,8 +99,8 @@ export function ArtistaForm({ artista, onSave }: { artista?: Artista; onSave?: (
         </ScrollArea>
         
         <div className="p-4 border-t">
-            <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Artista')}
+            <Button type="submit" disabled={isPending} className="w-full">
+                {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Artista')}
             </Button>
         </div>
       </form>
