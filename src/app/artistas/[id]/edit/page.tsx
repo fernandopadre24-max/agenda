@@ -14,6 +14,7 @@ export default function EditArtistaPage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     async function fetchArtista() {
+      setLoading(true);
       const fetchedArtista = await getArtistaById(params.id);
       if (!fetchedArtista) {
         notFound();

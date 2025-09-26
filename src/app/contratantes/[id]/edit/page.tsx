@@ -14,6 +14,7 @@ export default function EditContratantePage({ params }: { params: { id: string }
 
   useEffect(() => {
     async function fetchContratante() {
+      setLoading(true);
       const fetchedContratante = await getContratanteById(params.id);
       if (!fetchedContratante) {
         notFound();

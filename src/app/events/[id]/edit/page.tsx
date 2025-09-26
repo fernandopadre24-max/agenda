@@ -16,6 +16,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       const [fetchedEvent, fetchedArtistas, fetchedContratantes] = await Promise.all([
         getEventById(params.id),
         getArtistas(),
