@@ -1,6 +1,6 @@
 'use client';
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, Label } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend } from 'recharts';
 import {
   Card,
   CardContent,
@@ -47,7 +47,10 @@ const barChartConfig = {
   },
 } satisfies ChartConfig;
 
-const pieChartConfig = {
+const radarChartConfig = {
+  valor: {
+    label: 'Valor (R$)',
+  },
   recebido: {
     label: 'Recebido',
     color: 'hsl(var(--chart-2))',
@@ -73,10 +76,10 @@ export function FinancialChart({
     { type: 'A Pagar', aPagar: aPagarPendente },
   ];
 
-  const pieChartData = [
-    { name: 'recebido', value: recebido },
-    { name: 'pago', value: pago },
+  const radarChartData = [
+    { subject: 'Valores', recebido: recebido, pago: pago, fullMark: Math.max(recebido, pago) * 1.1 },
   ];
+
 
   return (
     <Card>
@@ -90,7 +93,7 @@ export function FinancialChart({
         <Tabs value={chartType} onValueChange={setChartType} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="bar">Barras</TabsTrigger>
-                <TabsTrigger value="pie">Pizza</TabsTrigger>
+                <TabsTrigger value="radar">Radar</TabsTrigger>
             </TabsList>
             <TabsContent value="bar">
                 <ChartContainer config={barChartConfig} className="min-h-[200px] w-full">
@@ -126,58 +129,20 @@ export function FinancialChart({
                   </BarChart>
                 </ChartContainer>
             </TabsContent>
-            <TabsContent value="pie">
+            <TabsContent value="radar">
                  <ChartContainer
-                  config={pieChartConfig}
-                  className="mx-auto aspect-square h-[250px]"
+                    config={radarChartConfig}
+                    className="mx-auto aspect-square h-[250px]"
                 >
-                  <PieChart>
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent hideLabel indicator="dot" nameKey="name" />}
-                    />
-                    <Pie
-                      data={pieChartData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={60}
-                      strokeWidth={5}
-                      fill="var(--color-pago)"
-                    >
-                       <Label
-                        content={({ viewBox }) => {
-                          if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                            return (
-                              <text
-                                x={viewBox.cx}
-                                y={viewBox.cy}
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                              >
-                                <tspan
-                                  x={viewBox.cx}
-                                  y={viewBox.cy}
-                                  className="fill-foreground text-3xl font-bold"
-                                >
-                                  {formatCurrency(recebido + pago)}
-                                </tspan>
-                                <tspan
-                                  x={viewBox.cx}
-                                  y={(viewBox.cy || 0) + 24}
-                                  className="fill-muted-foreground"
-                                >
-                                  Total
-                                </tspan>
-                              </text>
-                            )
-                          }
-                        }}
-                      />
-                       {pieChartData.map((entry) => (
-                        <Cell key={entry.name} fill={`var(--color-${entry.name})`} />
-                      ))}
-                    </Pie>
-                  </PieChart>
+                    <RadarChart data={radarChartData}>
+                        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="subject" />
+                        <PolarRadiusAxis tickFormatter={(value) => formatCurrency(value).replace(/\s/g, '')}/>
+                        <Radar name="Recebido" dataKey="recebido" stroke="var(--color-recebido)" fill="var(--color-recebido)" fillOpacity={0.6} />
+                        <Radar name="Pago" dataKey="pago" stroke="var(--color-pago)" fill="var(--color-pago)" fillOpacity={0.6} />
+                        <Legend />
+                    </RadarChart>
                 </ChartContainer>
             </TabsContent>
         </Tabs>
