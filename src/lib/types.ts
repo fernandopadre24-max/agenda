@@ -24,6 +24,8 @@ export type Event = {
   artista: string;
   entrada: string;
   saida: string;
+  cidade: string;
+  local: string;
   pagar?: {
     valor: number;
     status: 'pendente' | 'pago';

@@ -4,7 +4,7 @@ import { getEventById } from '@/lib/data';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Clock, Briefcase, User,LogIn, LogOut, ArrowDown, ArrowUp } from 'lucide-react';
+import { Calendar, Clock, Briefcase, User,LogIn, LogOut, ArrowDown, ArrowUp, MapPin } from 'lucide-react';
 import { EventActions } from '@/components/EventActions';
 
 function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: React.ReactNode }) {
@@ -38,6 +38,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
             <p className="text-muted-foreground flex items-center gap-2 pt-1"><Briefcase className="h-4 w-4" />{event.contratante}</p>
           </CardHeader>
           <CardContent className="space-y-4">
+            <DetailItem icon={MapPin} label="Localização" value={`${event.local}, ${event.cidade}`} />
             <DetailItem icon={Calendar} label="Data" value={formatDate(event.date)} />
             <DetailItem icon={Clock} label="Hora do Evento" value={event.hora} />
             <div className="grid grid-cols-2 gap-4">

@@ -40,6 +40,8 @@ const eventFormSchema = z.object({
   hora: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:MM).'),
   entrada: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:MM).'),
   saida: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:MM).'),
+  cidade: z.string().min(1, 'A cidade é obrigatória.'),
+  local: z.string().min(1, 'O local é obrigatório.'),
   financeType: z.enum(['receber', 'pagar', 'nenhum']).default('nenhum'),
   valor: z.coerce.number().optional(),
   status: z.enum(['pendente', 'concluido']).optional(),
@@ -101,6 +103,8 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
       hora: event?.hora ?? '',
       entrada: event?.entrada ?? '',
       saida: event?.saida ?? '',
+      cidade: event?.cidade ?? '',
+      local: event?.local ?? '',
       financeType: event?.receber ? 'receber' : event?.pagar ? 'pagar' : 'nenhum',
       valor: event?.receber?.valor ?? event?.pagar?.valor,
       status: event?.receber?.status === 'recebido' || event?.pagar?.status === 'pago' ? 'concluido' : 'pendente',
@@ -130,6 +134,9 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
         const dateMatch = suggestionText.match(/data: (\d{2}\/\d{2}\/\d{4})/i);
         const horaMatch = suggestionText.match(/hora: (\d{2}:\d{2})/i);
         const valorMatch = suggestionText.match(/valor:.*?(\d+(\.\d{1,2})?)/i);
+        const cidadeMatch = suggestionText.match(/cidade: (.*?)(,|$)/i);
+        const localMatch = suggestionText.match(/local: (.*?)(,|$)/i);
+
 
         if (contratanteMatch?.[1]) {
             const matchedContratante = contratantes.find(c => c.name.toLowerCase().includes(contratanteMatch[1].trim().toLowerCase()));
@@ -151,6 +158,12 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
             if (!form.getValues('financeType') || form.getValues('financeType') === 'nenhum') {
               form.setValue('financeType', 'receber');
             }
+        }
+        if (cidadeMatch?.[1]) {
+            form.setValue('cidade', cidadeMatch[1].trim(), { shouldValidate: true });
+        }
+        if (localMatch?.[1]) {
+            form.setValue('local', localMatch[1].trim(), { shouldValidate: true });
         }
         toast({ title: 'Sugestões aplicadas!', description: 'O formulário foi preenchido com as sugestões da IA.' });
       } else {
@@ -209,7 +222,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
               </CardTitle>
                <FormDescription>
                 Descreva o evento livremente. A IA tentará preencher o formulário para você.
-                Ex: "Festa de casamento para João e Maria em 15/12/2024, às 20h, com a Banda Sinfonia. Cachê de 3000."
+                Ex: "Festa de casamento para João e Maria em 15/12/2024, às 20h, com a Banda Sinfonia em Florianópolis no Espaço Garden. Cachê de 3000."
               </FormDescription>
             </CardHeader>
             <CardContent>
@@ -285,6 +298,14 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                     </FormItem>
                   )}
                 />
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="cidade" render={({ field }) => (
+                        <FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="Ex: Florianópolis" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                    <FormField control={form.control} name="local" render={({ field }) => (
+                        <FormItem><FormLabel>Local</FormLabel><FormControl><Input placeholder="Ex: Espaço Garden" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="date" render={({ field }) => (
                         <FormItem className="flex flex-col"><FormLabel>Data</FormLabel>
@@ -336,7 +357,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                         <FormField control={form.control} name="status" render={({ field }) => (
                             <FormItem className="space-y-3"><FormLabel>Status</FormLabel>
                             <FormControl>
-                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex space-x-4">
+                                <RadioGroup onValuechange={field.onChange} defaultValue={field.value} value={field.value} className="flex space-x-4">
                                 <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pendente" /></FormControl><FormLabel className="font-normal">Pendente</FormLabel></FormItem>
                                 <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="concluido" /></FormControl><FormLabel className="font-normal">{financeType === 'receber' ? 'Recebido' : 'Pago'}</FormLabel></FormItem>
                                 </RadioGroup>

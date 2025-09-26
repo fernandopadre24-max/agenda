@@ -27,6 +27,8 @@ const eventFormSchema = z.object({
   hora: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:MM).'),
   entrada: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:MM).'),
   saida: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido (HH:MM).'),
+  cidade: z.string().min(1, 'A cidade é obrigatória.'),
+  local: z.string().min(1, 'O local é obrigatório.'),
   financeType: z.enum(['receber', 'pagar', 'nenhum']).default('nenhum'),
   valor: z.coerce.number().optional(),
   status: z.enum(['pendente', 'concluido']).optional(),
@@ -78,6 +80,8 @@ const createEventFromForm = (data: EventFormValues): Omit<Event, 'id'> => {
         artista: data.artista,
         entrada: data.entrada,
         saida: data.saida,
+        cidade: data.cidade,
+        local: data.local,
     };
 
     if (data.financeType === 'receber' && data.valor !== undefined && data.status) {
