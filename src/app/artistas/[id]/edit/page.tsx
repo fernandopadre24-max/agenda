@@ -9,7 +9,7 @@ export default async function EditArtistaPage({ params }: { params: { id: string
   const artista = await getArtistaById(params.id);
 
   if (!artista) {
-    notFound();
+    notfound();
   }
 
   return (

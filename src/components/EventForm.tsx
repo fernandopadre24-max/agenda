@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, useFormState } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { CalendarIcon, Loader2 } from 'lucide-react';
@@ -58,10 +58,9 @@ interface EventFormProps {
     artistas: Artista[];
     contratantes: Contratante[];
     pastEvents: string[];
-    action?: typeof updateEventAction;
 }
 
-export function EventForm({ event, artistas, contratantes, pastEvents, action }: EventFormProps) {
+export function EventForm({ event, artistas, contratantes, pastEvents }: EventFormProps) {
   const isEditing = !!event;
   const router = useRouter();
   const { toast } = useToast();
@@ -89,8 +88,8 @@ export function EventForm({ event, artistas, contratantes, pastEvents, action }:
   const onSubmit = async (data: EventFormValues) => {
     startTransition(async () => {
       let result: ActionResponse;
-      if (isEditing && action && event?.id) {
-        result = await action(event.id, data);
+      if (isEditing && event.id) {
+        result = await updateEventAction(event.id, data);
       } else {
         result = await createEventAction(data);
       }
@@ -99,7 +98,9 @@ export function EventForm({ event, artistas, contratantes, pastEvents, action }:
         toast({
           title: `Evento ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
         });
-        router.push(result.redirectPath ?? '/');
+        if (result.redirectPath) {
+          router.push(result.redirectPath);
+        }
         router.refresh();
 
       } else {
@@ -225,7 +226,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents, action }:
                         <FormField control={form.control} name="status" render={({ field }) => (
                             <FormItem className="space-y-3"><FormLabel>Status</FormLabel>
                             <FormControl>
-                                <RadioGroup onValuechange={field.onChange} defaultValue={field.value} value={field.value} className="flex space-x-4">
+                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex space-x-4">
                                 <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pendente" /></FormControl><FormLabel className="font-normal">Pendente</FormLabel></FormItem>
                                 <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="concluido" /></FormControl><FormLabel className="font-normal">{financeType === 'receber' ? 'Recebido' : 'Pago'}</FormLabel></FormItem>
                                 </RadioGroup>

@@ -5,7 +5,6 @@ import { getArtistas, getContratantes, getEventById, getEvents } from '@/lib/dat
 import { notFound } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import type { Event } from '@/lib/types';
-import { updateEventAction } from '@/lib/actions';
 
 export default async function EditEventPage({ params }: { params: { id: string } }) {
   const [event, artistas, contratantes, allEvents] = await Promise.all([
@@ -36,7 +35,6 @@ export default async function EditEventPage({ params }: { params: { id: string }
           artistas={artistas}
           contratantes={contratantes}
           pastEvents={pastEvents}
-          action={updateEventAction}
         />
       </main>
     </div>

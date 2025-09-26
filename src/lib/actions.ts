@@ -17,7 +17,7 @@ import {
     getEvents,
     getEventById
 } from './data';
-import type { Event, Artista, Contratante } from './types';
+import type { Event, Artista, Contratante, ActionResponse } from './types';
 
 const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
@@ -63,14 +63,6 @@ export type ContratanteFormValues = z.infer<typeof contratanteFormSchema>;
 export type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
 
 
-export type ActionResponse = {
-    success: boolean;
-    message: string;
-    redirectPath?: string;
-    data?: Artista | Contratante;
-    errors?: { [key: string]: string[] | undefined; };
-}
-
 const createEventFromForm = (data: EventFormValues): Omit<Event, 'id'> => {
     const event: Omit<Event, 'id'> = {
         date: data.date,
@@ -107,7 +99,8 @@ export async function createEventAction(data: EventFormValues): Promise<ActionRe
     const newEvent = createEventFromForm(validatedFields.data);
     await dbAddEvent(newEvent);
     revalidatePath('/');
-    revalidatePath('/events/new');
+    revalidatePath('/agenda');
+    revalidatePath('/financeiro');
     return { success: true, message: 'Evento criado com sucesso!', redirectPath: '/' };
   } catch (e) {
     return { success: false, message: 'Ocorreu um erro ao criar o evento.' };
@@ -133,8 +126,9 @@ export async function updateEventAction(id: string, data: EventFormValues): Prom
     }
 
     revalidatePath('/');
+    revalidatePath('/agenda');
+    revalidatePath('/financeiro');
     revalidatePath(`/events/${id}`);
-    revalidatePath('/events/new');
     revalidatePath(`/events/${id}/edit`);
     return { success: true, message: 'Evento atualizado com sucesso!', redirectPath: `/events/${id}` };
 }
@@ -144,7 +138,8 @@ export async function deleteEventAction(id: string): Promise<ActionResponse> {
     try {
         await dbDeleteEvent(id);
         revalidatePath('/');
-        revalidatePath('/events/new');
+        revalidatePath('/agenda');
+        revalidatePath('/financeiro');
         return { success: true, message: 'Evento deletado com sucesso.', redirectPath: '/' };
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao deletar o evento.' };
@@ -167,7 +162,7 @@ export async function createContratanteAction(data: ContratanteFormValues): Prom
         return { success: false, message: 'Ocorreu um erro ao criar o contratante.' };
     }
     revalidatePath('/contratantes');
-    revalidatePath('/events/new');
+    revalidatePath('/');
     return { success: true, message: 'Contratante criado com sucesso.', data: newContratante };
 }
 
@@ -186,9 +181,9 @@ export async function updateContratanteAction(id: string, data: ContratanteFormV
         return { success: false, message: 'Ocorreu um erro ao atualizar o contratante.' };
     }
     revalidatePath('/contratantes');
-    revalidatePath(`/contratantes/[id]/edit`, 'page');
-    revalidatePath('/events/new');
-    return { success: true, message: 'Contratante atualizado com sucesso.', redirectPath: '/contratantes' };
+    revalidatePath(`/contratantes/${id}/edit`);
+    revalidatePath('/');
+    return { success: true, message: 'Contratante atualizado com sucesso.' };
 }
 
 export async function deleteContratanteAction(id: string): Promise<ActionResponse> {
@@ -212,7 +207,7 @@ export async function deleteContratanteAction(id: string): Promise<ActionRespons
         return { success: false, message: 'Ocorreu um erro ao deletar o contratante.' };
     }
     revalidatePath('/contratantes');
-    revalidatePath('/events/new');
+    revalidatePath('/');
     return { success: true, message: 'Contratante deletado com sucesso.' };
 }
 
@@ -232,7 +227,7 @@ export async function createArtistaAction(data: ArtistaFormValues): Promise<Acti
         return { success: false, message: 'Ocorreu um erro ao criar o artista.' };
     }
     revalidatePath('/artistas');
-    revalidatePath('/events/new');
+    revalidatePath('/');
     return { success: true, message: 'Artista criado com sucesso.', data: newArtista };
 }
 
@@ -251,9 +246,9 @@ export async function updateArtistaAction(id: string, data: ArtistaFormValues): 
         return { success: false, message: 'Ocorreu um erro ao atualizar o artista.' };
     }
     revalidatePath('/artistas');
-    revalidatePath(`/artistas/[id]/edit`, 'page');
-    revalidatePath('/events/new');
-    return { success: true, message: 'Artista atualizado com sucesso.', redirectPath: '/artistas'};
+    revalidatePath(`/artistas/${id}/edit`);
+    revalidatePath('/');
+    return { success: true, message: 'Artista atualizado com sucesso.'};
 }
 
 export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
@@ -276,7 +271,7 @@ export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
         return { success: false, message: 'Ocorreu um erro ao deletar o artista.' };
     }
     revalidatePath('/artistas');
-    revalidatePath('/events/new');
+    revalidatePath('/');
     return { success: true, message: 'Artista deletado com sucesso.' };
 }
 
