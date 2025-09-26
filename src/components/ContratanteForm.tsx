@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { createContratanteAction, updateContratanteAction } from '@/lib/actions';
-import { type Contratante } from '@/lib/types';
+import { type Contratante, type ActionResponse } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
 
 const contratanteFormSchema = z.object({
@@ -24,8 +23,13 @@ const contratanteFormSchema = z.object({
 
 type ContratanteFormValues = z.infer<typeof contratanteFormSchema>;
 
+interface ContratanteFormProps {
+    contratante?: Contratante;
+    onSave?: (newContratante: Contratante) => void;
+    action: (data: ContratanteFormValues) => Promise<ActionResponse>;
+}
 
-export function ContratanteForm({ contratante, onSave }: { contratante?: Contratante; onSave?: (newContratante: Contratante) => void }) {
+export function ContratanteForm({ contratante, onSave, action }: ContratanteFormProps) {
   const isEditing = !!contratante;
   const router = useRouter();
   const { toast } = useToast();
@@ -42,31 +46,21 @@ export function ContratanteForm({ contratante, onSave }: { contratante?: Contrat
 
   const onSubmit = async (data: ContratanteFormValues) => {
     startTransition(async () => {
-      if (isEditing) {
-        const result = await updateContratanteAction(contratante.id, data);
-         if (result.success) {
-          toast({ title: 'Contratante atualizado com sucesso!' });
+      const result = await action(data);
+      if (result.success) {
+        toast({ title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
+        if (isEditing) {
           router.push('/contratantes');
           router.refresh();
-        } else {
-          toast({
-            variant: 'destructive',
-            title: 'Erro ao atualizar o contratante.',
-            description: result.message,
-          });
+        } else if (onSave && result.data) {
+          onSave(result.data as Contratante);
         }
       } else {
-        const result = await createContratanteAction(data);
-        if (result.success && result.data && onSave) {
-          toast({ title: 'Contratante criado com sucesso!' });
-          onSave(result.data as Contratante);
-        } else {
-          toast({
-            variant: 'destructive',
-            title: 'Erro ao criar o contratante.',
-            description: result.message,
-          });
-        }
+        toast({
+          variant: 'destructive',
+          title: `Erro ao ${isEditing ? 'atualizar' : 'criar'} o contratante.`,
+          description: result.message,
+        });
       }
     });
   };

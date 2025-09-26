@@ -8,7 +8,7 @@ import { type Contratante } from '@/lib/types';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { ContratanteForm } from './ContratanteForm';
 import { useToast } from '@/hooks/use-toast';
-import { deleteContratanteAction } from '@/lib/actions';
+import { createContratanteAction, deleteContratanteAction } from '@/lib/actions';
 
 
 export function ContratantesClientPage({ initialContratantes }: { initialContratantes: Contratante[] }) {
@@ -43,7 +43,7 @@ export function ContratantesClientPage({ initialContratantes }: { initialContrat
             </Button>
           </SheetTrigger>
           <SheetContent className="p-0">
-            <ContratanteForm onSave={handleSave} />
+            <ContratanteForm onSave={handleSave} action={createContratanteAction}/>
           </SheetContent>
         </Sheet>
       </div>

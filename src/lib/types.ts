@@ -31,3 +31,11 @@ export type Event = {
     status: 'pendente' | 'recebido';
   };
 };
+
+export type ActionResponse = {
+    success: boolean;
+    message: string;
+    redirectPath?: string;
+    data?: Artista | Contratante | Event;
+    errors?: { [key: string]: string[] | undefined; };
+}

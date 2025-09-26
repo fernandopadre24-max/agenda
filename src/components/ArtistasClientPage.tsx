@@ -7,8 +7,8 @@ import { ArtistaActions } from '@/components/ArtistaActions';
 import { type Artista } from '@/lib/types';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { ArtistaForm } from './ArtistaForm';
-import { deleteArtistaAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
+import { createArtistaAction, deleteArtistaAction } from '@/lib/actions';
 
 export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artista[] }) {
   const [artistas, setArtistas] = useState(initialArtistas);
@@ -41,7 +41,7 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
             </Button>
           </SheetTrigger>
           <SheetContent className="p-0">
-             <ArtistaForm onSave={handleSave} />
+             <ArtistaForm onSave={handleSave} action={createArtistaAction} />
           </SheetContent>
         </Sheet>
       </div>
