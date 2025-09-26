@@ -74,8 +74,8 @@ export function FinancialChart({
   ];
 
   const pieChartData = [
-    { name: 'Recebido', value: recebido, fill: 'var(--color-recebido)' },
-    { name: 'Pago', value: pago, fill: 'var(--color-pago)' },
+    { name: 'Recebido', value: recebido, color: 'hsl(var(--chart-2))' },
+    { name: 'Pago', value: pago, color: 'hsl(var(--chart-5))' },
   ];
 
   return (
@@ -134,9 +134,9 @@ export function FinancialChart({
                   <PieChart>
                     <ChartTooltip
                       cursor={false}
-                      content={<ChartTooltipContent hideLabel indicator="dot" formatter={(value, name) => (
+                      content={<ChartTooltipContent hideLabel indicator="dot" formatter={(value, name, props) => (
                           <div className="flex flex-col">
-                            <span className="font-bold">{pieChartConfig[name.toLowerCase() as keyof typeof pieChartConfig]?.label}</span>
+                            <span className="font-bold">{props.payload?.name}</span>
                             <span>{formatCurrency(Number(value))}</span>
                           </div>
                         )}/>}
@@ -149,7 +149,7 @@ export function FinancialChart({
                       strokeWidth={5}
                     >
                       {pieChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                        <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                   </PieChart>
