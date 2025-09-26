@@ -30,7 +30,7 @@ export function FinanceiroClientPage({ initialTransactions }: { initialTransacti
       if (tx.type === 'receber') {
         if (tx.status === 'concluido') acc.recebido += tx.value;
         else acc.aReceber += tx.value;
-      } else {
+      } else { // 'pagar'
         if (tx.status === 'concluido') acc.pago += tx.value;
         else acc.aPagar += tx.value;
       }
