@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { createEventAction } from '@/lib/actions';
+import { createEventAction, updateEventAction } from '@/lib/actions';
 import type { Event, Contratante, Artista, ActionResponse } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -58,16 +58,7 @@ interface EventFormProps {
     artistas: Artista[];
     contratantes: Contratante[];
     pastEvents: string[];
-    action?: (id: string, data: EventFormValues) => Promise<ActionResponse>;
-}
-
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-    const { isSubmitting } = useFormState();
-    return (
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
-        </Button>
-    )
+    action?: typeof updateEventAction;
 }
 
 export function EventForm({ event, artistas, contratantes, pastEvents, action }: EventFormProps) {
@@ -97,9 +88,12 @@ export function EventForm({ event, artistas, contratantes, pastEvents, action }:
   
   const onSubmit = async (data: EventFormValues) => {
     startTransition(async () => {
-      const currentAction = isEditing && action ? action.bind(null, event!.id) : createEventAction;
-
-      const result = await currentAction(data);
+      let result: ActionResponse;
+      if (isEditing && action && event?.id) {
+        result = await action(event.id, data);
+      } else {
+        result = await createEventAction(data);
+      }
 
       if (result.success) {
         toast({
