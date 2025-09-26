@@ -17,7 +17,6 @@ import {
     getEvents
 } from './data';
 import type { Event, Artista, Contratante } from './types';
-import { redirect } from 'next/navigation';
 
 const eventFormSchema = z.object({
   draft: z.string().optional(),
@@ -130,19 +129,20 @@ export async function updateEventAction(id: string, data: EventFormValues): Prom
     revalidatePath('/');
     revalidatePath(`/events/${id}`);
     revalidatePath('/events/new');
-    redirect(`/events/${id}`);
+    revalidatePath(`/events/${id}/edit`);
+    return { success: true, message: 'Evento atualizado com sucesso!', redirectPath: `/events/${id}` };
 }
 
 
-export async function deleteEventAction(id: string) {
+export async function deleteEventAction(id: string): Promise<ActionResponse> {
     try {
         await dbDeleteEvent(id);
         revalidatePath('/');
         revalidatePath('/events/new');
+        return { success: true, message: 'Evento deletado com sucesso.', redirectPath: '/' };
     } catch (e) {
-        return { message: 'Ocorreu um erro ao deletar o evento.' };
+        return { success: false, message: 'Ocorreu um erro ao deletar o evento.' };
     }
-    redirect('/');
 }
 
 export async function createContratanteAction(data: ContratanteFormValues): Promise<ActionResponse> {
@@ -180,9 +180,9 @@ export async function updateContratanteAction(id: string, data: ContratanteFormV
         return { success: false, message: 'Ocorreu um erro ao atualizar o contratante.' };
     }
     revalidatePath('/contratantes');
-    revalidatePath(`/contratantes/${id}/edit`);
+    revalidatePath(`/contratantes/[id]/edit`, 'page');
     revalidatePath('/events/new');
-    redirect('/contratantes');
+    return { success: true, message: 'Contratante atualizado com sucesso.', redirectPath: '/contratantes' };
 }
 
 export async function deleteContratanteAction(id: string): Promise<ActionResponse> {
@@ -245,9 +245,9 @@ export async function updateArtistaAction(id: string, data: ArtistaFormValues): 
         return { success: false, message: 'Ocorreu um erro ao atualizar o artista.' };
     }
     revalidatePath('/artistas');
-    revalidatePath(`/artistas/${id}/edit`);
+    revalidatePath(`/artistas/[id]/edit`, 'page');
     revalidatePath('/events/new');
-    redirect('/artistas');
+    return { success: true, message: 'Artista atualizado com sucesso.', redirectPath: '/artistas'};
 }
 
 export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
