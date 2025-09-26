@@ -187,15 +187,16 @@ export async function updateContratanteAction(id: string, data: ContratanteFormV
             errors: validatedFields.error.flatten().fieldErrors,
         };
     }
+    let updatedContratante;
     try {
-        await dbUpdateContratante(id, validatedFields.data);
+        updatedContratante = await dbUpdateContratante(id, validatedFields.data);
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao atualizar o contratante.' };
     }
     revalidatePath('/contratantes');
     revalidatePath(`/contratantes/${id}/edit`);
     revalidatePath('/');
-    return { success: true, message: 'Contratante atualizado com sucesso.' };
+    return { success: true, message: 'Contratante atualizado com sucesso.', data: updatedContratante };
 }
 
 export async function deleteContratanteAction(id: string): Promise<ActionResponse> {
@@ -252,15 +253,16 @@ export async function updateArtistaAction(id: string, data: ArtistaFormValues): 
             errors: validatedFields.error.flatten().fieldErrors,
         };
     }
+    let updatedArtista;
     try {
-        await dbUpdateArtista(id, validatedFields.data);
+        updatedArtista = await dbUpdateArtista(id, validatedFields.data);
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao atualizar o artista.' };
     }
     revalidatePath('/artistas');
     revalidatePath(`/artistas/${id}/edit`);
     revalidatePath('/');
-    return { success: true, message: 'Artista atualizado com sucesso.'};
+    return { success: true, message: 'Artista atualizado com sucesso.', data: updatedArtista };
 }
 
 export async function deleteArtistaAction(id: string): Promise<ActionResponse> {

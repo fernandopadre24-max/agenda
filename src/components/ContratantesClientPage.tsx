@@ -1,13 +1,13 @@
 'use client';
-import { useState } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, User, Mail, Phone, Tag, Briefcase, Loader2 } from 'lucide-react';
 import { ContratanteActions } from '@/components/ContratanteActions';
 import { type Contratante } from '@/lib/types';
-import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import { useToast } from '@/hooks/use-toast';
-import { createContratanteAction, deleteContratanteAction } from '@/lib/actions';
+import { createContratanteAction, deleteContratanteAction, updateContratanteAction } from '@/lib/actions';
 import { Badge } from './ui/badge';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -28,60 +28,79 @@ const contratanteFormSchema = z.object({
 type ContratanteFormValues = z.infer<typeof contratanteFormSchema>;
 
 
-function NewContratanteForm({ onSave }: { onSave: (newContratante: Contratante) => void }) {
+function ContratanteForm({ 
+    onSave,
+    onCancel,
+    initialData,
+}: { 
+    onSave: (contratante: Contratante) => void,
+    onCancel: () => void,
+    initialData?: Contratante,
+}) {
   const { toast } = useToast();
-  const [isPending, startTransition] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const isEditing = !!initialData;
 
   const form = useForm<ContratanteFormValues>({
     resolver: zodResolver(contratanteFormSchema),
-    defaultValues: { name: '', responsibleName: '', email: '', phone: '', category: '' },
+    defaultValues: initialData || { name: '', responsibleName: '', email: '', phone: '', category: '' },
   });
 
+  useEffect(() => {
+    form.reset(initialData || { name: '', responsibleName: '', email: '', phone: '', category: '' });
+  }, [initialData, form]);
+
   const onSubmit = async (data: ContratanteFormValues) => {
-    startTransition(true);
-    const result = await createContratanteAction(data);
-    if (result.success && result.data) {
-      toast({ title: "Contratante criado com sucesso!" });
-      onSave(result.data as Contratante);
-      form.reset();
-    } else {
-      toast({
-        variant: 'destructive',
-        title: "Erro ao criar o contratante.",
-        description: result.message,
-      });
-    }
-    startTransition(false);
+    startTransition(async () => {
+      const action = isEditing 
+        ? updateContratanteAction(initialData.id, data)
+        : createContratanteAction(data);
+      
+      const result = await action;
+
+      if (result.success && result.data) {
+        toast({ title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
+        onSave(result.data as Contratante);
+        form.reset();
+      } else {
+        toast({
+          variant: 'destructive',
+          title: `Erro ao ${isEditing ? 'atualizar' : 'criar'} o contratante.`,
+          description: result.message,
+        });
+      }
+    });
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
-        <ScrollArea className="flex-1 p-6">
-            <Card className="border-none shadow-none p-0">
-                <CardHeader className="p-0 mb-6"><CardTitle className="font-headline">Novo Contratante</CardTitle></CardHeader>
-                <CardContent className="space-y-4 p-0">
-                    <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem><FormLabel>Nome do Contratante</FormLabel><FormControl><Input placeholder="Nome da empresa, evento ou pessoa" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="responsibleName" render={({ field }) => (
-                        <FormItem><FormLabel>Nome do Responsável</FormLabel><FormControl><Input placeholder="Nome de quem te contratou" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                     <FormField control={form.control} name="category" render={({ field }) => (
-                        <FormItem><FormLabel>Categoria</FormLabel><FormControl><Input placeholder="Ex: Casamento, Corporativo" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="email" render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="phone" render={({ field }) => (
-                        <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                </CardContent>
-            </Card>
+         <SheetHeader className="p-6">
+            <SheetTitle className="font-headline">{isEditing ? 'Editar Contratante' : 'Novo Contratante'}</SheetTitle>
+        </SheetHeader>
+        <ScrollArea className="flex-1 px-6">
+            <CardContent className="space-y-4 p-0">
+                <FormField control={form.control} name="name" render={({ field }) => (
+                    <FormItem><FormLabel>Nome do Contratante</FormLabel><FormControl><Input placeholder="Nome da empresa, evento ou pessoa" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name="responsibleName" render={({ field }) => (
+                    <FormItem><FormLabel>Nome do Responsável</FormLabel><FormControl><Input placeholder="Nome de quem te contratou" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                 <FormField control={form.control} name="category" render={({ field }) => (
+                    <FormItem><FormLabel>Categoria</FormLabel><FormControl><Input placeholder="Ex: Casamento, Corporativo" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name="email" render={({ field }) => (
+                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name="phone" render={({ field }) => (
+                    <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+            </CardContent>
         </ScrollArea>
-        <div className="p-4 border-t">
-            <Button type="submit" disabled={isPending} className="w-full">
-                {isPending ? <Loader2 className="animate-spin" /> : 'Criar Contratante'}
+        <div className="p-4 border-t flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
+            <Button type="submit" disabled={isPending}>
+                {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Contratante')}
             </Button>
         </div>
       </form>
@@ -95,11 +114,17 @@ export function ContratantesClientPage({ initialContratantes, deleteAction }: {
 }) {
   const [contratantes, setContratantes] = useState(initialContratantes);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingContratante, setEditingContratante] = useState<Contratante | undefined>(undefined);
   const { toast } = useToast();
 
-  const handleSave = (newContratante: Contratante) => {
-    setContratantes(prev => [...prev, newContratante].sort((a,b) => a.name.localeCompare(b.name)));
-    setIsSheetOpen(false);
+  const handleSave = (savedContratante: Contratante) => {
+    const isEditing = contratantes.some(c => c.id === savedContratante.id);
+    if (isEditing) {
+        setContratantes(prev => prev.map(c => c.id === savedContratante.id ? savedContratante : c));
+    } else {
+        setContratantes(prev => [...prev, savedContratante].sort((a,b) => a.name.localeCompare(b.name)));
+    }
+    handleCloseSheet();
   }
 
   const handleDelete = async (id: string) => {
@@ -114,19 +139,27 @@ export function ContratantesClientPage({ initialContratantes, deleteAction }: {
     }
   }
 
+  const handleEdit = (contratante: Contratante) => {
+    setEditingContratante(contratante);
+    setIsSheetOpen(true);
+  }
+
+  const handleAddNew = () => {
+    setEditingContratante(undefined);
+    setIsSheetOpen(true);
+  }
+  
+  const handleCloseSheet = () => {
+    setIsSheetOpen(false);
+    setEditingContratante(undefined);
+  }
+
   return (
     <>
       <div className="flex justify-end">
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Novo Contratante
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="p-0">
-            <NewContratanteForm onSave={handleSave}/>
-          </SheetContent>
-        </Sheet>
+        <Button onClick={handleAddNew}>
+          <Plus className="mr-2 h-4 w-4" /> Novo Contratante
+        </Button>
       </div>
 
        {contratantes.length > 0 ? (
@@ -147,7 +180,10 @@ export function ContratantesClientPage({ initialContratantes, deleteAction }: {
                         </Badge>
                       )}
                     </div>
-                    <ContratanteActions contratanteId={contratante.id} onDelete={() => handleDelete(contratante.id)} />
+                    <ContratanteActions 
+                        onEdit={() => handleEdit(contratante)} 
+                        onDelete={() => handleDelete(contratante.id)} 
+                    />
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm pt-0">
@@ -177,8 +213,21 @@ export function ContratantesClientPage({ initialContratantes, deleteAction }: {
           <div className="text-center py-12 text-muted-foreground">
             <User className="mx-auto h-12 w-12" />
             <p className="mt-4">Nenhum contratante cadastrado.</p>
+            <Button onClick={handleAddNew} className="mt-4">
+              <Plus className="mr-2 h-4 w-4" /> Cadastrar Contratante
+            </Button>
           </div>
         )}
+        
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
+            <ContratanteForm 
+                onSave={handleSave} 
+                onCancel={handleCloseSheet}
+                initialData={editingContratante}
+            />
+          </SheetContent>
+        </Sheet>
     </>
   );
 }

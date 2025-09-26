@@ -1,13 +1,13 @@
 'use client';
-import { useState } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Mic, Mail, Phone, Music, Loader2 } from 'lucide-react';
 import { ArtistaActions } from '@/components/ArtistaActions';
 import { type Artista } from '@/lib/types';
-import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from './ui/sheet';
 import { useToast } from '@/hooks/use-toast';
-import { createArtistaAction, deleteArtistaAction } from '@/lib/actions';
+import { createArtistaAction, deleteArtistaAction, updateArtistaAction } from '@/lib/actions';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,41 +24,57 @@ const artistaFormSchema = z.object({
 
 type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
 
-function NewArtistaForm({ onSave }: { onSave: (newArtista: Artista) => void }) {
+function ArtistaForm({
+  onSave,
+  onCancel,
+  initialData
+}: {
+  onSave: (artista: Artista) => void;
+  onCancel: () => void;
+  initialData?: Artista;
+}) {
   const { toast } = useToast();
-  const [isPending, startTransition] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const isEditing = !!initialData;
 
   const form = useForm<ArtistaFormValues>({
     resolver: zodResolver(artistaFormSchema),
-    defaultValues: { name: '', email: '', phone: '', serviceType: '' },
+    defaultValues: initialData || { name: '', email: '', phone: '', serviceType: '' },
   });
+  
+  useEffect(() => {
+    form.reset(initialData || { name: '', email: '', phone: '', serviceType: '' });
+  }, [initialData, form]);
 
   const onSubmit = (data: ArtistaFormValues) => {
-    startTransition(true);
-    createArtistaAction(data).then(result => {
+    startTransition(async () => {
+      const action = isEditing
+        ? updateArtistaAction(initialData.id, data)
+        : createArtistaAction(data);
+
+      const result = await action;
+
       if (result.success && result.data) {
-        toast({ title: "Artista criado com sucesso!" });
+        toast({ title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
         onSave(result.data as Artista);
         form.reset();
       } else {
         toast({
           variant: 'destructive',
-          title: "Erro ao criar o artista.",
+          title: `Erro ao ${isEditing ? 'atualizar' : 'criar'} o artista.`,
           description: result.message,
         });
       }
-      startTransition(false);
     });
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
-        <ScrollArea className="flex-1 p-6">
-          <Card className="border-none shadow-none p-0">
-            <CardHeader className="p-0 mb-6">
-              <CardTitle className="font-headline">Novo Artista</CardTitle>
-            </CardHeader>
+        <SheetHeader className="p-6">
+            <SheetTitle className="font-headline">{isEditing ? 'Editar Artista' : 'Novo Artista'}</SheetTitle>
+        </SheetHeader>
+        <ScrollArea className="flex-1 px-6">
             <CardContent className="space-y-4 p-0">
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
@@ -73,11 +89,11 @@ function NewArtistaForm({ onSave }: { onSave: (newArtista: Artista) => void }) {
                 <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
             </CardContent>
-          </Card>
         </ScrollArea>
-        <div className="p-4 border-t">
-          <Button type="submit" disabled={isPending} className="w-full">
-            {isPending ? <Loader2 className="animate-spin" /> : 'Criar Artista'}
+        <div className="p-4 border-t flex justify-end gap-2">
+           <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
+           <Button type="submit" disabled={isPending}>
+            {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Artista')}
           </Button>
         </div>
       </form>
@@ -89,11 +105,17 @@ function NewArtistaForm({ onSave }: { onSave: (newArtista: Artista) => void }) {
 export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artista[] }) {
   const [artistas, setArtistas] = useState(initialArtistas);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingArtista, setEditingArtista] = useState<Artista | undefined>(undefined);
   const { toast } = useToast();
 
-  const handleSave = (newArtista: Artista) => {
-    setArtistas(prev => [...prev, newArtista].sort((a, b) => a.name.localeCompare(b.name)));
-    setIsSheetOpen(false);
+  const handleSave = (savedArtista: Artista) => {
+    const isEditing = artistas.some(a => a.id === savedArtista.id);
+    if (isEditing) {
+        setArtistas(prev => prev.map(a => a.id === savedArtista.id ? savedArtista : a));
+    } else {
+        setArtistas(prev => [...prev, savedArtista].sort((a, b) => a.name.localeCompare(b.name)));
+    }
+    handleCloseSheet();
   };
 
   const handleDelete = async (id: string) => {
@@ -106,20 +128,28 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
       toast({ variant: 'destructive', title: 'Erro ao excluir artista.', description: result.message });
     }
   };
+  
+  const handleEdit = (artista: Artista) => {
+    setEditingArtista(artista);
+    setIsSheetOpen(true);
+  }
+
+  const handleAddNew = () => {
+    setEditingArtista(undefined);
+    setIsSheetOpen(true);
+  }
+
+  const handleCloseSheet = () => {
+    setIsSheetOpen(false);
+    setEditingArtista(undefined);
+  }
 
   return (
     <>
       <div className="flex justify-end">
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Novo Artista
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="p-0">
-             <NewArtistaForm onSave={handleSave} />
-          </SheetContent>
-        </Sheet>
+        <Button onClick={handleAddNew}>
+            <Plus className="mr-2 h-4 w-4" /> Novo Artista
+        </Button>
       </div>
 
        {artistas.length > 0 ? (
@@ -132,7 +162,10 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
                     <Mic className="h-5 w-5 text-primary" />
                     {artista.name}
                   </CardTitle>
-                  <ArtistaActions artistaId={artista.id} onDelete={() => handleDelete(artista.id)} />
+                  <ArtistaActions 
+                    onEdit={() => handleEdit(artista)} 
+                    onDelete={() => handleDelete(artista.id)} 
+                  />
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm pt-0">
@@ -162,8 +195,21 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
         <div className="text-center py-12 text-muted-foreground">
           <Mic className="mx-auto h-12 w-12" />
           <p className="mt-4">Nenhum artista cadastrado.</p>
+          <Button onClick={handleAddNew} className="mt-4">
+              <Plus className="mr-2 h-4 w-4" /> Cadastrar Artista
+          </Button>
         </div>
       )}
+      
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
+            <ArtistaForm 
+                onSave={handleSave} 
+                onCancel={handleCloseSheet} 
+                initialData={editingArtista}
+            />
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
