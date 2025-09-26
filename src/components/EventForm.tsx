@@ -31,7 +31,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { getEventSuggestions } from '@/ai/flows/intelligent-event-suggestions';
 import { Textarea } from './ui/textarea';
-import { getArtistas, getContratantes, getEvents } from '@/lib/data';
 import { Skeleton } from './ui/skeleton';
 
 
@@ -60,6 +59,9 @@ export type EventFormValues = z.infer<typeof eventFormSchema>;
 
 interface EventFormProps {
     event?: Event;
+    artistas: Artista[];
+    contratantes: Contratante[];
+    pastEvents: string[];
 }
 
 // Debounce hook
@@ -76,16 +78,12 @@ function useDebounce(value: string, delay: number) {
   return debouncedValue;
 }
 
-export function EventForm({ event }: EventFormProps) {
+export function EventForm({ event, artistas, contratantes, pastEvents }: EventFormProps) {
   const isEditing = !!event;
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isDataLoading, setIsDataLoading] = useState(true);
   const [isSuggesting, setIsSuggesting] = useState(false);
-  const [pastEvents, setPastEvents] = useState<string[]>([]);
-  const [artistas, setArtistas] = useState<Artista[]>([]);
-  const [contratantes, setContratantes] = useState<Contratante[]>([]);
   
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -105,28 +103,6 @@ export function EventForm({ event }: EventFormProps) {
 
   const draftValue = form.watch('draft');
   const debouncedDraft = useDebounce(draftValue ?? '', 1000);
-
-  useEffect(() => {
-    async function fetchData() {
-      setIsDataLoading(true);
-      router.refresh();
-      const [fetchedArtistas, fetchedContratantes, allEvents] = await Promise.all([
-        getArtistas(),
-        getContratantes(),
-        getEvents(),
-      ]);
-      
-      setArtistas(fetchedArtistas);
-      setContratantes(fetchedContratantes);
-
-      const eventDescriptions = allEvents.map(e => 
-        `Evento para ${e.contratante} com ${e.artista} em ${format(e.date, 'PPP', { locale: ptBR })} às ${e.hora}.`
-      );
-      setPastEvents(eventDescriptions);
-      setIsDataLoading(false);
-    }
-    fetchData();
-  }, [router]);
 
   const handleSuggestion = useCallback(async (draft: string) => {
     if (!draft || draft.length < 10) return;
@@ -217,17 +193,6 @@ export function EventForm({ event }: EventFormProps) {
     setIsLoading(false);
   };
   
-  if (isDataLoading) {
-    return (
-       <div className="space-y-6">
-          <Skeleton className="h-48 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-10 w-full" />
-       </div>
-    )
-  }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
