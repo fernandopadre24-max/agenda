@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { type Event } from '@/lib/types';
-import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, CheckCircle, Mic, DollarSign, Check } from 'lucide-react';
+import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, Check, Mic, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { useEffect, useState, useTransition } from 'react';
