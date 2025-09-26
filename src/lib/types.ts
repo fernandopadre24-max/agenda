@@ -3,6 +3,7 @@ export type Contratante = {
   name: string;
   email?: string;
   phone?: string;
+  category?: string;
 };
 
 export type Artista = {

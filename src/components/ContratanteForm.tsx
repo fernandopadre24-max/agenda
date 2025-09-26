@@ -19,6 +19,7 @@ const contratanteFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
     email: z.string().email('Formato de e-mail inválido.').optional().or(z.literal('')),
     phone: z.string().optional(),
+    category: z.string().optional(),
 });
 
 type ContratanteFormValues = z.infer<typeof contratanteFormSchema>;
@@ -41,6 +42,7 @@ export function ContratanteForm({ contratante, onSave, action }: ContratanteForm
       name: contratante?.name ?? '',
       email: contratante?.email ?? '',
       phone: contratante?.phone ?? '',
+      category: contratante?.category ?? '',
     },
   });
 
@@ -74,6 +76,9 @@ export function ContratanteForm({ contratante, onSave, action }: ContratanteForm
                 <CardContent className="space-y-4 p-0">
                     <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do contratante" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                     <FormField control={form.control} name="category" render={({ field }) => (
+                        <FormItem><FormLabel>Categoria</FormLabel><FormControl><Input placeholder="Ex: Casamento, Corporativo" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="email" render={({ field }) => (
                         <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>

@@ -2,16 +2,21 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, User, Mail, Phone } from 'lucide-react';
+import { Plus, User, Mail, Phone, Tag } from 'lucide-react';
 import { ContratanteActions } from '@/components/ContratanteActions';
 import { type Contratante } from '@/lib/types';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { ContratanteForm } from './ContratanteForm';
 import { useToast } from '@/hooks/use-toast';
 import { createContratanteAction, deleteContratanteAction } from '@/lib/actions';
+import { Badge } from './ui/badge';
 
 
-export function ContratantesClientPage({ initialContratantes }: { initialContratantes: Contratante[] }) {
+export function ContratantesClientPage({ initialContratantes, createAction, deleteAction }: { 
+    initialContratantes: Contratante[],
+    createAction: (data: any) => Promise<any>,
+    deleteAction: (id: string) => Promise<any>
+}) {
   const [contratantes, setContratantes] = useState(initialContratantes);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { toast } = useToast();
@@ -23,7 +28,7 @@ export function ContratantesClientPage({ initialContratantes }: { initialContrat
 
   const handleDelete = async (id: string) => {
     toast({ title: 'Excluindo contratante...' });
-    const result = await deleteContratanteAction(id);
+    const result = await deleteAction(id);
 
     if (result.success) {
         toast({ title: 'Contratante excluído com sucesso.' });
@@ -43,7 +48,7 @@ export function ContratantesClientPage({ initialContratantes }: { initialContrat
             </Button>
           </SheetTrigger>
           <SheetContent className="p-0">
-            <ContratanteForm onSave={handleSave} action={createContratanteAction}/>
+            <ContratanteForm onSave={handleSave} action={createAction}/>
           </SheetContent>
         </Sheet>
       </div>
@@ -54,10 +59,18 @@ export function ContratantesClientPage({ initialContratantes }: { initialContrat
               <Card key={contratante.id}>
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5 text-primary" />
-                      {contratante.name}
-                    </CardTitle>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <User className="h-5 w-5 text-primary" />
+                        <CardTitle>{contratante.name}</CardTitle>
+                      </div>
+                      {contratante.category && (
+                        <Badge variant="secondary" className="mt-2 ml-7">
+                          <Tag className="mr-1 h-3 w-3" />
+                          {contratante.category}
+                        </Badge>
+                      )}
+                    </div>
                     <ContratanteActions contratanteId={contratante.id} onDelete={() => handleDelete(contratante.id)} />
                   </div>
                 </CardHeader>
