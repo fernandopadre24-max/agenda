@@ -101,13 +101,12 @@ export async function createEventAction(data: EventFormValues): Promise<ActionRe
   try {
     const newEvent = createEventFromForm(validatedFields.data);
     await dbAddEvent(newEvent);
+    revalidatePath('/');
+    revalidatePath('/events/new');
+    return { success: true, message: 'Evento criado com sucesso!', redirectPath: '/' };
   } catch (e) {
     return { success: false, message: 'Ocorreu um erro ao criar o evento.' };
   }
-  
-  revalidatePath('/');
-  revalidatePath('/events/new');
-  redirect('/');
 }
 
 export async function updateEventAction(id: string, data: EventFormValues): Promise<ActionResponse> {

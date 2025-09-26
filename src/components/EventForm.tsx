@@ -180,8 +180,10 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
       toast({
         title: `Evento ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
       });
-      router.push(result.redirectPath ?? '/');
-      router.refresh();
+      if (result.redirectPath) {
+        router.push(result.redirectPath);
+        router.refresh();
+      }
     } else {
       toast({
         variant: 'destructive',
@@ -278,7 +280,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                                     <Check
                                         className={cn(
                                         "mr-2 h-4 w-4",
-                                        c.name === field.value
+                                        c.name.toLowerCase() === field.value?.toLowerCase()
                                             ? "opacity-100"
                                             : "opacity-0"
                                         )}
@@ -341,7 +343,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                                     <Check
                                         className={cn(
                                         "mr-2 h-4 w-4",
-                                        a.name === field.value
+                                        a.name.toLowerCase() === field.value?.toLowerCase()
                                             ? "opacity-100"
                                             : "opacity-0"
                                         )}
