@@ -12,7 +12,6 @@ import { Skeleton } from './ui/skeleton';
 export function ContratantesClientPage({ initialContratantes }: { initialContratantes: Contratante[] }) {
   const [contratantes, setContratantes] = useState(initialContratantes);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [loading, setLoading] = useState(false); // No longer need global loading
 
   const handleSave = (newContratante: Contratante) => {
     setContratantes(prev => [...prev, newContratante].sort((a,b) => a.name.localeCompare(b.name)));
@@ -38,13 +37,7 @@ export function ContratantesClientPage({ initialContratantes }: { initialContrat
         </Sheet>
       </div>
 
-       {loading ? (
-            <div className="space-y-4">
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
-            </div>
-        ) : contratantes.length > 0 ? (
+       {contratantes.length > 0 ? (
           <div className="space-y-4">
             {contratantes.map(contratante => (
               <Card key={contratante.id}>
