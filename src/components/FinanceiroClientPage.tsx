@@ -1,13 +1,13 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils';
-import { DollarSign, CheckCircle, Clock } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { DollarSign, CheckCircle, Clock, ArrowUp, ArrowDown } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Event } from '@/lib/types';
-import { Badge } from '@/components/ui/badge';
 import { FinancialChart } from '@/components/FinancialChart';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
 
 function SummaryCard({
   title,
@@ -35,54 +35,14 @@ function SummaryCard({
   );
 }
 
-function TransactionList({
-  title,
-  events,
-  type,
-}: {
-  title: string;
-  events: Event[];
+type UnifiedTransaction = {
+  eventId: string;
+  artista: string;
+  contratante: string;
+  date: Date;
   type: 'receber' | 'pagar';
-}) {
-  const filteredEvents = events.filter(
-    e => e[type] && e[type]?.status === 'pendente'
-  );
-
-  if (filteredEvents.length === 0) {
-    return null;
-  }
-
-  return (
-    <div>
-      <h3 className="text-lg font-headline mb-2">{title}</h3>
-      <div className="space-y-2">
-        {filteredEvents.map(event => (
-          <div
-            key={event.id}
-            className="flex justify-between items-center p-2 rounded-lg bg-card"
-          >
-            <div>
-              <p className="font-semibold">{event.artista}</p>
-              <p className="text-sm text-muted-foreground">
-                {event.contratante}
-              </p>
-            </div>
-            <Badge
-              variant={type === 'receber' ? 'default' : 'destructive'}
-              className={
-                type === 'receber'
-                  ? 'bg-green-600/20 text-green-400 border-green-600/30'
-                  : 'bg-red-600/20 text-red-400 border-red-600/30'
-              }
-            >
-              {formatCurrency(event[type]!.valor)}
-            </Badge>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+  valor: number;
+};
 
 export function FinanceiroClientPage({
   initialEvents,
@@ -97,11 +57,35 @@ export function FinanceiroClientPage({
     setEvents(initialEvents);
   }, [initialEvents]);
 
-  if (!isMounted) {
-    // You can return a skeleton loader here if you want
-    return null;
-  }
+  const pendingTransactions = useMemo<UnifiedTransaction[]>(() => {
+    if (!isMounted) return [];
 
+    const transactions: UnifiedTransaction[] = [];
+    events.forEach(event => {
+      if (event.receber?.status === 'pendente') {
+        transactions.push({
+          eventId: event.id,
+          artista: event.artista,
+          contratante: event.contratante,
+          date: new Date(event.date),
+          type: 'receber',
+          valor: event.receber.valor,
+        });
+      }
+      if (event.pagar?.status === 'pendente') {
+        transactions.push({
+          eventId: event.id,
+          artista: event.artista,
+          contratante: event.contratante,
+          date: new Date(event.date),
+          type: 'pagar',
+          valor: event.pagar.valor,
+        });
+      }
+    });
+
+    return transactions.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [events, isMounted]);
 
   const aReceberPendente = events.reduce((acc, event) => {
     if (event.receber?.status === 'pendente') {
@@ -132,6 +116,10 @@ export function FinanceiroClientPage({
   }, 0);
 
   const saldoGeral = recebido - pago;
+  
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <>
@@ -192,17 +180,42 @@ export function FinanceiroClientPage({
 
       <Separator />
 
-      <div className="space-y-4">
-        <TransactionList
-          title="Próximos Recebimentos"
-          events={events}
-          type="receber"
-        />
-        <TransactionList
-          title="Próximos Pagamentos"
-          events={events}
-          type="pagar"
-        />
+      <div>
+        <h3 className="text-lg font-headline mb-4">Transações Pendentes</h3>
+        {pendingTransactions.length > 0 ? (
+          <div className="space-y-3">
+            {pendingTransactions.map((tx) => (
+              <Link href={`/events/${tx.eventId}`} key={`${tx.eventId}-${tx.type}`} className="block">
+                <Card className="hover:border-primary/50 transition-colors">
+                  <CardContent className="p-3">
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <p className="font-semibold truncate">{tx.artista}</p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {tx.contratante}
+                        </p>
+                         <p className="text-xs text-muted-foreground mt-1">
+                           {formatDate(tx.date)}
+                        </p>
+                      </div>
+                      <div className={`flex items-center gap-2 font-bold ${tx.type === 'receber' ? 'text-green-500' : 'text-red-500'}`}>
+                        {tx.type === 'receber' ? 
+                            <ArrowUp className="h-4 w-4" /> : 
+                            <ArrowDown className="h-4 w-4" />}
+                        <span>{formatCurrency(tx.valor)}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-10 text-muted-foreground">
+            <CheckCircle className="mx-auto h-12 w-12" />
+            <p className="mt-4">Nenhuma transação pendente.</p>
+          </div>
+        )}
       </div>
     </>
   );

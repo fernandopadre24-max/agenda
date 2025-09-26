@@ -9,7 +9,7 @@ export default async function FinanceiroPage() {
 
   return (
     <div className="flex flex-col min-h-full bg-background">
-      <PageHeader title="Financeiro" showBackButton={true} />
+      <PageHeader title="Financeiro" />
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <FinanceiroClientPage initialEvents={events} />
       </main>

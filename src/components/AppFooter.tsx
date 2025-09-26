@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/', icon: Home, label: 'Início' },
   { href: '/agenda', icon: CalendarDays, label: 'Agenda' },
-  { href: '/calculadora', icon: Calculator, label: 'Calculadora'},
   { href: '/contratantes', icon: Users, label: 'Contratantes' },
   { href: '/artistas', icon: Mic, label: 'Artistas' },
   { href: '/financeiro', icon: DollarSign, label: 'Financeiro' },
