@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { createArtistaAction, updateArtistaAction, type ArtistaFormValues } from '@/lib/actions';
 import { type Artista } from '@/lib/types';
+import { ScrollArea } from './ui/scroll-area';
 
 const artistaFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
@@ -23,7 +24,7 @@ const artistaFormSchema = z.object({
 });
 
 
-export function ArtistaForm({ artista }: { artista?: Artista }) {
+export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: () => void }) {
   const isEditing = !!artista;
   const router = useRouter();
   const { toast } = useToast();
@@ -51,8 +52,13 @@ export function ArtistaForm({ artista }: { artista?: Artista }) {
       toast({
         title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
       });
-      router.push(result.redirectPath ?? '/artistas');
+       if (onSave) {
+        onSave();
+      } else {
+        router.push(result.redirectPath ?? '/artistas');
+      }
       router.refresh();
+
     } else {
       toast({
         variant: 'destructive',
@@ -65,28 +71,34 @@ export function ArtistaForm({ artista }: { artista?: Artista }) {
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <Card>
-            <CardHeader><CardTitle className="font-headline">Informações do Artista</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-                <FormField control={form.control} name="name" render={({ field }) => (
-                    <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
-                )}/>
-                <FormField control={form.control} name="serviceType" render={({ field }) => (
-                    <FormItem><FormLabel>Tipo de Serviço</FormLabel><FormControl><Input placeholder="Ex: Banda, DJ, Músico" {...field} /></FormControl><FormMessage /></FormItem>
-                )}/>
-                <FormField control={form.control} name="email" render={({ field }) => (
-                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
-                )}/>
-                <FormField control={form.control} name="phone" render={({ field }) => (
-                    <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
-                )}/>
-            </CardContent>
-        </Card>
+       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex flex-col h-full">
+        <ScrollArea className="flex-1">
+          <Card className="border-none shadow-none">
+              <CardHeader>
+                <CardTitle className="font-headline">{isEditing ? "Editar Artista" : "Novo Artista"}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <FormField control={form.control} name="name" render={({ field }) => (
+                      <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+                  <FormField control={form.control} name="serviceType" render={({ field }) => (
+                      <FormItem><FormLabel>Tipo de Serviço</FormLabel><FormControl><Input placeholder="Ex: Banda, DJ, Músico" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+                  <FormField control={form.control} name="email" render={({ field }) => (
+                      <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+                  <FormField control={form.control} name="phone" render={({ field }) => (
+                      <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+              </CardContent>
+          </Card>
+        </ScrollArea>
         
-        <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Artista')}
-        </Button>
+        <div className="p-4 border-t">
+            <Button type="submit" disabled={isLoading} className="w-full">
+                {isLoading ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Artista')}
+            </Button>
+        </div>
       </form>
     </Form>
   );
