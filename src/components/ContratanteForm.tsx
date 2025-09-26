@@ -17,6 +17,7 @@ import { ScrollArea } from './ui/scroll-area';
 
 const contratanteFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
+    responsibleName: z.string().optional(),
     email: z.string().email('Formato de e-mail inválido.').optional().or(z.literal('')),
     phone: z.string().optional(),
     category: z.string().optional(),
@@ -40,6 +41,7 @@ export function ContratanteForm({ contratante, onSave, action }: ContratanteForm
     resolver: zodResolver(contratanteFormSchema),
     defaultValues: {
       name: contratante?.name ?? '',
+      responsibleName: contratante?.responsibleName ?? '',
       email: contratante?.email ?? '',
       phone: contratante?.phone ?? '',
       category: contratante?.category ?? '',
@@ -75,7 +77,10 @@ export function ContratanteForm({ contratante, onSave, action }: ContratanteForm
                 <CardHeader className="p-0 mb-6"><CardTitle className="font-headline">{isEditing ? "Editar Contratante" : "Novo Contratante"}</CardTitle></CardHeader>
                 <CardContent className="space-y-4 p-0">
                     <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do contratante" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Nome do Contratante</FormLabel><FormControl><Input placeholder="Nome da empresa, evento ou pessoa" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                    <FormField control={form.control} name="responsibleName" render={({ field }) => (
+                        <FormItem><FormLabel>Nome do Responsável</FormLabel><FormControl><Input placeholder="Nome de quem te contratou" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                      <FormField control={form.control} name="category" render={({ field }) => (
                         <FormItem><FormLabel>Categoria</FormLabel><FormControl><Input placeholder="Ex: Casamento, Corporativo" {...field} /></FormControl><FormMessage /></FormItem>

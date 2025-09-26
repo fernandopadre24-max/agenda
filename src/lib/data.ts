@@ -80,7 +80,7 @@ export async function getContratanteById(id: string): Promise<Contratante | unde
     return contratantes.find(c => c.id === id);
 }
 
-export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
+export async function addContratante(contratanteData: Omit<Contratante, 'id' | 'responsibleName'> & { responsibleName?: string }): Promise<Contratante> {
   const contratantes = await getContratantes();
   const newContratante: Contratante = {
     id: String(Date.now() + Math.random()),

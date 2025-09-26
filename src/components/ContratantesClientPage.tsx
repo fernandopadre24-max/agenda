@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, User, Mail, Phone, Tag } from 'lucide-react';
+import { Plus, User, Mail, Phone, Tag, Briefcase } from 'lucide-react';
 import { ContratanteActions } from '@/components/ContratanteActions';
 import { type Contratante } from '@/lib/types';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
@@ -61,7 +61,7 @@ export function ContratantesClientPage({ initialContratantes, createAction, dele
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <User className="h-5 w-5 text-primary" />
+                        <Briefcase className="h-5 w-5 text-primary" />
                         <CardTitle>{contratante.name}</CardTitle>
                       </div>
                       {contratante.category && (
@@ -75,6 +75,12 @@ export function ContratantesClientPage({ initialContratantes, createAction, dele
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm pt-0">
+                  {contratante.responsibleName && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <User className="h-4 w-4" />
+                      <span>{contratante.responsibleName}</span>
+                    </div>
+                  )}
                   {contratante.email && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Mail className="h-4 w-4" />

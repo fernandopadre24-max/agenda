@@ -1,6 +1,7 @@
 export type Contratante = {
   id: string;
   name: string;
+  responsibleName?: string;
   email?: string;
   phone?: string;
   category?: string;

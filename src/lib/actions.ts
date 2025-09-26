@@ -43,6 +43,7 @@ const eventFormSchema = z.object({
 
 const contratanteFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
+    responsibleName: z.string().optional(),
     email: z.string().email('Formato de e-mail inválido.').optional().or(z.literal('')),
     phone: z.string().optional(),
     category: z.string().optional(),
