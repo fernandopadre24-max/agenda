@@ -343,6 +343,7 @@ export async function createTransactionAction(data: TransactionFormValues): Prom
     try {
         const newTransaction = await dbAddTransaction({ ...validatedFields.data, status: 'pendente' });
         revalidatePath('/financeiro');
+        revalidatePath('/transacoes');
         return { success: true, message: 'Transação criada com sucesso.', data: newTransaction };
     } catch (e) {
         return { success: false, message: 'Falha ao criar transação.' };
@@ -355,9 +356,10 @@ export async function updateTransactionAction(id: string, data: Partial<Transact
         return { success: false, message: 'Dados inválidos.' };
     }
     try {
-        await dbUpdateTransaction(id, validatedFields.data);
+        const updatedTransaction = await dbUpdateTransaction(id, validatedFields.data);
         revalidatePath('/financeiro');
-        return { success: true, message: 'Transação atualizada.' };
+        revalidatePath('/transacoes');
+        return { success: true, message: 'Transação atualizada.', data: updatedTransaction };
     } catch (e) {
         return { success: false, message: 'Falha ao atualizar transação.' };
     }
@@ -367,6 +369,7 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
     try {
         await dbDeleteTransaction(id);
         revalidatePath('/financeiro');
+        revalidatePath('/transacoes');
         return { success: true, message: 'Transação excluída.' };
     } catch (e) {
         return { success: false, message: 'Falha ao excluir transação.' };

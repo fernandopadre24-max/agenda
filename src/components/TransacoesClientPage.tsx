@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, ArrowUp, ArrowDown, Trash2, CheckCircle, Clock } from 'lucide-react';
+import { Loader2, Plus, ArrowUp, ArrowDown, Trash2, CheckCircle, Clock, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { createTransactionAction, deleteTransactionAction } from '@/lib/actions';
+import { createTransactionAction, deleteTransactionAction, updateTransactionAction } from '@/lib/actions';
 import { Transaction } from '@/lib/types';
 import {
   AlertDialog,
@@ -41,6 +41,7 @@ export function TransacoesClientPage({ initialTransactions }: { initialTransacti
   const [transactions, setTransactions] = useState(initialTransactions);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isPending, startTransition] = useState(false);
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<TransactionFormValues>({
@@ -53,14 +54,37 @@ export function TransacoesClientPage({ initialTransactions }: { initialTransacti
     },
   });
 
+  useEffect(() => {
+    if (editingTransactionId) {
+      const tx = transactions.find(t => t.id === editingTransactionId);
+      if (tx) {
+        form.reset({
+          description: tx.description,
+          value: tx.value,
+          type: tx.type,
+          date: new Date(tx.date),
+        });
+        setIsFormOpen(true);
+      }
+    }
+  }, [editingTransactionId, transactions, form]);
+
+
   const onSubmit = (data: TransactionFormValues) => {
     startTransition(true);
-    createTransactionAction(data).then(result => {
+    const action = editingTransactionId
+      ? updateTransactionAction(editingTransactionId, data)
+      : createTransactionAction(data);
+
+    action.then(result => {
       if (result.success && result.data) {
-        toast({ title: 'Transação adicionada!' });
-        setTransactions(prev => [result.data as Transaction, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        setIsFormOpen(false);
-        form.reset();
+        toast({ title: `Transação ${editingTransactionId ? 'atualizada' : 'adicionada'}!` });
+        if (editingTransactionId) {
+            setTransactions(prev => prev.map(t => t.id === editingTransactionId ? result.data as Transaction : t).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        } else {
+            setTransactions(prev => [result.data as Transaction, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        }
+        resetForm();
       } else {
         toast({ variant: 'destructive', title: 'Erro', description: result.message });
       }
@@ -81,18 +105,41 @@ export function TransacoesClientPage({ initialTransactions }: { initialTransacti
     })
   }
 
+  const handleEditClick = (id: string) => {
+    setEditingTransactionId(id);
+  }
+
+  const resetForm = () => {
+    form.reset({
+      description: '',
+      value: 0,
+      type: 'receber',
+      date: new Date(),
+    });
+    setEditingTransactionId(null);
+    setIsFormOpen(false);
+  }
+
+  const handleToggleForm = () => {
+    if (isFormOpen && editingTransactionId) {
+        resetForm();
+    } else {
+        setIsFormOpen(!isFormOpen);
+    }
+  }
+
   return (
     <>
       <div className="flex justify-end">
-        <Button onClick={() => setIsFormOpen(!isFormOpen)}>
-          <Plus className="mr-2 h-4 w-4" /> Nova Transação
+        <Button onClick={handleToggleForm}>
+          {isFormOpen ? 'Fechar Formulário' : <><Plus className="mr-2 h-4 w-4" /> Nova Transação</>}
         </Button>
       </div>
 
       {isFormOpen && (
         <Card>
           <CardHeader>
-            <CardTitle>Adicionar Nova Transação</CardTitle>
+            <CardTitle>{editingTransactionId ? 'Editar Transação' : 'Adicionar Nova Transação'}</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -109,7 +156,7 @@ export function TransacoesClientPage({ initialTransactions }: { initialTransacti
                 <FormField control={form.control} name="type" render={({ field }) => (
                   <FormItem className="space-y-3"><FormLabel>Tipo</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex space-x-4">
                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="receber" /></FormControl><FormLabel className="font-normal">A Receber</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pagar" /></FormControl><FormLabel className="font-normal">A Pagar</FormLabel></FormItem>
                       </RadioGroup>
@@ -138,11 +185,15 @@ export function TransacoesClientPage({ initialTransactions }: { initialTransacti
                   <p className="text-sm text-muted-foreground">{tx.description}</p>
                   <p className="text-xs text-muted-foreground mt-1">{formatDate(tx.date)}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                     <Badge variant={tx.status === 'concluido' ? 'default' : 'secondary'} className={tx.status === 'concluido' ? 'bg-green-500/80' : ''}>
                         {tx.status === 'concluido' ? <CheckCircle className="h-4 w-4 mr-1"/> : <Clock className="h-4 w-4 mr-1" />}
                         {tx.status}
                     </Badge>
+                     <Button variant="ghost" size="icon" onClick={() => handleEditClick(tx.id)} className="h-8 w-8">
+                        <Edit className="h-4 w-4" />
+                        <span className="sr-only">Editar</span>
+                     </Button>
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive h-8 w-8">
