@@ -24,7 +24,7 @@ const artistaFormSchema = z.object({
 });
 
 
-export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: (newArtista: Artista) => void }) {
+export function ArtistaForm({ artista, onSave }: { artista?: Artista; onSave?: (newArtista: Artista) => void }) {
   const isEditing = !!artista;
   const router = useRouter();
   const { toast } = useToast();

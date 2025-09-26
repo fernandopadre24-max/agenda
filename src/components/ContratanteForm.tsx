@@ -23,7 +23,7 @@ const contratanteFormSchema = z.object({
 });
 
 
-export function ContratanteForm({ contratante, onSave }: { contratante?: Contratante, onSave?: (newContratante: Contratante) => void }) {
+export function ContratanteForm({ contratante, onSave }: { contratante?: Contratante; onSave?: (newContratante: Contratante) => void }) {
   const isEditing = !!contratante;
   const router = useRouter();
   const { toast } = useToast();
