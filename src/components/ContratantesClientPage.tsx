@@ -7,16 +7,20 @@ import { ContratanteActions } from '@/components/ContratanteActions';
 import { Contratante } from '@/lib/types';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { ContratanteForm } from './ContratanteForm';
+import { Skeleton } from './ui/skeleton';
 
 export function ContratantesClientPage({ initialContratantes }: { initialContratantes: Contratante[] }) {
   const [contratantes, setContratantes] = useState(initialContratantes);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [loading, setLoading] = useState(false); // No longer need global loading
 
-  const handleSave = (newContratante?: Contratante) => {
-    if (newContratante) {
-        setContratantes(prev => [...prev, newContratante]);
-    }
+  const handleSave = (newContratante: Contratante) => {
+    setContratantes(prev => [...prev, newContratante].sort((a,b) => a.name.localeCompare(b.name)));
     setIsSheetOpen(false);
+  }
+
+  const handleDelete = (id: string) => {
+    setContratantes(prev => prev.filter(c => c.id !== id));
   }
 
   return (
@@ -34,41 +38,48 @@ export function ContratantesClientPage({ initialContratantes }: { initialContrat
         </Sheet>
       </div>
 
-      <div className="space-y-4">
-        {contratantes.map(contratante => (
-          <Card key={contratante.id}>
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
-                  {contratante.name}
-                </CardTitle>
-                <ContratanteActions contratanteId={contratante.id} />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm pt-0">
-              {contratante.email && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="h-4 w-4" />
-                  <span>{contratante.email}</span>
-                </div>
-              )}
-              {contratante.phone && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Phone className="h-4 w-4" />
-                  <span>{contratante.phone}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      {contratantes.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          <User className="mx-auto h-12 w-12" />
-          <p className="mt-4">Nenhum contratante cadastrado.</p>
-        </div>
-      )}
+       {loading ? (
+            <div className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+            </div>
+        ) : contratantes.length > 0 ? (
+          <div className="space-y-4">
+            {contratantes.map(contratante => (
+              <Card key={contratante.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5 text-primary" />
+                      {contratante.name}
+                    </CardTitle>
+                    <ContratanteActions contratanteId={contratante.id} onDelete={() => handleDelete(contratante.id)} />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm pt-0">
+                  {contratante.email && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="h-4 w-4" />
+                      <span>{contratante.email}</span>
+                    </div>
+                  )}
+                  {contratante.phone && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Phone className="h-4 w-4" />
+                      <span>{contratante.phone}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            <User className="mx-auto h-12 w-12" />
+            <p className="mt-4">Nenhum contratante cadastrado.</p>
+          </div>
+        )}
     </>
   );
 }
