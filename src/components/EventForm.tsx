@@ -3,11 +3,11 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +29,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { getEventSuggestions } from '@/ai/flows/intelligent-event-suggestions';
+import { Textarea } from './ui/textarea';
+import { getEvents } from '@/lib/data';
+
+const eventDraftSchema = z.object({
+  draft: z.string().optional(),
+});
 
 const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
@@ -58,15 +65,32 @@ interface EventFormProps {
     contratantes: Contratante[];
 }
 
+// Debounce hook
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export function EventForm({ event, artistas, contratantes }: EventFormProps) {
   const isEditing = !!event;
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [pastEvents, setPastEvents] = useState<string[]>([]);
   
-  const form = useForm<EventFormValues>({
-    resolver: zodResolver(eventFormSchema),
+  const form = useForm<EventFormValues & { draft?: string }>({
+    resolver: zodResolver(eventFormSchema.merge(eventDraftSchema)),
     defaultValues: {
+      draft: '',
       contratante: event?.contratante ?? '',
       artista: event?.artista ?? '',
       date: event?.date ? new Date(event.date) : new Date(),
@@ -78,6 +102,83 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
       status: event?.receber?.status === 'recebido' || event?.pagar?.status === 'pago' ? 'concluido' : 'pendente',
     },
   });
+
+  const draftValue = form.watch('draft');
+  const debouncedDraft = useDebounce(draftValue ?? '', 1000);
+
+  useEffect(() => {
+    async function fetchPastEvents() {
+      const allEvents = await getEvents();
+      const eventDescriptions = allEvents.map(e => 
+        `Evento para ${e.contratante} com ${e.artista} em ${format(e.date, 'PPP', { locale: ptBR })} às ${e.hora}.`
+      );
+      setPastEvents(eventDescriptions);
+    }
+    fetchPastEvents();
+  }, []);
+
+  const handleSuggestion = useCallback(async (draft: string) => {
+    if (!draft || draft.length < 10) return;
+
+    setIsSuggesting(true);
+    toast({ title: 'A IA está pensando...', description: 'Aguarde enquanto geramos sugestões para o seu evento.' });
+
+    try {
+      const result = await getEventSuggestions({ 
+        partialEvent: draft,
+        pastEvents,
+       });
+
+      if (result.suggestions.length > 0) {
+        const suggestionText = result.suggestions.join(' ');
+        
+        // Extrair informações do texto da sugestão
+        const artistaMatch = suggestionText.match(/artista: (.*?)(,|$)/i);
+        const contratanteMatch = suggestionText.match(/contratante: (.*?)(,|$)/i);
+        const dateMatch = suggestionText.match(/data: (\d{2}\/\d{2}\/\d{4})/i);
+        const horaMatch = suggestionText.match(/hora: (\d{2}:\d{2})/i);
+        const valorMatch = suggestionText.match(/valor:.*?(\d+(\.\d{1,2})?)/i);
+
+        if (contratanteMatch?.[1]) {
+            const matchedContratante = contratantes.find(c => c.name.toLowerCase().includes(contratanteMatch[1].trim().toLowerCase()));
+            if(matchedContratante) form.setValue('contratante', matchedContratante.name, { shouldValidate: true });
+        }
+        if (artistaMatch?.[1]) {
+            const matchedArtista = artistas.find(a => a.name.toLowerCase().includes(artistaMatch[1].trim().toLowerCase()));
+            if(matchedArtista) form.setValue('artista', matchedArtista.name, { shouldValidate: true });
+        }
+        if (dateMatch?.[1]) {
+            const [day, month, year] = dateMatch[1].split('/');
+            form.setValue('date', new Date(`${year}-${month}-${day}`), { shouldValidate: true });
+        }
+        if (horaMatch?.[1]) {
+            form.setValue('hora', horaMatch[1], { shouldValidate: true });
+        }
+         if (valorMatch?.[1]) {
+            form.setValue('valor', parseFloat(valorMatch[1]), { shouldValidate: true });
+            if (!form.getValues('financeType') || form.getValues('financeType') === 'nenhum') {
+              form.setValue('financeType', 'receber');
+            }
+        }
+        toast({ title: 'Sugestões aplicadas!', description: 'O formulário foi preenchido com as sugestões da IA.' });
+      } else {
+        toast({ variant: 'destructive', title: 'Sem sugestões', description: 'A IA não conseguiu gerar sugestões com base no texto fornecido.' });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Erro da IA', description: 'Ocorreu um erro ao buscar sugestões.' });
+    } finally {
+      setIsSuggesting(false);
+    }
+  }, [form, pastEvents, artistas, contratantes, toast]);
+
+
+  useEffect(() => {
+    if (debouncedDraft && !isEditing) {
+      handleSuggestion(debouncedDraft);
+    }
+  }, [debouncedDraft, handleSuggestion, isEditing]);
+
 
   const financeType = form.watch('financeType');
   
@@ -108,13 +209,47 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+        {!isEditing && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline flex items-center gap-2">
+                <Sparkles className="text-primary" /> Rascunho Inteligente
+              </CardTitle>
+               <FormDescription>
+                Descreva o evento livremente. A IA tentará preencher o formulário para você.
+                Ex: "Festa de casamento para João e Maria em 15/12/2024, às 20h, com a Banda Sinfonia. Cachê de 3000."
+              </FormDescription>
+            </CardHeader>
+            <CardContent>
+               <FormField
+                  control={form.control}
+                  name="draft"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Digite os detalhes do evento aqui..."
+                          {...field}
+                          rows={4}
+                          disabled={isSuggesting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
             <CardHeader><CardTitle className="font-headline">Informações do Evento</CardTitle></CardHeader>
             <CardContent className="space-y-4">
                 <FormField control={form.control} name="contratante" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Contratante</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                             <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Selecione um contratante" />
@@ -130,7 +265,7 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
                 <FormField control={form.control} name="artista" render={({ field }) => (
                      <FormItem>
                         <FormLabel>Artista / Serviço</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                             <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Selecione um artista" />
@@ -179,7 +314,7 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
                 <FormField control={form.control} name="financeType" render={({ field }) => (
                     <FormItem className="space-y-3"><FormLabel>Tipo de Transação</FormLabel>
                     <FormControl>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex space-x-4">
                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="nenhum" /></FormControl><FormLabel className="font-normal">Nenhum</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="receber" /></FormControl><FormLabel className="font-normal">A Receber</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pagar" /></FormControl><FormLabel className="font-normal">A Pagar</FormLabel></FormItem>
@@ -194,7 +329,7 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
                         <FormField control={form.control} name="status" render={({ field }) => (
                             <FormItem className="space-y-3"><FormLabel>Status</FormLabel>
                             <FormControl>
-                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex space-x-4">
                                 <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pendente" /></FormControl><FormLabel className="font-normal">Pendente</FormLabel></FormItem>
                                 <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="concluido" /></FormControl><FormLabel className="font-normal">{financeType === 'receber' ? 'Recebido' : 'Pago'}</FormLabel></FormItem>
                                 </RadioGroup>
@@ -205,8 +340,8 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
             </CardContent>
         </Card>
 
-        <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
+        <Button type="submit" disabled={isLoading || isSuggesting} className="w-full">
+            {(isLoading || isSuggesting) ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
         </Button>
       </form>
     </Form>

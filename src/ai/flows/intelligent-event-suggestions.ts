@@ -26,7 +26,7 @@ const EventSuggestionOutputSchema = z.object({
   suggestions: z
     .string()
     .array()
-    .describe('An array of suggested event details based on the input and past events.'),
+    .describe('An array of suggested event details based on the input and past events. Example: "artista: Nome do Artista, contratante: Nome do Contratante, data: DD/MM/YYYY, hora: HH:MM, valor: 1500"'),
 });
 export type EventSuggestionOutput = z.infer<typeof EventSuggestionOutputSchema>;
 
@@ -38,16 +38,29 @@ const prompt = ai.definePrompt({
   name: 'eventSuggestionPrompt',
   input: {schema: EventSuggestionInputSchema},
   output: {schema: EventSuggestionOutputSchema},
-  prompt: `You are an intelligent event suggestion assistant. Given a partial event description and a list of past events, you will provide relevant suggestions to complete the event description.
+  prompt: `Você é um assistente inteligente para agendamento de eventos. Com base em uma descrição parcial do evento e em um histórico de eventos anteriores, sua tarefa é extrair e estruturar as informações para preencher um formulário.
 
-Partial Event Description: {{{partialEvent}}}
+Analise a "Descrição Parcial do Evento" e, se possível, extraia as seguintes informações:
+- nome do contratante
+- nome do artista
+- data do evento (formato DD/MM/YYYY)
+- hora do evento (formato HH:MM)
+- valor/cachê (apenas números)
 
-Past Events:
+Use o histórico de "Eventos Passados" como contexto para inferir informações que possam estar faltando ou para corrigir ambiguidades.
+
+Retorne as informações extraídas em uma única string no formato "chave: valor", separadas por vírgulas. Por exemplo: "contratante: Casamento Joana & Miguel, artista: Banda Sinfonia, data: 15/12/2024, hora: 22:00, valor: 3500".
+
+Se uma informação não puder ser extraída, não a inclua na string de sugestão.
+
+Descrição Parcial do Evento: {{{partialEvent}}}
+
+Eventos Passados:
 {{#each pastEvents}}
 - {{{this}}}
 {{/each}}
 
-Suggestions:`,
+`,
 });
 
 const eventSuggestionFlow = ai.defineFlow(
