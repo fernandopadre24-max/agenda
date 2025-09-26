@@ -1,220 +1,203 @@
 'use client';
 
+import { useState, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Loader2, Plus, ArrowUp, ArrowDown, Edit, Trash2, CheckCircle, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { DollarSign, CheckCircle, Clock, ArrowUp, ArrowDown } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
-import { Event } from '@/lib/types';
-import { FinancialChart } from '@/components/FinancialChart';
-import { useEffect, useState, useMemo } from 'react';
-import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
+import { createTransactionAction, deleteTransactionAction } from '@/lib/actions';
+import { Transaction } from '@/lib/types';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { FinancialChart } from './FinancialChart';
 
-function SummaryCard({
-  title,
-  value,
-  icon: Icon,
-  colorClass = 'text-primary',
-}: {
-  title: string;
-  value: number;
-  icon: React.ElementType;
-  colorClass?: string;
-}) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className={`h-4 w-4 text-muted-foreground ${colorClass}`} />
-      </CardHeader>
-      <CardContent>
-        <div className={`text-2xl font-bold ${colorClass}`}>
-          {formatCurrency(value)}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
-type UnifiedTransaction = {
-  eventId: string;
-  artista: string;
-  contratante: string;
-  date: Date;
-  type: 'receber' | 'pagar';
-  valor: number;
-};
+const transactionFormSchema = z.object({
+  description: z.string().min(3, 'A descrição é obrigatória.'),
+  value: z.coerce.number().positive('O valor deve ser positivo.'),
+  type: z.enum(['receber', 'pagar'], { required_error: 'Selecione o tipo.' }),
+  date: z.coerce.date({ required_error: 'A data é obrigatória.' }),
+});
 
-export function FinanceiroClientPage({
-  initialEvents,
-}: {
-  initialEvents: Event[];
-}) {
-  const [events, setEvents] = useState<Event[]>(initialEvents);
-  const [isMounted, setIsMounted] = useState(false);
+type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
-  useEffect(() => {
-    setIsMounted(true);
-    setEvents(initialEvents);
-  }, [initialEvents]);
+export function FinanceiroClientPage({ initialTransactions }: { initialTransactions: Transaction[] }) {
+  const [transactions, setTransactions] = useState(initialTransactions);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isPending, startTransition] = useState(false);
+  const { toast } = useToast();
 
-  const pendingTransactions = useMemo<UnifiedTransaction[]>(() => {
-    if (!isMounted) return [];
+  const form = useForm<TransactionFormValues>({
+    resolver: zodResolver(transactionFormSchema),
+    defaultValues: {
+      description: '',
+      value: 0,
+      type: 'receber',
+      date: new Date(),
+    },
+  });
 
-    const transactions: UnifiedTransaction[] = [];
-    events.forEach(event => {
-      if (event.receber?.status === 'pendente') {
-        transactions.push({
-          eventId: event.id,
-          artista: event.artista,
-          contratante: event.contratante,
-          date: new Date(event.date),
-          type: 'receber',
-          valor: event.receber.valor,
-        });
+  const onSubmit = (data: TransactionFormValues) => {
+    startTransition(true);
+    createTransactionAction(data).then(result => {
+      if (result.success && result.data) {
+        toast({ title: 'Transação adicionada!' });
+        setTransactions(prev => [result.data as Transaction, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setIsFormOpen(false);
+        form.reset();
+      } else {
+        toast({ variant: 'destructive', title: 'Erro', description: result.message });
       }
-      if (event.pagar?.status === 'pendente') {
-        transactions.push({
-          eventId: event.id,
-          artista: event.artista,
-          contratante: event.contratante,
-          date: new Date(event.date),
-          type: 'pagar',
-          valor: event.pagar.valor,
-        });
-      }
+      startTransition(false);
     });
+  };
 
-    return transactions.sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [events, isMounted]);
-
-  const aReceberPendente = events.reduce((acc, event) => {
-    if (event.receber?.status === 'pendente') {
-      return acc + event.receber.valor;
-    }
-    return acc;
-  }, 0);
-
-  const recebido = events.reduce((acc, event) => {
-    if (event.receber?.status === 'recebido') {
-      return acc + event.receber.valor;
-    }
-    return acc;
-  }, 0);
-
-  const aPagarPendente = events.reduce((acc, event) => {
-    if (event.pagar?.status === 'pendente') {
-      return acc + event.pagar.valor;
-    }
-    return acc;
-  }, 0);
-
-  const pago = events.reduce((acc, event) => {
-    if (event.pagar?.status === 'pago') {
-      return acc + event.pagar.valor;
-    }
-    return acc;
-  }, 0);
-
-  const saldoGeral = recebido - pago;
-  
-  if (!isMounted) {
-    return null;
+  const handleDelete = (id: string) => {
+    startTransition(true);
+    deleteTransactionAction(id).then(result => {
+      if (result.success) {
+        toast({ title: 'Transação excluída!' });
+        setTransactions(prev => prev.filter(t => t.id !== id));
+      } else {
+        toast({ variant: 'destructive', title: 'Erro', description: result.message });
+      }
+      startTransition(false);
+    })
   }
+
+  const { recebido, pago, aReceber, aPagar } = useMemo(() => {
+    return transactions.reduce((acc, tx) => {
+      if (tx.type === 'receber') {
+        if (tx.status === 'concluido') acc.recebido += tx.value;
+        else acc.aReceber += tx.value;
+      } else {
+        if (tx.status === 'concluido') acc.pago += tx.value;
+        else acc.aPagar += tx.value;
+      }
+      return acc;
+    }, { recebido: 0, pago: 0, aReceber: 0, aPagar: 0 });
+  }, [transactions]);
+  
+  const saldoGeral = recebido - pago;
+
 
   return (
     <>
-      <FinancialChart
-        recebido={recebido}
-        pago={pago}
-        aReceberPendente={aReceberPendente}
-        aPagarPendente={aPagarPendente}
-      />
+      <FinancialChart recebido={recebido} pago={pago} aReceberPendente={aReceber} aPagarPendente={aPagar} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-headline flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-primary" />
-            Saldo Geral
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p
-            className={`text-3xl font-bold ${
-              saldoGeral >= 0 ? 'text-green-400' : 'text-red-400'
-            }`}
-          >
-            {formatCurrency(saldoGeral)}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            (Total recebido - Total pago)
-          </p>
-        </CardContent>
-      </Card>
+        <Card>
+            <CardHeader>
+            <CardTitle className="text-lg font-headline flex items-center gap-2">
+                <ArrowUp className="text-green-500" /> Saldo Geral
+            </CardTitle>
+            </CardHeader>
+            <CardContent>
+            <p className={`text-3xl font-bold ${saldoGeral >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {formatCurrency(saldoGeral)}
+            </p>
+            <p className="text-xs text-muted-foreground">(Total recebido - Total pago)</p>
+            </CardContent>
+        </Card>
 
-      <div className="grid grid-cols-2 gap-4">
-        <SummaryCard
-          title="A Receber"
-          value={aReceberPendente}
-          icon={Clock}
-          colorClass="text-green-400"
-        />
-        <SummaryCard
-          title="Recebido"
-          value={recebido}
-          icon={CheckCircle}
-          colorClass="text-green-400"
-        />
-        <SummaryCard
-          title="A Pagar"
-          value={aPagarPendente}
-          icon={Clock}
-          colorClass="text-red-400"
-        />
-        <SummaryCard
-          title="Pago"
-          value={pago}
-          icon={CheckCircle}
-          colorClass="text-red-400"
-        />
+      <div className="flex justify-end">
+        <Button onClick={() => setIsFormOpen(!isFormOpen)}>
+          <Plus className="mr-2 h-4 w-4" /> Nova Transação
+        </Button>
       </div>
 
-      <Separator />
+      {isFormOpen && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Adicionar Nova Transação</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField control={form.control} name="description" render={({ field }) => (
+                  <FormItem><FormLabel>Descrição</FormLabel><FormControl><Input placeholder="Ex: Adiantamento Cachê, Despesa de transporte" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="value" render={({ field }) => (
+                  <FormItem><FormLabel>Valor</FormLabel><FormControl><Input type="number" placeholder="0,00" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="date" render={({ field }) => (
+                  <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} onChange={e => field.onChange(e.target.valueAsDate)} value={field.value.toISOString().split('T')[0]} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="type" render={({ field }) => (
+                  <FormItem className="space-y-3"><FormLabel>Tipo</FormLabel>
+                    <FormControl>
+                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="receber" /></FormControl><FormLabel className="font-normal">A Receber</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pagar" /></FormControl><FormLabel className="font-normal">A Pagar</FormLabel></FormItem>
+                      </RadioGroup>
+                    </FormControl><FormMessage /></FormItem>
+                )} />
+                <Button type="submit" disabled={isPending} className="w-full">
+                  {isPending ? <Loader2 className="animate-spin" /> : 'Salvar Transação'}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      )}
 
-      <div>
-        <h3 className="text-lg font-headline mb-4">Transações Pendentes</h3>
-        {pendingTransactions.length > 0 ? (
-          <div className="space-y-3">
-            {pendingTransactions.map((tx) => (
-              <Link href={`/events/${tx.eventId}`} key={`${tx.eventId}-${tx.type}`} className="block">
-                <Card className="hover:border-primary/50 transition-colors">
-                  <CardContent className="p-3">
-                    <div className="flex justify-between items-center">
-                      <div className="flex-1">
-                        <p className="font-semibold truncate">{tx.artista}</p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {tx.contratante}
-                        </p>
-                         <p className="text-xs text-muted-foreground mt-1">
-                           {formatDate(tx.date)}
-                        </p>
-                      </div>
-                      <div className={`flex items-center gap-2 font-bold ${tx.type === 'receber' ? 'text-green-500' : 'text-red-500'}`}>
-                        {tx.type === 'receber' ? 
-                            <ArrowUp className="h-4 w-4" /> : 
-                            <ArrowDown className="h-4 w-4" />}
-                        <span>{formatCurrency(tx.valor)}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+      <div className="space-y-3">
+        <h3 className="text-lg font-headline">Histórico de Transações</h3>
+        {transactions.length > 0 ? (
+          transactions.map(tx => (
+            <Card key={tx.id}>
+              <CardContent className="p-3 flex justify-between items-center">
+                <div className="flex-1">
+                  <p className={`font-semibold flex items-center gap-2 ${tx.type === 'receber' ? 'text-green-500' : 'text-red-500'}`}>
+                    {tx.type === 'receber' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                    {formatCurrency(tx.value)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{tx.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{formatDate(tx.date)}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Badge variant={tx.status === 'concluido' ? 'default' : 'secondary'} className={tx.status === 'concluido' ? 'bg-green-500/80' : ''}>
+                        {tx.status === 'concluido' ? <CheckCircle className="h-4 w-4 mr-1"/> : <Clock className="h-4 w-4 mr-1" />}
+                        {tx.status}
+                    </Badge>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive h-8 w-8">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                <AlertDialogDescription>Esta ação não pode ser desfeita. Isso excluirá permanentemente a transação.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(tx.id)} disabled={isPending}>Excluir</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          ))
         ) : (
-          <div className="text-center py-10 text-muted-foreground">
-            <CheckCircle className="mx-auto h-12 w-12" />
-            <p className="mt-4">Nenhuma transação pendente.</p>
-          </div>
+          <p className="text-muted-foreground text-center py-4">Nenhuma transação registrada.</p>
         )}
       </div>
     </>

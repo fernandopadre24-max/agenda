@@ -36,10 +36,19 @@ export type Event = {
   };
 };
 
+export type Transaction = {
+    id: string;
+    description: string;
+    value: number;
+    type: 'pagar' | 'receber';
+    status: 'pendente' | 'concluido';
+    date: Date;
+}
+
 export type ActionResponse = {
     success: boolean;
     message: string;
     redirectPath?: string;
-    data?: Artista | Contratante;
+    data?: Artista | Contratante | Transaction;
     errors?: { [key: string]: string[] | undefined; };
 }

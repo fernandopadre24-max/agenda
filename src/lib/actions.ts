@@ -15,9 +15,12 @@ import {
     deleteArtista as dbDeleteArtista,
     getArtistas as dbGetArtistas,
     getEvents,
-    getEventById
+    getEventById,
+    addTransaction as dbAddTransaction,
+    updateTransaction as dbUpdateTransaction,
+    deleteTransaction as dbDeleteTransaction,
 } from './data';
-import type { Event, Artista, Contratante, ActionResponse } from './types';
+import type { Event, Artista, Contratante, ActionResponse, Transaction } from './types';
 
 const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
@@ -57,10 +60,18 @@ const artistaFormSchema = z.object({
     serviceType: z.string().optional(),
 });
 
+const transactionFormSchema = z.object({
+  description: z.string().min(3, 'A descrição é obrigatória.'),
+  value: z.coerce.number().positive('O valor deve ser positivo.'),
+  type: z.enum(['receber', 'pagar']),
+  date: z.coerce.date(),
+});
+
 
 export type EventFormValues = z.infer<typeof eventFormSchema>;
 export type ContratanteFormValues = z.infer<typeof contratanteFormSchema>;
 export type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
+export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
 
 const createEventFromForm = (data: EventFormValues): Omit<Event, 'id'> => {
@@ -302,5 +313,45 @@ export async function updateEventStatusAction(eventId: string, type: 'pagar' | '
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
         return { success: false, message: `Ocorreu um erro ao atualizar o status: ${errorMessage}` };
+    }
+}
+
+
+// Transaction Actions
+export async function createTransactionAction(data: TransactionFormValues): Promise<ActionResponse> {
+    const validatedFields = transactionFormSchema.safeParse(data);
+    if (!validatedFields.success) {
+        return { success: false, message: 'Dados inválidos.', errors: validatedFields.error.flatten().fieldErrors };
+    }
+    try {
+        const newTransaction = await dbAddTransaction({ ...validatedFields.data, status: 'pendente' });
+        revalidatePath('/financeiro');
+        return { success: true, message: 'Transação criada com sucesso.', data: newTransaction };
+    } catch (e) {
+        return { success: false, message: 'Falha ao criar transação.' };
+    }
+}
+
+export async function updateTransactionAction(id: string, data: Partial<TransactionFormValues>): Promise<ActionResponse> {
+    const validatedFields = transactionFormSchema.partial().safeParse(data);
+    if (!validatedFields.success) {
+        return { success: false, message: 'Dados inválidos.' };
+    }
+    try {
+        await dbUpdateTransaction(id, validatedFields.data);
+        revalidatePath('/financeiro');
+        return { success: true, message: 'Transação atualizada.' };
+    } catch (e) {
+        return { success: false, message: 'Falha ao atualizar transação.' };
+    }
+}
+
+export async function deleteTransactionAction(id: string): Promise<ActionResponse> {
+    try {
+        await dbDeleteTransaction(id);
+        revalidatePath('/financeiro');
+        return { success: true, message: 'Transação excluída.' };
+    } catch (e) {
+        return { success: false, message: 'Falha ao excluir transação.' };
     }
 }

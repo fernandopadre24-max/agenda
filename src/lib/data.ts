@@ -1,4 +1,4 @@
-import type { Event, Contratante, Artista } from './types';
+import type { Event, Contratante, Artista, Transaction } from './types';
 import { LocalStorage } from 'node-localstorage';
 
 // Polyfill for localStorage on the server side
@@ -7,6 +7,7 @@ const localStorage = typeof window !== 'undefined' ? window.localStorage : new L
 const ARTISTAS_KEY = 'artistas';
 const CONTRATANTES_KEY = 'contratantes';
 const EVENTS_KEY = 'events';
+const TRANSACTIONS_KEY = 'transactions';
 
 // Helper functions to get and set data from localStorage
 function getData<T>(key: string): T[] {
@@ -149,4 +150,39 @@ export async function deleteArtista(id: string): Promise<boolean> {
     artistas = artistas.filter(a => a.id !== id);
     setData(ARTISTAS_KEY, artistas);
     return artistas.length < initialLength;
+}
+
+// Transaction functions
+export async function getTransactions(): Promise<Transaction[]> {
+    const transactions = getData<Transaction>(TRANSACTIONS_KEY).map(t => ({...t, date: new Date(t.date)}));
+    return transactions.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
+export async function addTransaction(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
+    const transactions = await getTransactions();
+    const newTransaction: Transaction = {
+        id: String(Date.now() + Math.random()),
+        ...transactionData,
+    };
+    transactions.push(newTransaction);
+    setData(TRANSACTIONS_KEY, transactions);
+    return newTransaction;
+}
+
+export async function updateTransaction(id: string, transactionData: Partial<Omit<Transaction, 'id'>>): Promise<Transaction | undefined> {
+    const transactions = await getTransactions();
+    const index = transactions.findIndex(t => t.id === id);
+    if (index === -1) return undefined;
+    const updatedTransaction = { ...transactions[index], ...transactionData, id };
+    transactions[index] = updatedTransaction;
+    setData(TRANSACTIONS_KEY, transactions);
+    return updatedTransaction;
+}
+
+export async function deleteTransaction(id: string): Promise<boolean> {
+    let transactions = await getTransactions();
+    const initialLength = transactions.length;
+    transactions = transactions.filter(t => t.id !== id);
+    setData(TRANSACTIONS_KEY, transactions);
+    return transactions.length < initialLength;
 }
