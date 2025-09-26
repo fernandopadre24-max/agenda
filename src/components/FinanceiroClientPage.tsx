@@ -26,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { FinancialChart } from './FinancialChart';
+import { Badge } from '@/components/ui/badge';
 
 
 const transactionFormSchema = z.object({
