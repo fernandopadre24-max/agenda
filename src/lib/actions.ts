@@ -20,7 +20,6 @@ import {
 import type { Event, Artista, Contratante } from './types';
 
 const eventFormSchema = z.object({
-  draft: z.string().optional(),
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
   artista: z.string().min(1, 'O nome do artista é obrigatório.'),
   date: z.coerce.date({ required_error: 'A data do evento é obrigatória.' }),

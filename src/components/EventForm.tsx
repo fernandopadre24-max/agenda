@@ -3,17 +3,16 @@
 import { useForm, useFormState } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CalendarIcon, Loader2, Sparkles } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback, useTransition } from 'react';
+import { useState, useCallback } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,16 +23,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { createEventAction, updateEventAction } from '@/lib/actions';
-import type { Event, Contratante, Artista, ActionResponse } from '@/lib/types';
+import type { Event, Contratante, Artista } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { getEventSuggestions } from '@/ai/flows/intelligent-event-suggestions';
-import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const eventFormSchema = z.object({
-  draft: z.string().optional(),
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
   artista: z.string().min(1, 'O nome do artista é obrigatório.'),
   date: z.coerce.date({ required_error: 'A data do evento é obrigatória.' }),
@@ -64,20 +60,6 @@ interface EventFormProps {
     pastEvents: string[];
 }
 
-// Debounce hook
-function useDebounce(value: string, delay: number) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
-
 function SubmitButton({ isEditing }: { isEditing: boolean }) {
     const { isSubmitting } = useFormState();
     return (
@@ -91,12 +73,10 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
   const isEditing = !!event;
   const router = useRouter();
   const { toast } = useToast();
-  const [isSuggesting, setIsSuggesting] = useState(false);
   
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
-      draft: '',
       contratante: event?.contratante ?? '',
       artista: event?.artista ?? '',
       date: event?.date ? new Date(event.date) : new Date(),
@@ -110,80 +90,6 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
       status: event?.receber?.status === 'recebido' || event?.pagar?.status === 'pago' ? 'concluido' : 'pendente',
     },
   });
-
-  const draftValue = form.watch('draft');
-  const debouncedDraft = useDebounce(draftValue ?? '', 1000);
-
-  const handleSuggestion = useCallback(async (draft: string) => {
-    if (!draft || draft.length < 10) return;
-
-    setIsSuggesting(true);
-    toast({ title: 'A IA está pensando...', description: 'Aguarde enquanto geramos sugestões para o seu evento.' });
-
-    try {
-      const result = await getEventSuggestions({ 
-        partialEvent: draft,
-        pastEvents,
-       });
-
-      if (result.suggestions.length > 0) {
-        const suggestionText = result.suggestions.join(' ');
-        
-        const artistaMatch = suggestionText.match(/artista: (.*?)(,|$)/i);
-        const contratanteMatch = suggestionText.match(/contratante: (.*?)(,|$)/i);
-        const dateMatch = suggestionText.match(/data: (\d{2}\/\d{2}\/\d{4})/i);
-        const horaMatch = suggestionText.match(/hora: (\d{2}:\d{2})/i);
-        const valorMatch = suggestionText.match(/valor:.*?(\d+(\.\d{1,2})?)/i);
-        const cidadeMatch = suggestionText.match(/cidade: (.*?)(,|$)/i);
-        const localMatch = suggestionText.match(/local: (.*?)(,|$)/i);
-
-
-        if (contratanteMatch?.[1]) {
-            const matchedContratante = contratantes.find(c => c.name.toLowerCase().includes(contratanteMatch[1].trim().toLowerCase()));
-            if(matchedContratante) form.setValue('contratante', matchedContratante.name, { shouldValidate: true });
-        }
-        if (artistaMatch?.[1]) {
-            const matchedArtista = artistas.find(a => a.name.toLowerCase().includes(artistaMatch[1].trim().toLowerCase()));
-            if(matchedArtista) form.setValue('artista', matchedArtista.name, { shouldValidate: true });
-        }
-        if (dateMatch?.[1]) {
-            const [day, month, year] = dateMatch[1].split('/');
-            form.setValue('date', new Date(`${year}-${month}-${day}`), { shouldValidate: true });
-        }
-        if (horaMatch?.[1]) {
-            form.setValue('hora', horaMatch[1], { shouldValidate: true });
-        }
-         if (valorMatch?.[1]) {
-            form.setValue('valor', parseFloat(valorMatch[1]), { shouldValidate: true });
-            if (!form.getValues('financeType') || form.getValues('financeType') === 'nenhum') {
-              form.setValue('financeType', 'receber');
-            }
-        }
-        if (cidadeMatch?.[1]) {
-            form.setValue('cidade', cidadeMatch[1].trim(), { shouldValidate: true });
-        }
-        if (localMatch?.[1]) {
-            form.setValue('local', localMatch[1].trim(), { shouldValidate: true });
-        }
-        toast({ title: 'Sugestões aplicadas!', description: 'O formulário foi preenchido com as sugestões da IA.' });
-      } else {
-        toast({ variant: 'destructive', title: 'Sem sugestões', description: 'A IA não conseguiu gerar sugestões com base no texto fornecido.' });
-      }
-    } catch (error) {
-      console.error(error);
-      toast({ variant: 'destructive', title: 'Erro da IA', description: 'Ocorreu um erro ao buscar sugestões.' });
-    } finally {
-      setIsSuggesting(false);
-    }
-  }, [form, pastEvents, toast, artistas, contratantes]);
-
-
-  useEffect(() => {
-    if (debouncedDraft && !isEditing) {
-      handleSuggestion(debouncedDraft);
-    }
-  }, [debouncedDraft, handleSuggestion, isEditing]);
-
 
   const financeType = form.watch('financeType');
   
@@ -213,40 +119,6 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-
-        {!isEditing && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-headline flex items-center gap-2">
-                <Sparkles className="text-primary" /> Rascunho Inteligente
-              </CardTitle>
-               <FormDescription>
-                Descreva o evento livremente. A IA tentará preencher o formulário para você.
-                Ex: "Festa de casamento para João e Maria em 15/12/2024, às 20h, com a Banda Sinfonia em Florianópolis no Espaço Garden. Cachê de 3000."
-              </FormDescription>
-            </CardHeader>
-            <CardContent>
-               <FormField
-                  control={form.control}
-                  name="draft"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Digite os detalhes do evento aqui..."
-                          {...field}
-                          rows={4}
-                          disabled={isSuggesting}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </CardContent>
-          </Card>
-        )}
-
         <Card>
             <CardHeader><CardTitle className="font-headline">Informações do Evento</CardTitle></CardHeader>
             <CardContent className="space-y-4">
