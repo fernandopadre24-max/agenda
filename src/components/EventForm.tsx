@@ -244,6 +244,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                             <Button
                               variant="outline"
                               role="combobox"
+                              aria-expanded={contratantePopoverOpen}
                               className={cn(
                                 "w-full justify-between",
                                 !field.value && "text-muted-foreground"
@@ -269,7 +270,8 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                                     value={c.name}
                                     key={c.id}
                                     onSelect={(currentValue) => {
-                                        form.setValue("contratante", currentValue === field.value ? "" : currentValue, { shouldValidate: true })
+                                        const finalValue = currentValue.toLowerCase() === field.value?.toLowerCase() ? '' : c.name;
+                                        form.setValue("contratante", finalValue, { shouldValidate: true })
                                         setContratantePopoverOpen(false)
                                     }}
                                     >
@@ -305,6 +307,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                             <Button
                               variant="outline"
                               role="combobox"
+                              aria-expanded={artistaPopoverOpen}
                               className={cn(
                                 "w-full justify-between",
                                 !field.value && "text-muted-foreground"
@@ -330,7 +333,8 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                                     value={a.name}
                                     key={a.id}
                                     onSelect={(currentValue) => {
-                                        form.setValue("artista", currentValue === field.value ? "" : currentValue, { shouldValidate: true })
+                                        const finalValue = currentValue.toLowerCase() === field.value?.toLowerCase() ? '' : a.name;
+                                        form.setValue("artista", finalValue, { shouldValidate: true })
                                         setArtistaPopoverOpen(false)
                                     }}
                                     >
