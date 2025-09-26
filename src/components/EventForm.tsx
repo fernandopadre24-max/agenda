@@ -33,11 +33,9 @@ import { getEventSuggestions } from '@/ai/flows/intelligent-event-suggestions';
 import { Textarea } from './ui/textarea';
 import { getEvents } from '@/lib/data';
 
-const eventDraftSchema = z.object({
-  draft: z.string().optional(),
-});
 
 const eventFormSchema = z.object({
+  draft: z.string().optional(),
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
   artista: z.string().min(1, 'O nome do artista é obrigatório.'),
   date: z.coerce.date({ required_error: 'A data do evento é obrigatória.' }),
@@ -87,8 +85,8 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [pastEvents, setPastEvents] = useState<string[]>([]);
   
-  const form = useForm<EventFormValues & { draft?: string }>({
-    resolver: zodResolver(eventFormSchema.merge(eventDraftSchema)),
+  const form = useForm<EventFormValues>({
+    resolver: zodResolver(eventFormSchema),
     defaultValues: {
       draft: '',
       contratante: event?.contratante ?? '',
