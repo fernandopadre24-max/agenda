@@ -1,6 +1,6 @@
 'use client';
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend, Area, AreaChart } from 'recharts';
 import {
   Card,
   CardContent,
@@ -25,7 +25,7 @@ interface FinancialChartProps {
   aPagarPendente: number;
 }
 
-const barChartConfig = {
+const chartConfig = {
   valor: {
     label: 'Valor (R$)',
   },
@@ -47,19 +47,6 @@ const barChartConfig = {
   },
 } satisfies ChartConfig;
 
-const radarChartConfig = {
-  valor: {
-    label: 'Valor (R$)',
-  },
-  recebido: {
-    label: 'Recebido',
-    color: 'hsl(var(--chart-2))',
-  },
-  pago: {
-    label: 'Pago',
-    color: 'hsl(var(--chart-5))',
-  },
-} satisfies ChartConfig;
 
 export function FinancialChart({
   recebido,
@@ -69,17 +56,16 @@ export function FinancialChart({
 }: FinancialChartProps) {
   const [chartType, setChartType] = useState('bar');
   
-  const barChartData = [
-    { type: 'Recebido', recebido },
-    { type: 'Pago', pago },
-    { type: 'A Receber', aReceber: aReceberPendente },
-    { type: 'A Pagar', aPagar: aPagarPendente },
+  const chartData = [
+    { type: 'Recebido', recebido, fill: "var(--color-recebido)" },
+    { type: 'Pago', pago, fill: "var(--color-pago)" },
+    { type: 'A Receber', aReceber: aReceberPendente, fill: "var(--color-aReceber)" },
+    { type: 'A Pagar', aPagar: aPagarPendente, fill: "var(--color-aPagar)" },
   ];
 
   const radarChartData = [
     { subject: 'Valores', recebido: recebido, pago: pago, fullMark: Math.max(recebido, pago) * 1.1 },
   ];
-
 
   return (
     <Card>
@@ -91,13 +77,14 @@ export function FinancialChart({
       </CardHeader>
       <CardContent>
         <Tabs value={chartType} onValueChange={setChartType} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="bar">Barras</TabsTrigger>
                 <TabsTrigger value="radar">Radar</TabsTrigger>
+                <TabsTrigger value="area">Área</TabsTrigger>
             </TabsList>
             <TabsContent value="bar">
-                <ChartContainer config={barChartConfig} className="min-h-[200px] w-full">
-                  <BarChart accessibilityLayer data={barChartData} margin={{ top: 20 }}>
+                <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                  <BarChart accessibilityLayer data={chartData} margin={{ top: 20 }}>
                     <CartesianGrid vertical={false} />
                     <XAxis
                       dataKey="type"
@@ -114,7 +101,7 @@ export function FinancialChart({
                       content={<ChartTooltipContent
                         formatter={(value, name) => (
                           <div className="flex flex-col">
-                            <span className="font-bold">{barChartConfig[name as keyof typeof barChartConfig]?.label}</span>
+                            <span className="font-bold">{chartConfig[name as keyof typeof chartConfig]?.label}</span>
                             <span>{formatCurrency(Number(value))}</span>
                           </div>
                         )}
@@ -131,7 +118,7 @@ export function FinancialChart({
             </TabsContent>
             <TabsContent value="radar">
                  <ChartContainer
-                    config={radarChartConfig}
+                    config={chartConfig}
                     className="mx-auto aspect-square h-[250px]"
                 >
                     <RadarChart data={radarChartData}>
@@ -143,6 +130,67 @@ export function FinancialChart({
                         <Radar name="Pago" dataKey="pago" stroke="var(--color-pago)" fill="var(--color-pago)" fillOpacity={0.6} />
                         <Legend />
                     </RadarChart>
+                </ChartContainer>
+            </TabsContent>
+             <TabsContent value="area">
+                <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                  <AreaChart
+                    accessibilityLayer
+                    data={chartData}
+                    margin={{
+                      left: 12,
+                      right: 12,
+                      top: 20
+                    }}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="type"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tickFormatter={(value) => value.substring(0, 10)}
+                    />
+                     <YAxis
+                      tickFormatter={(value) => formatCurrency(value).replace(/\s/g, '')}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent
+                        formatter={(value, name) => (
+                           <div className="flex flex-col">
+                            <span className="font-bold">{chartConfig[name as keyof typeof chartConfig]?.label}</span>
+                            <span>{formatCurrency(Number(value))}</span>
+                          </div>
+                        )}
+                        labelFormatter={(label) => label}
+                        indicator="dot"
+                      />}
+                    />
+                    <defs>
+                      <linearGradient id="fillRecebido" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-recebido)" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="var(--color-recebido)" stopOpacity={0.1} />
+                      </linearGradient>
+                      <linearGradient id="fillPago" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-pago)" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="var(--color-pago)" stopOpacity={0.1} />
+                      </linearGradient>
+                       <linearGradient id="fillAReceber" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-aReceber)" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="var(--color-aReceber)" stopOpacity={0.1} />
+                      </linearGradient>
+                       <linearGradient id="fillAPagar" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-aPagar)" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="var(--color-aPagar)" stopOpacity={0.1} />
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="recebido" stroke="var(--color-recebido)" fill="url(#fillRecebido)" />
+                    <Area type="monotone" dataKey="pago" stroke="var(--color-pago)" fill="url(#fillPago)" />
+                    <Area type="monotone" dataKey="aReceber" stroke="var(--color-aReceber)" fill="url(#fillAReceber)" />
+                    <Area type="monotone" dataKey="aPagar" stroke="var(--color-aPagar)" fill="url(#fillAPagar)" />
+                    <Legend />
+                  </AreaChart>
                 </ChartContainer>
             </TabsContent>
         </Tabs>
