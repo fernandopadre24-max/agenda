@@ -20,6 +20,7 @@ import type { Event, Artista, Contratante } from './types';
 import { redirect } from 'next/navigation';
 
 const eventFormSchema = z.object({
+  draft: z.string().optional(),
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
   artista: z.string().min(1, 'O nome do artista é obrigatório.'),
   date: z.coerce.date({ required_error: 'A data do evento é obrigatória.' }),
@@ -38,6 +39,7 @@ const eventFormSchema = z.object({
     message: 'Valor e status são obrigatórios para transações financeiras.',
     path: ['valor'],
 });
+
 
 const contratanteFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
@@ -162,6 +164,7 @@ export async function createContratanteAction(data: ContratanteFormValues): Prom
         return { success: false, message: 'Ocorreu um erro ao criar o contratante.' };
     }
     revalidatePath('/contratantes');
+    revalidatePath('/events/new');
     return { success: true, message: 'Contratante criado com sucesso.', redirectPath: '/contratantes', data: newContratante };
 }
 
@@ -180,6 +183,7 @@ export async function updateContratanteAction(id: string, data: ContratanteFormV
         return { success: false, message: 'Ocorreu um erro ao atualizar o contratante.' };
     }
     revalidatePath('/contratantes');
+    revalidatePath('/events/new');
     redirect('/contratantes');
 }
 
@@ -204,6 +208,7 @@ export async function deleteContratanteAction(id: string): Promise<ActionRespons
         return { success: false, message: 'Ocorreu um erro ao deletar o contratante.' };
     }
     revalidatePath('/contratantes');
+    revalidatePath('/events/new');
     return { success: true, message: 'Contratante deletado com sucesso.' };
 }
 
@@ -223,6 +228,7 @@ export async function createArtistaAction(data: ArtistaFormValues): Promise<Acti
         return { success: false, message: 'Ocorreu um erro ao criar o artista.' };
     }
     revalidatePath('/artistas');
+    revalidatePath('/events/new');
     return { success: true, message: 'Artista criado com sucesso.', redirectPath: '/artistas', data: newArtista };
 }
 
@@ -241,6 +247,7 @@ export async function updateArtistaAction(id: string, data: ArtistaFormValues): 
         return { success: false, message: 'Ocorreu um erro ao atualizar o artista.' };
     }
     revalidatePath('/artistas');
+    revalidatePath('/events/new');
     redirect('/artistas');
 }
 
@@ -264,5 +271,6 @@ export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
         return { success: false, message: 'Ocorreu um erro ao deletar o artista.' };
     }
     revalidatePath('/artistas');
+    revalidatePath('/events/new');
     return { success: true, message: 'Artista deletado com sucesso.' };
 }
