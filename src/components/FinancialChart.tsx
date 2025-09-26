@@ -1,6 +1,6 @@
 'use client';
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, Label } from 'recharts';
 import {
   Card,
   CardContent,
@@ -12,8 +12,8 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  type ChartConfig
 } from '@/components/ui/chart';
-import type { ChartConfig } from '@/components/ui/chart';
 import { formatCurrency } from '@/lib/utils';
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -49,12 +49,12 @@ const barChartConfig = {
 
 const pieChartConfig = {
   recebido: {
-    label: "Recebido",
-    color: "hsl(var(--chart-2))",
+    label: 'Recebido',
+    color: 'hsl(var(--chart-2))',
   },
   pago: {
-    label: "Pago",
-    color: "hsl(var(--chart-5))",
+    label: 'Pago',
+    color: 'hsl(var(--chart-5))',
   },
 } satisfies ChartConfig;
 
@@ -74,8 +74,8 @@ export function FinancialChart({
   ];
 
   const pieChartData = [
-    { name: 'Recebido', value: recebido, color: 'hsl(var(--chart-2))' },
-    { name: 'Pago', value: pago, color: 'hsl(var(--chart-5))' },
+    { name: 'recebido', value: recebido },
+    { name: 'pago', value: pago },
   ];
 
   return (
@@ -115,7 +115,7 @@ export function FinancialChart({
                             <span>{formatCurrency(Number(value))}</span>
                           </div>
                         )}
-                        labelFormatter={(label) => null}
+                        labelFormatter={() => null}
                         indicator="dot"
                       />}
                     />
@@ -134,12 +134,7 @@ export function FinancialChart({
                   <PieChart>
                     <ChartTooltip
                       cursor={false}
-                      content={<ChartTooltipContent hideLabel indicator="dot" formatter={(value, name, props) => (
-                          <div className="flex flex-col">
-                            <span className="font-bold">{props.payload?.name}</span>
-                            <span>{formatCurrency(Number(value))}</span>
-                          </div>
-                        )}/>}
+                      content={<ChartTooltipContent hideLabel indicator="dot" nameKey="name" />}
                     />
                     <Pie
                       data={pieChartData}
@@ -147,9 +142,39 @@ export function FinancialChart({
                       nameKey="name"
                       innerRadius={60}
                       strokeWidth={5}
+                      fill="var(--color-pago)"
                     >
-                      {pieChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                       <Label
+                        content={({ viewBox }) => {
+                          if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                            return (
+                              <text
+                                x={viewBox.cx}
+                                y={viewBox.cy}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                              >
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={viewBox.cy}
+                                  className="fill-foreground text-3xl font-bold"
+                                >
+                                  {formatCurrency(recebido + pago)}
+                                </tspan>
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) + 24}
+                                  className="fill-muted-foreground"
+                                >
+                                  Total
+                                </tspan>
+                              </text>
+                            )
+                          }
+                        }}
+                      />
+                       {pieChartData.map((entry) => (
+                        <Cell key={entry.name} fill={`var(--color-${entry.name})`} />
                       ))}
                     </Pie>
                   </PieChart>
