@@ -81,7 +81,7 @@ export function EventForm({ event }: EventFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isDataLoading, setIsDataLoading] = useState(!isEditing);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [pastEvents, setPastEvents] = useState<string[]>([]);
   const [artistas, setArtistas] = useState<Artista[]>([]);
@@ -109,6 +109,7 @@ export function EventForm({ event }: EventFormProps) {
   useEffect(() => {
     async function fetchData() {
       setIsDataLoading(true);
+      router.refresh();
       const [fetchedArtistas, fetchedContratantes, allEvents] = await Promise.all([
         getArtistas(),
         getContratantes(),
@@ -125,7 +126,7 @@ export function EventForm({ event }: EventFormProps) {
       setIsDataLoading(false);
     }
     fetchData();
-  }, []);
+  }, [router]);
 
   const handleSuggestion = useCallback(async (draft: string) => {
     if (!draft || draft.length < 10) return;
