@@ -46,7 +46,7 @@ export function EventCard({ event }: { event: Event }) {
         toast({ title: 'Atualizando status...' });
         const result = await updateEventStatusAction(event.id, type);
         if (result.success) {
-            toast({ title: 'Status atualizado com sucesso!' });
+            toast({ title: type === 'receber' ? 'Recebimento confirmado!' : 'Pagamento confirmado!' });
             router.refresh();
         } else {
             toast({ variant: 'destructive', title: 'Erro ao atualizar status.', description: result.message });
