@@ -24,7 +24,7 @@ const artistaFormSchema = z.object({
 });
 
 
-export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: (newArtista?: Artista) => void }) {
+export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: (newArtista: Artista) => void }) {
   const isEditing = !!artista;
   const router = useRouter();
   const { toast } = useToast();
@@ -42,30 +42,36 @@ export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: (
 
   const onSubmit = async (data: ArtistaFormValues) => {
     setIsLoading(true);
-    const action = isEditing 
-        ? updateArtistaAction.bind(null, artista.id) 
-        : createArtistaAction;
-        
-    const result = await action(data);
-
-    if (result.success) {
-      toast({
-        title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
-      });
-       if (onSave) {
-        onSave(result.data as Artista);
-      } else {
-        router.push(result.redirectPath ?? '/artistas');
+    
+    if (isEditing) {
+      const result = await updateArtistaAction(artista.id, data);
+      if (result.success) {
+        toast({ title: 'Artista atualizado com sucesso!' });
+        router.push('/artistas');
         router.refresh();
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao atualizar o artista.',
+          description: result.message,
+        });
       }
-
     } else {
-      toast({
-        variant: 'destructive',
-        title: `Erro ao ${isEditing ? 'atualizar' : 'criar'} o artista.`,
-        description: result.message,
-      });
+      const result = await createArtistaAction(data);
+      if (result.success && result.data) {
+        toast({ title: 'Artista criado com sucesso!' });
+        if (onSave) {
+          onSave(result.data as Artista);
+        }
+      } else {
+         toast({
+          variant: 'destructive',
+          title: 'Erro ao criar o artista.',
+          description: result.message,
+        });
+      }
     }
+    
     setIsLoading(false);
   };
   

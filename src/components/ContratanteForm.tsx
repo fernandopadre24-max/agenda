@@ -23,7 +23,7 @@ const contratanteFormSchema = z.object({
 });
 
 
-export function ContratanteForm({ contratante, onSave }: { contratante?: Contratante, onSave?: (newContratante?: Contratante) => void }) {
+export function ContratanteForm({ contratante, onSave }: { contratante?: Contratante, onSave?: (newContratante: Contratante) => void }) {
   const isEditing = !!contratante;
   const router = useRouter();
   const { toast } = useToast();
@@ -40,29 +40,36 @@ export function ContratanteForm({ contratante, onSave }: { contratante?: Contrat
 
   const onSubmit = async (data: ContratanteFormValues) => {
     setIsLoading(true);
-    const action = isEditing
-        ? updateContratanteAction.bind(null, contratante.id)
-        : createContratanteAction;
 
-    const result = await action(data);
-
-    if (result.success) {
-      toast({
-        title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
-      });
-      if (onSave) {
-        onSave(result.data as Contratante);
-      } else {
-        router.push(result.redirectPath ?? '/contratantes');
+    if (isEditing) {
+      const result = await updateContratanteAction(contratante.id, data);
+       if (result.success) {
+        toast({ title: 'Contratante atualizado com sucesso!' });
+        router.push('/contratantes');
         router.refresh();
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao atualizar o contratante.',
+          description: result.message,
+        });
       }
     } else {
-      toast({
-        variant: 'destructive',
-        title: `Erro ao ${isEditing ? 'atualizar' : 'criar'} o contratante.`,
-        description: result.message,
-      });
+      const result = await createContratanteAction(data);
+      if (result.success && result.data) {
+        toast({ title: 'Contratante criado com sucesso!' });
+        if (onSave) {
+          onSave(result.data as Contratante);
+        }
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao criar o contratante.',
+          description: result.message,
+        });
+      }
     }
+    
     setIsLoading(false);
   };
   
