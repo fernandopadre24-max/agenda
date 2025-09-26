@@ -73,12 +73,12 @@ export function EventCard({ event }: { event: Event }) {
   }
 
   const eventDate = new Date(event.date);
+  eventDate.setUTCHours(0,0,0,0);
   const now = new Date();
   now.setHours(0,0,0,0);
-  const isPastEvent = eventDate < now;
   
-  const day = eventDate.toLocaleDateString('pt-BR', { day: '2-digit' });
-  const month = eventDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+  const day = eventDate.toLocaleDateString('pt-BR', { day: '2-digit', timeZone: 'UTC' });
+  const month = eventDate.toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' }).replace('.', '');
   const time = event.hora;
 
   const renderFinancials = () => {
@@ -200,3 +200,5 @@ export function EventCard({ event }: { event: Event }) {
       </Card>
   );
 }
+
+    

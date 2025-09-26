@@ -32,7 +32,7 @@ function setData<T>(key: string, data: T[]): void {
 // Event functions
 export async function getEvents(): Promise<Event[]> {
   const events = getData<Event>(EVENTS_KEY).map(e => ({...e, date: new Date(e.date)}));
-  return events.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 export async function getEventById(id: string): Promise<Event | undefined> {
@@ -186,3 +186,5 @@ export async function deleteTransaction(id: string): Promise<boolean> {
     setData(TRANSACTIONS_KEY, transactions);
     return transactions.length < initialLength;
 }
+
+    
