@@ -3,7 +3,7 @@
 import { useForm, useFormState } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CalendarIcon, Check, ChevronsUpDown, Loader2, Sparkles } from 'lucide-react';
+import { CalendarIcon, Loader2, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
@@ -24,13 +24,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { createEventAction, updateEventAction } from '@/lib/actions';
-import type { Event, Contratante, Artista } from '@/lib/types';
+import type { Event, Contratante, Artista, ActionResponse } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { getEventSuggestions } from '@/ai/flows/intelligent-event-suggestions';
 import { Textarea } from './ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const eventFormSchema = z.object({
   draft: z.string().optional(),
@@ -90,8 +90,6 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
   const router = useRouter();
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
-  const [contratantePopoverOpen, setContratantePopoverOpen] = useState(false);
-  const [artistaPopoverOpen, setArtistaPopoverOpen] = useState(false);
   
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -243,61 +241,22 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                   control={form.control}
                   name="contratante"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                    <FormItem>
                       <FormLabel>Contratante</FormLabel>
-                      <Popover open={contratantePopoverOpen} onOpenChange={setContratantePopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={contratantePopoverOpen}
-                              className={cn(
-                                "w-full justify-between",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value
-                                ? contratantes.find(
-                                    (c) => c.name === field.value
-                                  )?.name
-                                : "Selecione um contratante"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                          <Command>
-                            <CommandInput placeholder="Buscar contratante..." />
-                            <CommandList>
-                                <CommandEmpty>Nenhum contratante encontrado.</CommandEmpty>
-                                <CommandGroup>
-                                {contratantes.map((c) => (
-                                    <CommandItem
-                                    value={c.name}
-                                    key={c.id}
-                                    onSelect={(currentValue) => {
-                                        const finalValue = currentValue.toLowerCase() === field.value?.toLowerCase() ? '' : c.name;
-                                        form.setValue("contratante", finalValue, { shouldValidate: true })
-                                        setContratantePopoverOpen(false)
-                                    }}
-                                    >
-                                    <Check
-                                        className={cn(
-                                        "mr-2 h-4 w-4",
-                                        c.name.toLowerCase() === field.value?.toLowerCase()
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                    />
-                                    {c.name}
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um contratante" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {contratantes.map((c) => (
+                            <SelectItem key={c.id} value={c.name}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -306,61 +265,22 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
                   control={form.control}
                   name="artista"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                     <FormItem>
                       <FormLabel>Artista / Serviço</FormLabel>
-                      <Popover open={artistaPopoverOpen} onOpenChange={setArtistaPopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={artistaPopoverOpen}
-                              className={cn(
-                                "w-full justify-between",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value
-                                ? artistas.find(
-                                    (a) => a.name === field.value
-                                  )?.name
-                                : "Selecione um artista"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                          <Command>
-                            <CommandInput placeholder="Buscar artista..." />
-                            <CommandList>
-                                <CommandEmpty>Nenhum artista encontrado.</CommandEmpty>
-                                <CommandGroup>
-                                {artistas.map((a) => (
-                                    <CommandItem
-                                    value={a.name}
-                                    key={a.id}
-                                    onSelect={(currentValue) => {
-                                        const finalValue = currentValue.toLowerCase() === field.value?.toLowerCase() ? '' : a.name;
-                                        form.setValue("artista", finalValue, { shouldValidate: true })
-                                        setArtistaPopoverOpen(false)
-                                    }}
-                                    >
-                                    <Check
-                                        className={cn(
-                                        "mr-2 h-4 w-4",
-                                        a.name.toLowerCase() === field.value?.toLowerCase()
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                    />
-                                    {a.name}
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um artista" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {artistas.map((a) => (
+                            <SelectItem key={a.id} value={a.name}>
+                              {a.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
