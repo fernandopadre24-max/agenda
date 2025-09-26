@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Loader2, ListFilter, Calendar as CalendarIcon, X } from 'lucide-react';
 import { smartSearch } from '@/ai/flows/smart-search';
 import { EventList } from './EventList';
-import type { Event } from '@/lib/types';
+import type { Event, Artista, Contratante } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,8 +16,17 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { isSameDay } from 'date-fns';
 import { Card } from './ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
+export function EventDashboard({ 
+  initialEvents,
+  initialArtistas,
+  initialContratantes
+}: { 
+  initialEvents: Event[],
+  initialArtistas: Artista[],
+  initialContratantes: Contratante[]
+}) {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [events, setEvents] = useState(initialEvents);
@@ -26,6 +35,9 @@ export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
   const [isMounted, setIsMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedArtista, setSelectedArtista] = useState('all');
+  const [selectedContratante, setSelectedContratante] = useState('all');
+
 
   useEffect(() => {
     setIsMounted(true);
@@ -78,11 +90,19 @@ export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
     }
 
     if (selectedDate) {
-        return filteredEvents.filter(e => isSameDay(new Date(e.date), selectedDate));
+        filteredEvents = filteredEvents.filter(e => isSameDay(new Date(e.date), selectedDate));
+    }
+
+    if (selectedArtista !== 'all') {
+        filteredEvents = filteredEvents.filter(e => e.artista === selectedArtista);
+    }
+
+    if (selectedContratante !== 'all') {
+        filteredEvents = filteredEvents.filter(e => e.contratante === selectedContratante);
     }
 
     return filteredEvents;
-  }, [filter, events, isMounted, selectedDate]);
+  }, [filter, events, isMounted, selectedDate, selectedArtista, selectedContratante]);
 
   const eventDates = useMemo(() => {
     return initialEvents.map(event => new Date(event.date));
@@ -90,46 +110,73 @@ export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex w-full items-center space-x-2">
-        <Input 
-          type="text" 
-          placeholder="Busca inteligente de eventos..." 
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          className="bg-card flex-1"
-        />
-        <Button onClick={handleSearch} disabled={isLoading} className="bg-primary hover:bg-primary/90">
-          {isLoading ? <Loader2 className="animate-spin" /> : <Search />}
-          <span className="sr-only">Buscar</span>
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <ListFilter />
-              <span className="sr-only">Filtrar</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuRadioGroup value={filter} onValueChange={setFilter}>
-              <DropdownMenuRadioItem value="all">Todos</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="upcoming">Próximos</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="past">Passados</DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-         <Button variant="outline" size="icon" onClick={() => setShowCalendar(!showCalendar)}>
-            <CalendarIcon />
-            <span className="sr-only">Calendário</span>
-        </Button>
-      </div>
+        <div className="space-y-2">
+            <div className="flex w-full items-center space-x-2">
+                <Input 
+                type="text" 
+                placeholder="Busca inteligente de eventos..." 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="bg-card flex-1"
+                />
+                <Button onClick={handleSearch} disabled={isLoading} className="bg-primary hover:bg-primary/90">
+                {isLoading ? <Loader2 className="animate-spin" /> : <Search />}
+                <span className="sr-only">Buscar</span>
+                </Button>
+            </div>
+            <div className="flex w-full items-center gap-2">
+                <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex-1">
+                    <ListFilter className="mr-2 h-4 w-4" />
+                    {filter === 'all' ? 'Todos' : filter === 'upcoming' ? 'Próximos' : 'Passados'}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuRadioGroup value={filter} onValueChange={setFilter}>
+                    <DropdownMenuRadioItem value="all">Todos</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="upcoming">Próximos</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="past">Passados</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+                </DropdownMenu>
+                <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)} className="flex-1">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? selectedDate.toLocaleDateString('pt-BR') : 'Data'}
+                </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+                <Select value={selectedArtista} onValueChange={setSelectedArtista}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Filtrar por artista" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os Artistas</SelectItem>
+                        {initialArtistas.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={selectedContratante} onValueChange={setSelectedContratante}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Filtrar por contratante" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os Contratantes</SelectItem>
+                        {initialContratantes.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
 
        {showCalendar && (
          <Card className="p-0">
           <Calendar
             mode="single"
             selected={selectedDate}
-            onSelect={setSelectedDate}
+            onSelect={(date) => {
+                setSelectedDate(date);
+                setShowCalendar(false);
+            }}
             modifiers={{ event: eventDates }}
             modifiersClassNames={{
               event: 'bg-primary/20 rounded-full',
@@ -140,11 +187,18 @@ export function EventDashboard({ initialEvents }: { initialEvents: Event[] }) {
          </Card>
       )}
 
-      {selectedDate && (
+      {(selectedDate || selectedArtista !== 'all' || selectedContratante !== 'all') && (
           <div className="flex justify-start">
-             <Button variant="outline" size="sm" onClick={() => setSelectedDate(undefined)}>
+             <Button variant="outline" size="sm" onClick={() => {
+                setSelectedDate(undefined);
+                setSelectedArtista('all');
+                setSelectedContratante('all');
+                setQuery('');
+                setEvents(initialEvents);
+                setAiResponse('');
+             }}>
                 <X className="mr-2 h-4 w-4" />
-                Limpar seleção
+                Limpar filtros
             </Button>
           </div>
       )}

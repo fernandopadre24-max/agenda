@@ -1,17 +1,25 @@
 import { AppHeader } from '@/components/AppHeader';
-import { getEvents } from '@/lib/data';
+import { getEvents, getArtistas, getContratantes } from '@/lib/data';
 import { EventDashboard } from '@/components/EventDashboard';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
 export default async function HomePage() {
-  const events = await getEvents();
+  const [events, artistas, contratantes] = await Promise.all([
+    getEvents(),
+    getArtistas(),
+    getContratantes(),
+  ]);
 
   return (
     <div className="flex flex-col flex-1">
       <AppHeader />
       <main className="flex-1 p-4 md:p-6">
-        <EventDashboard initialEvents={events} />
+        <EventDashboard 
+          initialEvents={events} 
+          initialArtistas={artistas}
+          initialContratantes={contratantes}
+        />
       </main>
       <Link
         href="/events/new"
