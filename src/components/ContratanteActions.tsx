@@ -1,9 +1,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { deleteContratanteAction } from '@/lib/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,19 +15,6 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export function ContratanteActions({ contratanteId, onDelete }: { contratanteId: string, onDelete: () => void }) {
-  const { toast } = useToast();
-
-  const handleDelete = async () => {
-    toast({ title: 'Excluindo contratante...' });
-    const result = await deleteContratanteAction(contratanteId);
-
-    if (result.success) {
-        toast({ title: 'Contratante excluído com sucesso.' });
-        onDelete();
-    } else {
-        toast({ variant: 'destructive', title: 'Erro ao excluir contratante.', description: result.message })
-    }
-  };
 
   return (
     <div className="flex items-center gap-1">
@@ -55,7 +40,7 @@ export function ContratanteActions({ contratanteId, onDelete }: { contratanteId:
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Continuar</AlertDialogAction>
+                <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">Continuar</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

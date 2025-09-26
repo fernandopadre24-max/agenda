@@ -4,22 +4,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, User, Mail, Phone } from 'lucide-react';
 import { ContratanteActions } from '@/components/ContratanteActions';
-import { Contratante } from '@/lib/types';
+import { type Contratante } from '@/lib/types';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { ContratanteForm } from './ContratanteForm';
-import { Skeleton } from './ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { deleteContratanteAction } from '@/lib/actions';
+
 
 export function ContratantesClientPage({ initialContratantes }: { initialContratantes: Contratante[] }) {
   const [contratantes, setContratantes] = useState(initialContratantes);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleSave = (newContratante: Contratante) => {
     setContratantes(prev => [...prev, newContratante].sort((a,b) => a.name.localeCompare(b.name)));
     setIsSheetOpen(false);
   }
 
-  const handleDelete = (id: string) => {
-    setContratantes(prev => prev.filter(c => c.id !== id));
+  const handleDelete = async (id: string) => {
+    toast({ title: 'Excluindo contratante...' });
+    const result = await deleteContratanteAction(id);
+
+    if (result.success) {
+        toast({ title: 'Contratante excluído com sucesso.' });
+        setContratantes(prev => prev.filter(c => c.id !== id));
+    } else {
+        toast({ variant: 'destructive', title: 'Erro ao excluir contratante.', description: result.message })
+    }
   }
 
   return (
