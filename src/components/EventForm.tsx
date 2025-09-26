@@ -7,7 +7,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +28,6 @@ import type { Event, Contratante, Artista } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { getArtistas, getContratantes } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const eventFormSchema = z.object({
@@ -53,26 +52,18 @@ const eventFormSchema = z.object({
 
 export type EventFormValues = z.infer<typeof eventFormSchema>;
 
-export function EventForm({ event }: { event?: Event }) {
+interface EventFormProps {
+    event?: Event;
+    artistas: Artista[];
+    contratantes: Contratante[];
+}
+
+export function EventForm({ event, artistas, contratantes }: EventFormProps) {
   const isEditing = !!event;
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [contratantes, setContratantes] = useState<Contratante[]>([]);
-  const [artistas, setArtistas] = useState<Artista[]>([]);
-
-  useEffect(() => {
-    async function fetchData() {
-        const [contratantesData, artistasData] = await Promise.all([
-            getContratantes(),
-            getArtistas()
-        ]);
-        setContratantes(contratantesData);
-        setArtistas(artistasData);
-    }
-    fetchData();
-  }, []);
-
+  
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
