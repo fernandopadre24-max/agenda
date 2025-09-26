@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { type Artista, type ActionResponse } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
+import { createArtistaAction } from '@/lib/actions';
 
 const artistaFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
@@ -27,7 +28,7 @@ type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
 interface ArtistaFormProps {
     artista?: Artista;
     onSave?: (newArtista: Artista) => void;
-    action: (data: ArtistaFormValues) => Promise<ActionResponse>;
+    action: (id: string, data: ArtistaFormValues) => Promise<ActionResponse> | ((data: ArtistaFormValues) => Promise<ActionResponse>);
 }
 
 export function ArtistaForm({ artista, onSave, action }: ArtistaFormProps) {
@@ -48,14 +49,15 @@ export function ArtistaForm({ artista, onSave, action }: ArtistaFormProps) {
 
   const onSubmit = (data: ArtistaFormValues) => {
     startTransition(async () => {
-        const result = await action(data);
+        const currentAction = isEditing ? action.bind(null, artista.id) : createArtistaAction;
+        const result = await currentAction(data);
         if (result.success) {
             toast({ title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
-            if (isEditing) {
+            if (onSave && result.data) {
+                onSave(result.data as Artista);
+            } else {
                 router.push('/artistas');
                 router.refresh();
-            } else if (onSave && result.data) {
-                onSave(result.data as Artista);
             }
         } else {
             toast({

@@ -14,13 +14,11 @@ export default async function EditArtistaPage({ params }: { params: { id: string
     notFound();
   }
 
-  const action = updateArtistaAction.bind(null, artista.id);
-
   return (
     <div className="flex flex-col min-h-full bg-background">
       <PageHeader title="Editar Artista" showBackButton={true}/>
       <main className="flex-1 p-4 md:p-6">
-        <ArtistaForm artista={artista as Artista} action={action} />
+        <ArtistaForm artista={artista as Artista} action={updateArtistaAction} />
       </main>
     </div>
   );

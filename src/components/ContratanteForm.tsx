@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { type Contratante, type ActionResponse } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
+import { createContratanteAction } from '@/lib/actions';
 
 const contratanteFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
@@ -28,7 +29,7 @@ type ContratanteFormValues = z.infer<typeof contratanteFormSchema>;
 interface ContratanteFormProps {
     contratante?: Contratante;
     onSave?: (newContratante: Contratante) => void;
-    action: (data: ContratanteFormValues) => Promise<ActionResponse>;
+    action: (id: string, data: ContratanteFormValues) => Promise<ActionResponse> | ((data: ContratanteFormValues) => Promise<ActionResponse>);
 }
 
 export function ContratanteForm({ contratante, onSave, action }: ContratanteFormProps) {
@@ -50,14 +51,15 @@ export function ContratanteForm({ contratante, onSave, action }: ContratanteForm
 
   const onSubmit = async (data: ContratanteFormValues) => {
     startTransition(async () => {
-      const result = await action(data);
+      const currentAction = isEditing ? action.bind(null, contratante.id) : createContratanteAction;
+      const result = await currentAction(data);
       if (result.success) {
         toast({ title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
-        if (isEditing) {
+        if (onSave && result.data) {
+          onSave(result.data as Contratante);
+        } else {
           router.push('/contratantes');
           router.refresh();
-        } else if (onSave && result.data) {
-          onSave(result.data as Contratante);
         }
       } else {
         toast({

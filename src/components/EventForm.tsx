@@ -7,7 +7,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { useState, useCallback } from 'react';
+import { useState, useTransition } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,8 +22,8 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { createEventAction, updateEventAction } from '@/lib/actions';
-import type { Event, Contratante, Artista } from '@/lib/types';
+import { createEventAction } from '@/lib/actions';
+import type { Event, Contratante, Artista, ActionResponse } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -58,6 +58,7 @@ interface EventFormProps {
     artistas: Artista[];
     contratantes: Contratante[];
     pastEvents: string[];
+    action?: (id: string, data: EventFormValues) => Promise<ActionResponse>;
 }
 
 function SubmitButton({ isEditing }: { isEditing: boolean }) {
@@ -69,10 +70,11 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
     )
 }
 
-export function EventForm({ event, artistas, contratantes, pastEvents }: EventFormProps) {
+export function EventForm({ event, artistas, contratantes, pastEvents, action }: EventFormProps) {
   const isEditing = !!event;
   const router = useRouter();
   const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
   
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -94,26 +96,26 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
   const financeType = form.watch('financeType');
   
   const onSubmit = async (data: EventFormValues) => {
-    const action = isEditing
-      ? updateEventAction.bind(null, event!.id)
-      : createEventAction;
+    startTransition(async () => {
+      const currentAction = isEditing && action ? action.bind(null, event!.id) : createEventAction;
 
-    const result = await action(data);
+      const result = await currentAction(data);
 
-    if (result.success) {
-      toast({
-        title: `Evento ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
-      });
-       router.push(result.redirectPath ?? '/');
-       router.refresh();
+      if (result.success) {
+        toast({
+          title: `Evento ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
+        });
+        router.push(result.redirectPath ?? '/');
+        router.refresh();
 
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao salvar o evento.',
-        description: result.message,
-      });
-    }
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao salvar o evento.',
+          description: result.message,
+        });
+      }
+    });
   };
   
   return (
@@ -240,7 +242,9 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
             </CardContent>
         </Card>
 
-        <SubmitButton isEditing={isEditing} />
+        <Button type="submit" disabled={isPending} className="w-full">
+            {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
+        </Button>
       </form>
     </Form>
   );
