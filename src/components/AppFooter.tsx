@@ -1,16 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Users, Mic, DollarSign, CalendarDays, Calculator } from 'lucide-react';
+import { Home, Users, Mic, DollarSign, CalendarDays, ArrowRightLeft } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Início' },
   { href: '/agenda', icon: CalendarDays, label: 'Agenda' },
+  { href: '/transacoes', icon: ArrowRightLeft, label: 'Transações'},
   { href: '/contratantes', icon: Users, label: 'Contratantes' },
   { href: '/artistas', icon: Mic, label: 'Artistas' },
-  { href: '/financeiro', icon: DollarSign, label: 'Financeiro' },
+  { href: '/financeiro', icon: DollarSign, label: 'Resumo' },
 ];
 
 export function AppFooter() {
