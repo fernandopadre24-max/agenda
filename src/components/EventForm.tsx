@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CalendarIcon, Loader2, Sparkles } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown, Loader2, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
@@ -28,7 +28,7 @@ import type { Event, Contratante, Artista } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { getEventSuggestions } from '@/ai/flows/intelligent-event-suggestions';
 import { Textarea } from './ui/textarea';
 
@@ -117,7 +117,6 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
       if (result.suggestions.length > 0) {
         const suggestionText = result.suggestions.join(' ');
         
-        // Extrair informações do texto da sugestão
         const artistaMatch = suggestionText.match(/artista: (.*?)(,|$)/i);
         const contratanteMatch = suggestionText.match(/contratante: (.*?)(,|$)/i);
         const dateMatch = suggestionText.match(/data: (\d{2}\/\d{2}\/\d{4})/i);
@@ -231,38 +230,126 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
         <Card>
             <CardHeader><CardTitle className="font-headline">Informações do Evento</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-                <FormField control={form.control} name="contratante" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Contratante</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecione um contratante" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {contratantes.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
+                <FormField
+                  control={form.control}
+                  name="contratante"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Contratante</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? contratantes.find(
+                                    (c) => c.name === field.value
+                                  )?.name
+                                : "Selecione um contratante"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar contratante..." />
+                            <CommandList>
+                                <CommandEmpty>Nenhum contratante encontrado.</CommandEmpty>
+                                <CommandGroup>
+                                {contratantes.map((c) => (
+                                    <CommandItem
+                                    value={c.name}
+                                    key={c.id}
+                                    onSelect={() => {
+                                        form.setValue("contratante", c.name)
+                                    }}
+                                    >
+                                    <Check
+                                        className={cn(
+                                        "mr-2 h-4 w-4",
+                                        c.name === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                    />
+                                    {c.name}
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
                     </FormItem>
-                )}/>
-                <FormField control={form.control} name="artista" render={({ field }) => (
-                     <FormItem>
-                        <FormLabel>Artista / Serviço</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecione um artista" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {artistas.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="artista"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Artista / Serviço</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? artistas.find(
+                                    (a) => a.name === field.value
+                                  )?.name
+                                : "Selecione um artista"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar artista..." />
+                            <CommandList>
+                                <CommandEmpty>Nenhum artista encontrado.</CommandEmpty>
+                                <CommandGroup>
+                                {artistas.map((a) => (
+                                    <CommandItem
+                                    value={a.name}
+                                    key={a.id}
+                                    onSelect={() => {
+                                        form.setValue("artista", a.name)
+                                    }}
+                                    >
+                                    <Check
+                                        className={cn(
+                                        "mr-2 h-4 w-4",
+                                        a.name === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                    />
+                                    {a.name}
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
                     </FormItem>
-                )}/>
+                  )}
+                />
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="date" render={({ field }) => (
                         <FormItem className="flex flex-col"><FormLabel>Data</FormLabel>
