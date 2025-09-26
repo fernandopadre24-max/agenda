@@ -23,7 +23,7 @@ const contratanteFormSchema = z.object({
 });
 
 
-export function ContratanteForm({ contratante, onSave }: { contratante?: Contratante, onSave?: () => void }) {
+export function ContratanteForm({ contratante, onSave }: { contratante?: Contratante, onSave?: (newContratante?: Contratante) => void }) {
   const isEditing = !!contratante;
   const router = useRouter();
   const { toast } = useToast();
@@ -51,11 +51,11 @@ export function ContratanteForm({ contratante, onSave }: { contratante?: Contrat
         title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
       });
       if (onSave) {
-        onSave();
+        onSave(result.data as Contratante);
       } else {
         router.push(result.redirectPath ?? '/contratantes');
+        router.refresh();
       }
-      router.refresh();
     } else {
       toast({
         variant: 'destructive',

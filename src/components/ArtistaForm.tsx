@@ -24,7 +24,7 @@ const artistaFormSchema = z.object({
 });
 
 
-export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: () => void }) {
+export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: (newArtista?: Artista) => void }) {
   const isEditing = !!artista;
   const router = useRouter();
   const { toast } = useToast();
@@ -53,11 +53,11 @@ export function ArtistaForm({ artista, onSave }: { artista?: Artista, onSave?: (
         title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
       });
        if (onSave) {
-        onSave();
+        onSave(result.data as Artista);
       } else {
         router.push(result.redirectPath ?? '/artistas');
+        router.refresh();
       }
-      router.refresh();
 
     } else {
       toast({

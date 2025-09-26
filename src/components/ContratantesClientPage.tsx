@@ -12,6 +12,13 @@ export function ContratantesClientPage({ initialContratantes }: { initialContrat
   const [contratantes, setContratantes] = useState(initialContratantes);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+  const handleSave = (newContratante?: Contratante) => {
+    if (newContratante) {
+        setContratantes(prev => [...prev, newContratante]);
+    }
+    setIsSheetOpen(false);
+  }
+
   return (
     <>
       <div className="flex justify-end">
@@ -22,7 +29,7 @@ export function ContratantesClientPage({ initialContratantes }: { initialContrat
             </Button>
           </SheetTrigger>
           <SheetContent className="p-0">
-            <ContratanteForm onSave={() => setIsSheetOpen(false)} />
+            <ContratanteForm onSave={handleSave} />
           </SheetContent>
         </Sheet>
       </div>

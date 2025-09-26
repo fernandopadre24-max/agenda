@@ -16,7 +16,7 @@ import {
     getArtistas as dbGetArtistas,
     getEvents
 } from './data';
-import type { Event } from './types';
+import type { Event, Artista, Contratante } from './types';
 import { redirect } from 'next/navigation';
 
 const eventFormSchema = z.object({
@@ -62,6 +62,7 @@ export type ActionResponse = {
     success: boolean;
     message: string;
     redirectPath?: string;
+    data?: Artista | Contratante;
     errors?: { [key: string]: string[] | undefined; };
 }
 
@@ -154,13 +155,14 @@ export async function createContratanteAction(data: ContratanteFormValues): Prom
             errors: validatedFields.error.flatten().fieldErrors,
         };
     }
+    let newContratante;
     try {
-        await dbAddContratante(validatedFields.data);
+        newContratante = await dbAddContratante(validatedFields.data);
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao criar o contratante.' };
     }
     revalidatePath('/contratantes');
-    redirect('/contratantes');
+    return { success: true, message: 'Contratante criado com sucesso.', redirectPath: '/contratantes', data: newContratante };
 }
 
 export async function updateContratanteAction(id: string, data: ContratanteFormValues): Promise<ActionResponse> {
@@ -214,13 +216,14 @@ export async function createArtistaAction(data: ArtistaFormValues): Promise<Acti
             errors: validatedFields.error.flatten().fieldErrors,
         };
     }
+    let newArtista;
     try {
-        await dbAddArtista(validatedFields.data);
+        newArtista = await dbAddArtista(validatedFields.data);
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao criar o artista.' };
     }
     revalidatePath('/artistas');
-    redirect('/artistas');
+    return { success: true, message: 'Artista criado com sucesso.', redirectPath: '/artistas', data: newArtista };
 }
 
 export async function updateArtistaAction(id: string, data: ArtistaFormValues): Promise<ActionResponse> {

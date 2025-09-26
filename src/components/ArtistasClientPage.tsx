@@ -12,6 +12,13 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
   const [artistas, setArtistas] = useState(initialArtistas);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+  const handleSave = (newArtista?: Artista) => {
+    if (newArtista) {
+        setArtistas(prev => [...prev, newArtista])
+    }
+    setIsSheetOpen(false);
+  }
+
   return (
     <>
       <div className="flex justify-end">
@@ -22,7 +29,7 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
             </Button>
           </SheetTrigger>
           <SheetContent className="p-0">
-             <ArtistaForm onSave={() => setIsSheetOpen(false)} />
+             <ArtistaForm onSave={handleSave} />
           </SheetContent>
         </Sheet>
       </div>
