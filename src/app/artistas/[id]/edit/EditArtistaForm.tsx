@@ -6,15 +6,13 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { type Artista, type ActionResponse } from '@/lib/types';
-import { ScrollArea } from './ui/scroll-area';
-import { createArtistaAction } from '@/lib/actions';
+import { type Artista } from '@/lib/types';
+import { updateArtistaAction } from '@/lib/actions';
 
 const artistaFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
@@ -25,14 +23,11 @@ const artistaFormSchema = z.object({
 
 type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
 
-interface ArtistaFormProps {
-    artista?: Artista;
-    onSave?: (newArtista: Artista) => void;
-    action: (id: string, data: ArtistaFormValues) => Promise<ActionResponse> | ((data: ArtistaFormValues) => Promise<ActionResponse>);
+interface EditArtistaFormProps {
+    artista: Artista;
 }
 
-export function ArtistaForm({ artista, onSave, action }: ArtistaFormProps) {
-  const isEditing = !!artista;
+export function EditArtistaForm({ artista }: EditArtistaFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -40,29 +35,24 @@ export function ArtistaForm({ artista, onSave, action }: ArtistaFormProps) {
   const form = useForm<ArtistaFormValues>({
     resolver: zodResolver(artistaFormSchema),
     defaultValues: {
-      name: artista?.name ?? '',
-      email: artista?.email ?? '',
-      phone: artista?.phone ?? '',
-      serviceType: artista?.serviceType ?? '',
+      name: artista.name,
+      email: artista.email ?? '',
+      phone: artista.phone ?? '',
+      serviceType: artista.serviceType ?? '',
     },
   });
 
   const onSubmit = (data: ArtistaFormValues) => {
     startTransition(async () => {
-        const currentAction = isEditing ? action.bind(null, artista.id) : createArtistaAction;
-        const result = await currentAction(data);
+        const result = await updateArtistaAction(artista.id, data);
         if (result.success) {
-            toast({ title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
-            if (onSave && result.data) {
-                onSave(result.data as Artista);
-            } else {
-                router.push('/artistas');
-                router.refresh();
-            }
+            toast({ title: "Artista atualizado com sucesso!" });
+            router.push('/artistas');
+            router.refresh();
         } else {
             toast({
               variant: 'destructive',
-              title: `Erro ao ${isEditing ? 'atualizar' : 'criar'} o artista.`,
+              title: "Erro ao atualizar o artista.",
               description: result.message,
             });
         }
@@ -71,13 +61,9 @@ export function ArtistaForm({ artista, onSave, action }: ArtistaFormProps) {
   
   return (
     <Form {...form}>
-       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex flex-col h-full">
-        <ScrollArea className="flex-1 p-6">
-          <Card className="border-none shadow-none p-0">
-              <CardHeader className="p-0 mb-6">
-                <CardTitle className="font-headline">{isEditing ? "Editar Artista" : "Novo Artista"}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 p-0">
+       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card>
+              <CardContent className="space-y-4 pt-6">
                   <FormField control={form.control} name="name" render={({ field }) => (
                       <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
@@ -92,13 +78,10 @@ export function ArtistaForm({ artista, onSave, action }: ArtistaFormProps) {
                   )}/>
               </CardContent>
           </Card>
-        </ScrollArea>
         
-        <div className="p-4 border-t">
-            <Button type="submit" disabled={isPending} className="w-full">
-                {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Artista')}
-            </Button>
-        </div>
+          <Button type="submit" disabled={isPending} className="w-full">
+              {isPending ? <Loader2 className="animate-spin" /> : 'Salvar Alterações'}
+          </Button>
       </form>
     </Form>
   );

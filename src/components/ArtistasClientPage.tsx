@@ -2,13 +2,89 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Mic, Mail, Phone, Music } from 'lucide-react';
+import { Plus, Mic, Mail, Phone, Music, Loader2 } from 'lucide-react';
 import { ArtistaActions } from '@/components/ArtistaActions';
 import { type Artista } from '@/lib/types';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
-import { ArtistaForm } from './ArtistaForm';
 import { useToast } from '@/hooks/use-toast';
 import { createArtistaAction, deleteArtistaAction } from '@/lib/actions';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
+import { Input } from './ui/input';
+import { ScrollArea } from './ui/scroll-area';
+
+const artistaFormSchema = z.object({
+    name: z.string().min(1, 'O nome é obrigatório.'),
+    email: z.string().email('Formato de e-mail inválido.').optional().or(z.literal('')),
+    phone: z.string().optional(),
+    serviceType: z.string().optional(),
+});
+
+type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
+
+function NewArtistaForm({ onSave }: { onSave: (newArtista: Artista) => void }) {
+  const { toast } = useToast();
+  const [isPending, startTransition] = useState(false);
+
+  const form = useForm<ArtistaFormValues>({
+    resolver: zodResolver(artistaFormSchema),
+    defaultValues: { name: '', email: '', phone: '', serviceType: '' },
+  });
+
+  const onSubmit = (data: ArtistaFormValues) => {
+    startTransition(true);
+    createArtistaAction(data).then(result => {
+      if (result.success && result.data) {
+        toast({ title: "Artista criado com sucesso!" });
+        onSave(result.data as Artista);
+        form.reset();
+      } else {
+        toast({
+          variant: 'destructive',
+          title: "Erro ao criar o artista.",
+          description: result.message,
+        });
+      }
+      startTransition(false);
+    });
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
+        <ScrollArea className="flex-1 p-6">
+          <Card className="border-none shadow-none p-0">
+            <CardHeader className="p-0 mb-6">
+              <CardTitle className="font-headline">Novo Artista</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-0">
+              <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="serviceType" render={({ field }) => (
+                <FormItem><FormLabel>Tipo de Serviço</FormLabel><FormControl><Input placeholder="Ex: Banda, DJ, Músico" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="email" render={({ field }) => (
+                <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="phone" render={({ field }) => (
+                <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+            </CardContent>
+          </Card>
+        </ScrollArea>
+        <div className="p-4 border-t">
+          <Button type="submit" disabled={isPending} className="w-full">
+            {isPending ? <Loader2 className="animate-spin" /> : 'Criar Artista'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
 
 export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artista[] }) {
   const [artistas, setArtistas] = useState(initialArtistas);
@@ -41,7 +117,7 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
             </Button>
           </SheetTrigger>
           <SheetContent className="p-0">
-             <ArtistaForm onSave={handleSave} action={createArtistaAction} />
+             <NewArtistaForm onSave={handleSave} />
           </SheetContent>
         </Sheet>
       </div>
