@@ -6,8 +6,6 @@ import { getArtistas, getContratantes, getEvents } from '@/lib/data';
 import type { Artista, Contratante, Event } from '@/lib/types';
 import { useEffect, useState } from 'react';
 
-export const dynamic = 'force-dynamic';
-
 export default function NewEventPage() {
   const [data, setData] = useState<{
     artistas: Artista[];
