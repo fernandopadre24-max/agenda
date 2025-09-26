@@ -156,7 +156,7 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
     } finally {
       setIsSuggesting(false);
     }
-  }, [form, pastEvents, artistas, contratantes, toast]);
+  }, [form, pastEvents, toast, artistas, contratantes]);
 
 
   useEffect(() => {
@@ -182,8 +182,11 @@ export function EventForm({ event, artistas, contratantes, pastEvents }: EventFo
       });
       if (result.redirectPath) {
         router.push(result.redirectPath);
-        router.refresh();
+      } else if (!isEditing) {
+        router.push('/');
       }
+      router.refresh();
+
     } else {
       toast({
         variant: 'destructive',
