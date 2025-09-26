@@ -150,7 +150,7 @@ export function EventCard({ event }: { event: Event }) {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10" 
-                        onClick={handleCompletionStatusUpdate}
+                        onClick={(e) => { e.stopPropagation(); handleCompletionStatusUpdate(); }}
                         disabled={isPending}
                         aria-label={"Marcar como Realizado"}
                       >
@@ -162,7 +162,7 @@ export function EventCard({ event }: { event: Event }) {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-green-500 hover:text-green-500 hover:bg-green-500/10" 
-                        onClick={() => handleFinancialStatusUpdate(showReceberAction ? 'receber' : 'pagar')}
+                        onClick={(e) => { e.stopPropagation(); handleFinancialStatusUpdate(showReceberAction ? 'receber' : 'pagar'); }}
                         disabled={isPending}
                         aria-label={showReceberAction ? "Marcar como Recebido" : "Marcar como Pago"}
                       >
@@ -170,19 +170,19 @@ export function EventCard({ event }: { event: Event }) {
                     </Button>
                 )}
                 <Button variant="ghost" size="icon" asChild className="h-8 w-8">
-                    <Link href={`/events/${event.id}/edit`}>
+                    <Link href={`/events/${event.id}/edit`} onClick={(e) => e.stopPropagation()}>
                         <Edit className="h-4 w-4" />
                         <span className="sr-only">Editar</span>
                     </Link>
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8">
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8" onClick={(e) => e.stopPropagation()}>
                             <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Excluir</span>
                         </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                         <AlertDialogHeader>
                         <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -200,5 +200,3 @@ export function EventCard({ event }: { event: Event }) {
       </Card>
   );
 }
-
-    
