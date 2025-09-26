@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { type Event } from '@/lib/types';
-import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, CheckCircle } from 'lucide-react';
+import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, CheckCircle, Mic } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { useEffect, useState, useTransition } from 'react';
@@ -113,14 +113,17 @@ export function EventCard({ event }: { event: Event }) {
                     </div>
                     <div className="flex-1 p-3">
                       <div className="flex justify-between items-start">
-                          <CardTitle className="font-headline text-base leading-tight">{event.artista}</CardTitle>
+                          <CardTitle className="font-headline text-base leading-tight flex items-center gap-2">
+                            <Briefcase className="h-4 w-4" />
+                            {event.contratante}
+                          </CardTitle>
                           {renderFinancials()}
                       </div>
-                      <CardDescription className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
-                          <Briefcase className="h-3 w-3" />
-                          {event.contratante}
+                      <CardDescription className="flex items-center gap-2 text-xs text-muted-foreground pt-1 pl-1">
+                          <Mic className="h-3 w-3" />
+                          {event.artista}
                       </CardDescription>
-                      <div className="text-xs text-muted-foreground mt-1.5">{time}</div>
+                      <div className="text-xs text-muted-foreground mt-1.5 pl-1">{time}</div>
                     </div>
                 </div>
             </Link>
