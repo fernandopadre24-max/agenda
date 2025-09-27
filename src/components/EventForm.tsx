@@ -87,7 +87,8 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
         }
     }
     fetchData();
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -210,71 +211,101 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
                             </FormItem>
                           )}
                         />
-                         <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="cidade" render={({ field }) => (
-                                <FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="Ex: Florianópolis" {...field} /></FormControl><FormMessage /></FormItem>
-                            )}/>
-                            <FormField control={form.control} name="local" render={({ field }) => (
-                                <FormItem><FormLabel>Local</FormLabel><FormControl><Input placeholder="Ex: Espaço Garden" {...field} /></FormControl><FormMessage /></FormItem>
-                            )}/>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="date" render={({ field }) => (
-                                <FormItem className="flex flex-col"><FormLabel>Data</FormLabel>
-                                <Popover><PopoverTrigger asChild>
+                         <FormField
+                            control={form.control}
+                            name="date"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                <FormLabel>Data do Evento</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
                                     <FormControl>
-                                    <Button variant={'outline'} className={cn('justify-start text-left font-normal',!field.value && 'text-muted-foreground')}>
-                                        {field.value ? format(field.value, 'PPP', { locale: ptBR }) : <span>Escolha uma data</span>}
+                                        <Button
+                                        variant={'outline'}
+                                        className={cn(
+                                            'w-full pl-3 text-left font-normal',
+                                            !field.value && 'text-muted-foreground'
+                                        )}
+                                        >
+                                        {field.value ? (
+                                            format(field.value, 'PPP', { locale: ptBR })
+                                        ) : (
+                                            <span>Escolha uma data</span>
+                                        )}
                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
+                                        </Button>
                                     </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                                </PopoverContent></Popover><FormMessage /></FormItem>
-                            )}/>
-                            <FormField control={form.control} name="hora" render={({ field }) => (
-                                <FormItem><FormLabel>Hora</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
-                            )}/>
-                        </div>
-                         <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="entrada" render={({ field }) => (
-                                <FormItem><FormLabel>Entrada</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
-                            )}/>
-                            <FormField control={form.control} name="saida" render={({ field }) => (
-                                <FormItem><FormLabel>Saída</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
-                            )}/>
-                        </div>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        disabled={(date) =>
+                                        date < new Date('1900-01-01')
+                                        }
+                                        initialFocus
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        <FormField control={form.control} name="hora" render={({ field }) => (<FormItem><FormLabel>Hora do Evento</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     </CardContent>
                 </Card>
-                
                 <Card>
-                    <CardHeader><CardTitle className="font-headline text-lg">Financeiro</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="font-headline text-lg">Detalhes de Horário e Local</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
-                        <FormField control={form.control} name="financeType" render={({ field }) => (
-                            <FormItem className="space-y-3"><FormLabel>Tipo de Transação</FormLabel>
-                            <FormControl>
-                                <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
-                                <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="nenhum" /></FormControl><FormLabel className="font-normal">Nenhum</FormLabel></FormItem>
-                                <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="receber" /></FormControl><FormLabel className="font-normal">A Receber</FormLabel></FormItem>
-                                <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pagar" /></FormControl><FormLabel className="font-normal">A Pagar</FormLabel></FormItem>
-                                </RadioGroup>
-                            </FormControl><FormMessage /></FormItem>
-                        )}/>
+                        <FormField control={form.control} name="entrada" render={({ field }) => (<FormItem><FormLabel>Entrada no Local</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="saida" render={({ field }) => (<FormItem><FormLabel>Saída do Local</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="cidade" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="Cidade do evento" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="local" render={({ field }) => (<FormItem><FormLabel>Local</FormLabel><FormControl><Input placeholder="Local do evento" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    </CardContent>
+                </Card>
+
+                 <Card>
+                    <CardHeader><CardTitle className="font-headline text-lg">Informações Financeiras</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                         <FormField
+                            control={form.control}
+                            name="financeType"
+                            render={({ field }) => (
+                                <FormItem className="space-y-3">
+                                <FormLabel>Tipo de Transação</FormLabel>
+                                <FormControl>
+                                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
+                                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="nenhum" /></FormControl><FormLabel className="font-normal">Nenhum</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="receber" /></FormControl><FormLabel className="font-normal">A Receber</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pagar" /></FormControl><FormLabel className="font-normal">A Pagar</FormLabel></FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         {financeType !== 'nenhum' && (
                             <>
                                 <FormField control={form.control} name="valor" render={({ field }) => (
-                                    <FormItem><FormLabel>Valor</FormLabel><FormControl><Input type="number" placeholder="0,00" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Valor</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} /></FormControl><FormMessage /></FormItem>
                                 )}/>
-                                <FormField control={form.control} name="status" render={({ field }) => (
-                                    <FormItem className="space-y-3"><FormLabel>Status</FormLabel>
-                                    <FormControl>
-                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
-                                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pendente" /></FormControl><FormLabel className="font-normal">Pendente</FormLabel></FormItem>
-                                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="concluido" /></FormControl><FormLabel className="font-normal">{financeType === 'receber' ? 'Recebido' : 'Pago'}</FormLabel></FormItem>
-                                        </RadioGroup>
-                                    </FormControl><FormMessage /></FormItem>
-                                )}/>
+                                <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                        <FormLabel>Status</FormLabel>
+                                        <FormControl>
+                                            <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
+                                                <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pendente" /></FormControl><FormLabel className="font-normal">Pendente</FormLabel></FormItem>
+                                                <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="concluido" /></FormControl><FormLabel className="font-normal">{financeType === 'receber' ? 'Recebido' : 'Pago'}</FormLabel></FormItem>
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </>
                         )}
                     </CardContent>
@@ -283,13 +314,11 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
                 )}
             </div>
         </ScrollArea>
-        <div className="p-4 border-t bg-background flex gap-2">
-            <Button type="button" variant="outline" onClick={onCancel} className="w-full">
-                Cancelar
-            </Button>
-            <Button type="submit" disabled={isPending || isLoadingData} className="w-full">
-                {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
-            </Button>
+        <div className="p-4 border-t flex justify-end gap-2 bg-background">
+          <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
+          <Button type="submit" disabled={isPending || isLoadingData}>
+            {isPending ? <Loader2 className="animate-spin" /> : 'Salvar Evento'}
+          </Button>
         </div>
       </form>
     </Form>
