@@ -22,6 +22,7 @@ import {
     getTransactions,
 } from './data';
 import type { Event, Artista, Contratante, ActionResponse, Transaction } from './types';
+import { Timestamp } from 'firebase-admin/firestore';
 
 const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
@@ -76,8 +77,8 @@ export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
 
 const createEventFromForm = (data: EventFormValues): Partial<Omit<Event, 'id'>> => {
-    const event: Partial<Omit<Event, 'id'>> = {
-        date: data.date,
+    const event: any = {
+        date: Timestamp.fromDate(data.date),
         hora: data.hora,
         contratante: data.contratante,
         artista: data.artista,
@@ -89,14 +90,10 @@ const createEventFromForm = (data: EventFormValues): Partial<Omit<Event, 'id'>> 
 
     if (data.financeType === 'receber' && data.valor !== undefined && data.status) {
         event.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
-        event.pagar = undefined;
     } else if (data.financeType === 'pagar' && data.valor !== undefined && data.status) {
         event.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
-        event.receber = undefined;
-    } else {
-        event.pagar = undefined;
-        event.receber = undefined;
     }
+
     return event;
 }
 
@@ -141,8 +138,13 @@ export async function updateEventAction(id: string, data: EventFormValues): Prom
     try {
         const eventUpdateData = createEventFromForm(validatedFields.data);
         // Firestore specific: remove undefined fields so they are deleted from the document
-        if (eventUpdateData.pagar === undefined) delete eventUpdateData.pagar;
-        if (eventUpdateData.receber === undefined) delete eventUpdateData.receber;
+        if (!eventUpdateData.pagar) {
+            delete eventUpdateData.pagar;
+        }
+        if (!eventUpdateData.receber) {
+             delete eventUpdateData.receber;
+        }
+
 
         const updatedEvent = await dbUpdateEvent(id, eventUpdateData);
         
@@ -389,7 +391,11 @@ export async function createTransactionAction(data: TransactionFormValues): Prom
     }
 
     try {
-        const newTransaction = await dbAddTransaction({ ...validatedFields.data, status: 'concluido' });
+        const transactionWithTimestamp = {
+            ...validatedFields.data,
+            date: Timestamp.fromDate(validatedFields.data.date)
+        };
+        const newTransaction = await dbAddTransaction({ ...transactionWithTimestamp, status: 'concluido' });
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');
         return { success: true, message: 'Transação criada com sucesso.', data: newTransaction };
@@ -403,8 +409,14 @@ export async function updateTransactionAction(id: string, data: Partial<Transact
     if (!validatedFields.success) {
         return { success: false, message: 'Dados inválidos.' };
     }
+
+    let dataWithTimestamp: any = { ...validatedFields.data };
+    if (validatedFields.data.date) {
+        dataWithTimestamp.date = Timestamp.fromDate(validatedFields.data.date);
+    }
+    
     try {
-        const updatedTransaction = await dbUpdateTransaction(id, validatedFields.data);
+        const updatedTransaction = await dbUpdateTransaction(id, dataWithTimestamp);
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');
         return { success: true, message: 'Transação atualizada.', data: updatedTransaction };
@@ -425,3 +437,4 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
 }
 
     
+
