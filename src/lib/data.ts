@@ -181,11 +181,13 @@ export async function deleteArtista(id: string): Promise<boolean> {
 
 export async function getTransactions(): Promise<Transaction[]> {
     try {
-        const snapshot = await db.collection('transactions').orderBy('date', 'desc').get();
+        const snapshot = await db.collection('transactions').get();
         if (snapshot.empty) {
             return [];
         }
-        return snapshot.docs.map(doc => convertTimestamps<Transaction>({ id: doc.id, ...doc.data() }));
+        const transactions = snapshot.docs.map(doc => convertTimestamps<Transaction>({ id: doc.id, ...doc.data() }));
+        // Sort in-memory to avoid complex Firestore indexes
+        return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
     } catch(error) {
         console.error("Error fetching transactions:", error);
         return [];
