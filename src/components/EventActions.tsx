@@ -16,7 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useRouter } from 'next/navigation';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
+import { Sheet, SheetContent } from './ui/sheet';
 import { EventForm } from './EventForm';
 import type { Artista, Contratante, Event } from '@/lib/types';
 
@@ -52,25 +52,22 @@ export function EventActions({
       if(result.success) {
         toast({ title: 'Evento excluído com sucesso.' });
         router.push('/');
-        router.refresh(); // This ensures the list on the homepage is updated
+        router.refresh(); 
       } else {
         toast({ title: 'Erro ao excluir evento.', description: result.message, variant: 'destructive' });
       }
     });
   };
   
-  const handleEdit = () => {
-    setIsSheetOpen(true);
-  }
-  
-  const handleCloseSheet = () => {
+  const handleSaveSuccess = () => {
     setIsSheetOpen(false);
+    router.refresh();
   }
 
   return (
     <>
         <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={handleEdit}>
+            <Button variant="outline" onClick={() => setIsSheetOpen(true)}>
                 <Edit className="mr-2 h-4 w-4" /> Editar
             </Button>
             <Button variant="outline" onClick={handleReminder}>
@@ -102,16 +99,14 @@ export function EventActions({
         </div>
 
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-            <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
-                 <SheetHeader className="p-6">
-                    <SheetTitle className="font-headline">Editar Evento</SheetTitle>
-                </SheetHeader>
+            <SheetContent className="p-0">
                 <EventForm
                     event={event}
                     artistas={artistas}
                     contratantes={contratantes}
                     pastEvents={pastEvents}
-                    onCancel={handleCloseSheet}
+                    onSave={handleSaveSuccess}
+                    onCancel={() => setIsSheetOpen(false)}
                 />
             </SheetContent>
       </Sheet>

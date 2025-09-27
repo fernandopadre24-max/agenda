@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useTransition, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,7 +59,7 @@ function ContratanteForm({
       
       const result = await action;
 
-      if (result.success && result.data) {
+      if (result.success) {
         toast({ title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
         onSave();
       } else {
@@ -75,12 +74,12 @@ function ContratanteForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-rows-[auto,1fr,auto] h-full">
          <SheetHeader className="p-6">
             <SheetTitle className="font-headline">{isEditing ? 'Editar Contratante' : 'Novo Contratante'}</SheetTitle>
         </SheetHeader>
-        <ScrollArea className="flex-1 px-6">
-            <div className="space-y-4 pr-1">
+        <ScrollArea className="flex-1">
+            <div className="space-y-4 px-6 pr-7">
                 <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem><FormLabel>Nome do Contratante</FormLabel><FormControl><Input placeholder="Nome da empresa, evento ou pessoa" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
@@ -98,7 +97,7 @@ function ContratanteForm({
                 )}/>
             </div>
         </ScrollArea>
-        <div className="p-4 border-t flex justify-end gap-2">
+        <div className="p-4 border-t flex justify-end gap-2 bg-background">
             <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
             <Button type="submit" disabled={isPending}>
                 {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Contratante')}
@@ -147,7 +146,7 @@ export function ContratantesClientPage({ initialContratantes }: {
       </div>
 
        {initialContratantes.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-4 mt-4">
             {initialContratantes.map(contratante => (
               <Card key={contratante.id}>
                 <CardHeader className="pb-3">

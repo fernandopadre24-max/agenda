@@ -7,7 +7,6 @@ import { EventDashboard } from './EventDashboard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import { EventForm } from './EventForm';
 import { type Event, type Artista, type Contratante } from '@/lib/types';
-import { ScrollArea } from './ui/scroll-area';
 
 export function DashboardClient({
   initialEvents,
@@ -23,9 +22,8 @@ export function DashboardClient({
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
   const router = useRouter();
 
-  const handleCloseSheet = () => {
+  const handleSaveSuccess = () => {
     setIsCreateSheetOpen(false);
-    // We refresh the router to ensure the new data is fetched by the server component
     router.refresh();
   };
 
@@ -45,14 +43,12 @@ export function DashboardClient({
       
       <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
         <SheetContent className="p-0">
-          <SheetHeader className="p-6">
-            <SheetTitle className="font-headline">Criar Novo Evento</SheetTitle>
-          </SheetHeader>
           <EventForm
               artistas={initialArtistas}
               contratantes={initialContratantes}
               pastEvents={pastEvents}
-              onCancel={handleCloseSheet}
+              onSave={handleSaveSuccess}
+              onCancel={() => setIsCreateSheetOpen(false)}
             />
         </SheetContent>
       </Sheet>

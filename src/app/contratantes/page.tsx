@@ -1,4 +1,3 @@
-
 'use server';
 
 import { getContratantes } from '@/lib/data';

@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useRouter } from 'next/navigation';
 import { useTransition, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -29,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
+import { SheetHeader, SheetTitle } from './ui/sheet';
 
 const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
@@ -59,12 +59,12 @@ interface EventFormProps {
     artistas: Artista[];
     contratantes: Contratante[];
     pastEvents: string[];
-    onCancel?: () => void;
+    onSave: () => void;
+    onCancel: () => void;
 }
 
-export function EventForm({ event, artistas, contratantes, onCancel }: EventFormProps) {
+export function EventForm({ event, artistas, contratantes, onSave, onCancel }: EventFormProps) {
   const isEditing = !!event;
-  const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
@@ -113,10 +113,7 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
         toast({
           title: `Evento ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
         });
-        if (onCancel) {
-            onCancel();
-        }
-        router.refresh();
+        onSave();
       } else {
         toast({
           variant: 'destructive',
@@ -129,11 +126,14 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex flex-col h-full">
-        <ScrollArea className="flex-1 px-1">
-            <div className="space-y-6 pr-6 pl-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-rows-[auto,1fr,auto] h-full">
+        <SheetHeader className="p-6">
+            <SheetTitle className="font-headline">{isEditing ? 'Editar Evento' : 'Novo Evento'}</SheetTitle>
+        </SheetHeader>
+        <ScrollArea>
+            <div className="space-y-6 px-6 pr-7">
                 <Card>
-                    <CardHeader><CardTitle className="font-headline">Informações do Evento</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="font-headline text-lg">Informações do Evento</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         <FormField
                           control={form.control}
@@ -222,12 +222,12 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
                 </Card>
                 
                 <Card>
-                    <CardHeader><CardTitle className="font-headline">Financeiro</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="font-headline text-lg">Financeiro</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         <FormField control={form.control} name="financeType" render={({ field }) => (
                             <FormItem className="space-y-3"><FormLabel>Tipo de Transação</FormLabel>
                             <FormControl>
-                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex space-x-4">
+                                <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                                 <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="nenhum" /></FormControl><FormLabel className="font-normal">Nenhum</FormLabel></FormItem>
                                 <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="receber" /></FormControl><FormLabel className="font-normal">A Receber</FormLabel></FormItem>
                                 <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pagar" /></FormControl><FormLabel className="font-normal">A Pagar</FormLabel></FormItem>
@@ -242,7 +242,7 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
                                 <FormField control={form.control} name="status" render={({ field }) => (
                                     <FormItem className="space-y-3"><FormLabel>Status</FormLabel>
                                     <FormControl>
-                                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex space-x-4">
+                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="pendente" /></FormControl><FormLabel className="font-normal">Pendente</FormLabel></FormItem>
                                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="concluido" /></FormControl><FormLabel className="font-normal">{financeType === 'receber' ? 'Recebido' : 'Pago'}</FormLabel></FormItem>
                                         </RadioGroup>
@@ -254,12 +254,10 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
                 </Card>
             </div>
         </ScrollArea>
-        <div className="p-4 border-t bg-background flex gap-2 sticky bottom-0">
-            {onCancel && (
-                <Button type="button" variant="outline" onClick={onCancel} className="w-full">
-                    Cancelar
-                </Button>
-            )}
+        <div className="p-4 border-t bg-background flex gap-2">
+            <Button type="button" variant="outline" onClick={onCancel} className="w-full">
+                Cancelar
+            </Button>
             <Button type="submit" disabled={isPending} className="w-full">
                 {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
             </Button>

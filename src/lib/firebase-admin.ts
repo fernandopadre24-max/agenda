@@ -8,7 +8,7 @@ if (!admin.apps.length) {
   // GOOGLE_APPLICATION_CREDENTIALS should be set for local development.
   // In Firebase App Hosting, the credentials are automatically available.
   
-  // Disabling Firebase initialization to debug UI issues.
+  // Disabling Firebase initialization to use in-memory DB for debugging.
   /*
   try {
     admin.initializeApp();
@@ -18,9 +18,7 @@ if (!admin.apps.length) {
   */
 }
 
-// @ts-nocheck
-// export const db = admin.firestore();
-// export const auth = admin.auth();
-
+// Using in-memory DB, so we export undefined for db and auth.
+// This file is kept to avoid breaking imports throughout the app.
 export const db = undefined;
 export const auth = undefined;

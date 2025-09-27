@@ -1,8 +1,10 @@
 'use server';
 
 import type { Event, Contratante, Artista, Transaction } from './types';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // --- In-Memory Database ---
+// NOTE: This data will reset on every server restart.
 let memoryDB = {
   events: [
      { id: '1', date: new Date('2024-08-15T22:00:00.000Z'), hora: '22:00', contratante: 'Casamento Joana & Miguel', artista: 'Banda Sinfonia', entrada: '21:00', saida: '02:00', cidade: 'São Paulo', local: 'Buffet Felicidade', status: 'pendente', receber: { valor: 3500, status: 'pendente' } },
@@ -22,11 +24,18 @@ let memoryDB = {
   transactions: [] as Transaction[],
 };
 let nextId = 4;
+const getNextId = () => (nextId++).toString();
 
 
 // --- Event Functions ---
 export async function getEvents(): Promise<Event[]> {
-  return [...memoryDB.events].sort((a, b) => a.date.getTime() - b.date.getTime());
+  try {
+    const events = [...memoryDB.events];
+    return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    return [];
+  }
 }
 
 export async function getEventById(id: string): Promise<Event | undefined> {
@@ -34,8 +43,10 @@ export async function getEventById(id: string): Promise<Event | undefined> {
 }
 
 export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
-  const newId = (nextId++).toString();
-  const newEvent: Event = { ...eventData, id: newId };
+  const newId = getNextId();
+  // Ensure date is a Date object
+  const date = eventData.date instanceof Timestamp ? eventData.date.toDate() : new Date(eventData.date);
+  const newEvent: Event = { ...eventData, id: newId, date };
   memoryDB.events.push(newEvent);
   return newEvent;
 }
@@ -44,7 +55,24 @@ export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id
     const eventIndex = memoryDB.events.findIndex(e => e.id === id);
     if (eventIndex === -1) return undefined;
     
-    const updatedEvent = { ...memoryDB.events[eventIndex], ...eventData };
+    const existingEvent = memoryDB.events[eventIndex];
+    
+    // Firestore's FieldValue.delete() is not applicable for in-memory, so we handle it manually.
+    const updateData = { ...eventData };
+    if ('receber' in updateData && updateData.receber === undefined) {
+      delete existingEvent.receber;
+    }
+    if ('pagar' in updateData && updateData.pagar === undefined) {
+      delete existingEvent.pagar;
+    }
+    
+    const updatedEvent = { ...existingEvent, ...updateData };
+    
+    // Ensure date is a Date object
+    if (updatedEvent.date) {
+        updatedEvent.date = updatedEvent.date instanceof Timestamp ? updatedEvent.date.toDate() : new Date(updatedEvent.date);
+    }
+    
     memoryDB.events[eventIndex] = updatedEvent;
     
     return updatedEvent;
@@ -58,15 +86,17 @@ export async function deleteEvent(id: string): Promise<boolean> {
 
 // --- Contratante Functions ---
 export async function getContratantes(): Promise<Contratante[]> {
-  return [...memoryDB.contratantes].sort((a, b) => a.name.localeCompare(b.name));
-}
-
-export async function getContratanteById(id: string): Promise<Contratante | undefined> {
-    return memoryDB.contratantes.find(c => c.id === id);
+  try {
+    const contratantes = [...memoryDB.contratantes];
+    return contratantes.sort((a, b) => a.name.localeCompare(b.name));
+  } catch (error) {
+     console.error("Error fetching contratantes:", error);
+    return [];
+  }
 }
 
 export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
-  const newId = (nextId++).toString();
+  const newId = getNextId();
   const newContratante: Contratante = { ...contratanteData, id: newId };
   memoryDB.contratantes.push(newContratante);
   return newContratante;
@@ -88,15 +118,17 @@ export async function deleteContratante(id: string): Promise<boolean> {
 
 // --- Artista Functions ---
 export async function getArtistas(): Promise<Artista[]> {
-  return [...memoryDB.artistas].sort((a,b) => a.name.localeCompare(b.name));
-}
-
-export async function getArtistaById(id: string): Promise<Artista | undefined> {
-    return memoryDB.artistas.find(a => a.id === id);
+  try {
+    const artistas = [...memoryDB.artistas];
+    return artistas.sort((a,b) => a.name.localeCompare(b.name));
+  } catch (error) {
+    console.error("Error fetching artistas:", error);
+    return [];
+  }
 }
 
 export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Artista> {
-  const newId = (nextId++).toString();
+  const newId = getNextId();
   const newArtista: Artista = { ...artistaData, id: newId };
   memoryDB.artistas.push(newArtista);
   return newArtista;
@@ -118,12 +150,19 @@ export async function deleteArtista(id: string): Promise<boolean> {
 
 // --- Transaction Functions ---
 export async function getTransactions(): Promise<Transaction[]> {
-    return [...memoryDB.transactions].sort((a, b) => b.date.getTime() - a.date.getTime());
+    try {
+        const transactions = [...memoryDB.transactions];
+        return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    } catch(e) {
+        console.error("Error fetching transactions:", e);
+        return [];
+    }
 }
 
 export async function addTransaction(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
-    const newId = `trans-${nextId++}`;
-    const newTransaction: Transaction = { ...transactionData, id: newId };
+    const newId = `trans-${getNextId()}`;
+    const date = transactionData.date instanceof Timestamp ? transactionData.date.toDate() : new Date(transactionData.date);
+    const newTransaction: Transaction = { ...transactionData, id: newId, date };
     memoryDB.transactions.push(newTransaction);
     return newTransaction;
 }
@@ -131,7 +170,13 @@ export async function addTransaction(transactionData: Omit<Transaction, 'id'>): 
 export async function updateTransaction(id: string, transactionData: Partial<Omit<Transaction, 'id'>>): Promise<Transaction | undefined> {
     const index = memoryDB.transactions.findIndex(t => t.id === id);
     if (index === -1) return undefined;
-    memoryDB.transactions[index] = { ...memoryDB.transactions[index], ...transactionData };
+
+    const update = { ...transactionData };
+    if (update.date) {
+        update.date = update.date instanceof Timestamp ? update.date.toDate() : new Date(update.date);
+    }
+    
+    memoryDB.transactions[index] = { ...memoryDB.transactions[index], ...update };
     return memoryDB.transactions[index];
 }
 

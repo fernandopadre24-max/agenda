@@ -22,7 +22,7 @@ import {
 import { deleteEventAction, updateEventCompletionStatusAction, updateEventStatusAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
+import { Sheet, SheetContent } from './ui/sheet';
 import { EventForm } from './EventForm';
 
 
@@ -75,18 +75,21 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
         }
     });
   }
-
-  const handleEdit = () => {
-    setIsEditSheetOpen(true);
-  }
   
-  const handleCloseSheet = () => {
+  const handleSaveSuccess = () => {
     setIsEditSheetOpen(false);
     router.refresh();
   }
 
   if (!isMounted) {
-    return null;
+    // Avoid hydration errors by returning a placeholder or null on the first render
+    return (
+        <Card className="h-[100px]">
+            <div className="flex h-full items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+        </Card>
+    );
   }
 
   const eventDate = new Date(event.date);
@@ -184,7 +187,7 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
                                     <DollarSign className="h-4 w-4" />
                                 </Button>
                             )}
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleEdit(); }}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setIsEditSheetOpen(true); }}>
                                 <Edit className="h-4 w-4" />
                                 <span className="sr-only">Editar</span>
                             </Button>
@@ -215,15 +218,13 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
         </Card>
         <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
             <SheetContent className="p-0">
-                 <SheetHeader className="p-6">
-                    <SheetTitle className="font-headline">Editar Evento</SheetTitle>
-                </SheetHeader>
                 <EventForm
                     event={event}
                     artistas={artistas}
                     contratantes={contratantes}
                     pastEvents={pastEvents}
-                    onCancel={handleCloseSheet}
+                    onSave={handleSaveSuccess}
+                    onCancel={() => setIsEditSheetOpen(false)}
                 />
             </SheetContent>
         </Sheet>
