@@ -1,213 +1,168 @@
 import type { Event, Contratante, Artista, Transaction } from './types';
-import fs from 'fs/promises';
-import path from 'path';
+import { db } from './firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
-const dataDir = path.join(process.cwd(), 'src', 'db');
+// --- Helper Functions ---
 
-const ARTISTAS_PATH = path.join(dataDir, 'artistas.json');
-const CONTRATANTES_PATH = path.join(dataDir, 'contratantes.json');
-const EVENTS_PATH = path.join(dataDir, 'events.json');
-const TRANSACTIONS_PATH = path.join(dataDir, 'transactions.json');
-
-// Helper function to ensure directory and files exist
-async function ensureDbFile(filePath: string) {
-  try {
-    await fs.access(filePath);
-  } catch {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, JSON.stringify([]), 'utf-8');
+/**
+ * Converts Firestore Timestamps to Date objects in a document.
+ * This is necessary because Firestore returns a Timestamp object,
+ * but the application expects a standard JavaScript Date object.
+ */
+function convertTimestamps<T>(docData: any): T {
+  if (!docData) return docData;
+  const data = { ...docData };
+  for (const key in data) {
+    if (data[key] instanceof FieldValue) {
+        // This can happen during updates, ignore it.
+    } else if (data[key] && typeof data[key].toDate === 'function') {
+      // This is a Firestore Timestamp
+      data[key] = data[key].toDate();
+    }
   }
-}
-
-// Helper functions to get and set data from JSON files
-async function getData<T>(filePath: string): Promise<T[]> {
-    await ensureDbFile(filePath);
-    try {
-        const item = await fs.readFile(filePath, 'utf-8');
-        return item ? JSON.parse(item) : [];
-    } catch (error) {
-        console.error(`Error reading from file "${path.basename(filePath)}":`, error);
-        return [];
-    }
-}
-
-async function setData<T>(filePath: string, data: T[]): Promise<void> {
-    await ensureDbFile(filePath);
-    try {
-        await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (error) {
-        console.error(`Error writing to file "${path.basename(filePath)}":`, error);
-    }
+  return data as T;
 }
 
 
-// Event functions
+// --- Event Functions ---
+
 export async function getEvents(): Promise<Event[]> {
-  const events = await getData<Event>(EVENTS_PATH);
-  return events
-    .map(e => ({...e, date: new Date(e.date)}))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const snapshot = await db.collection('events').orderBy('date', 'asc').get();
+  if (snapshot.empty) {
+    return [];
+  }
+  return snapshot.docs.map(doc => convertTimestamps<Event>({ id: doc.id, ...doc.data() }));
 }
 
 export async function getEventById(id: string): Promise<Event | undefined> {
-  const events = await getEvents();
-  return events.find(event => event.id === id);
+  const doc = await db.collection('events').doc(id).get();
+  if (!doc.exists) {
+    return undefined;
+  }
+  return convertTimestamps<Event>({ id: doc.id, ...doc.data() });
 }
 
 export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
-  const events = await getEvents();
-  const newEvent: Event = {
-    id: String(Date.now() + Math.random()),
+  const docRef = await db.collection('events').add(eventData);
+  return {
+    id: docRef.id,
     ...eventData,
   };
-  events.push(newEvent);
-  await setData(EVENTS_PATH, events);
-  return newEvent;
 }
 
 export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id'>>): Promise<Event | undefined> {
-    const events = await getEvents();
-    const eventIndex = events.findIndex(event => event.id === id);
-    if(eventIndex === -1) return undefined;
-
-    const currentEvent = events[eventIndex];
-    const updatedEvent = { 
-        ...currentEvent, 
-        ...eventData, 
-    } as Event;
-
-    events[eventIndex] = updatedEvent;
-    await setData(EVENTS_PATH, events);
-    return updatedEvent;
+    const docRef = db.collection('events').doc(id);
+    await docRef.update(eventData);
+    return await getEventById(id);
 }
-
 
 export async function deleteEvent(id: string): Promise<boolean> {
-  let events = await getEvents();
-  const initialLength = events.length;
-  events = events.filter(event => event.id !== id);
-  await setData(EVENTS_PATH, events);
-  return events.length < initialLength;
+  await db.collection('events').doc(id).delete();
+  return true;
 }
 
-// Contratante functions
+// --- Contratante Functions ---
+
 export async function getContratantes(): Promise<Contratante[]> {
-  const contratantes = await getData<Contratante>(CONTRATANTES_PATH);
-  return contratantes.sort((a,b) => a.name.localeCompare(b.name));
+  const snapshot = await db.collection('contratantes').orderBy('name', 'asc').get();
+  if (snapshot.empty) {
+    return [];
+  }
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contratante));
 }
 
 export async function getContratanteById(id: string): Promise<Contratante | undefined> {
-    const contratantes = await getContratantes();
-    return contratantes.find(c => c.id === id);
+    const doc = await db.collection('contratantes').doc(id).get();
+    if (!doc.exists) {
+        return undefined;
+    }
+    return { id: doc.id, ...doc.data() } as Contratante;
 }
 
 export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
-  const contratantes = await getContratantes();
-  const newContratante: Contratante = {
-    id: String(Date.now() + Math.random()),
+  const docRef = await db.collection('contratantes').add(contratanteData);
+  return {
+    id: docRef.id,
     ...contratanteData,
   };
-  contratantes.push(newContratante);
-  await setData(CONTRATANTES_PATH, contratantes);
-  return newContratante;
 }
 
 export async function updateContratante(id: string, contratanteData: Partial<Omit<Contratante, 'id'>>): Promise<Contratante | undefined> {
-    const contratantes = await getContratantes();
-    const contratanteIndex = contratantes.findIndex(c => c.id === id);
-    if (contratanteIndex === -1) return undefined;
-
-    const updatedContratante = { ...contratantes[contratanteIndex], ...contratanteData };
-    contratantes[contratanteIndex] = updatedContratante;
-    await setData(CONTRATANTES_PATH, contratantes);
-    return updatedContratante;
+    const docRef = db.collection('contratantes').doc(id);
+    await docRef.update(contratanteData);
+    return await getContratanteById(id);
 }
 
 export async function deleteContratante(id: string): Promise<boolean> {
-    let contratantes = await getContratantes();
-    const initialLength = contratantes.length;
-    contratantes = contratantes.filter(c => c.id !== id);
-    await setData(CONTRATANTES_PATH, contratantes);
-    return contratantes.length < initialLength;
+    await db.collection('contratantes').doc(id).delete();
+    return true;
 }
 
 
-// Artista functions
+// --- Artista Functions ---
+
 export async function getArtistas(): Promise<Artista[]> {
-  const artistas = await getData<Artista>(ARTISTAS_PATH);
-  return artistas.sort((a,b) => a.name.localeCompare(b.name));
+  const snapshot = await db.collection('artistas').orderBy('name', 'asc').get();
+  if (snapshot.empty) {
+    return [];
+  }
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Artista));
 }
 
 export async function getArtistaById(id: string): Promise<Artista | undefined> {
-    const artistas = await getArtistas();
-    return artistas.find(a => a.id === id);
+    const doc = await db.collection('artistas').doc(id).get();
+    if (!doc.exists) {
+        return undefined;
+    }
+    return { id: doc.id, ...doc.data() } as Artista;
 }
 
 export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Artista> {
-  const artistas = await getArtistas();
-  const newArtista: Artista = {
-    id: String(Date.now() + Math.random()),
+  const docRef = await db.collection('artistas').add(artistaData);
+  return {
+    id: docRef.id,
     ...artistaData,
   };
-  artistas.push(newArtista);
-  await setData(ARTISTAS_PATH, artistas);
-  return newArtista;
 }
 
 export async function updateArtista(id: string, artistaData: Partial<Omit<Artista, 'id'>>): Promise<Artista | undefined> {
-    const artistas = await getArtistas();
-    const artistaIndex = artistas.findIndex(a => a.id === id);
-    if (artistaIndex === -1) return undefined;
-    
-    const updatedArtista = { ...artistas[artistaIndex], ...artistaData };
-    artistas[artistaIndex] = updatedArtista;
-    await setData(ARTISTAS_PATH, artistas);
-    return updatedArtista;
+    const docRef = db.collection('artistas').doc(id);
+    await docRef.update(artistaData);
+    return await getArtistaById(id);
 }
 
 export async function deleteArtista(id: string): Promise<boolean> {
-    let artistas = await getArtistas();
-    const initialLength = artistas.length;
-    artistas = artistas.filter(a => a.id !== id);
-    await setData(ARTISTAS_PATH, artistas);
-    return artistas.length < initialLength;
+    await db.collection('artistas').doc(id).delete();
+    return true;
 }
 
-// Transaction functions
+
+// --- Transaction Functions ---
+
 export async function getTransactions(): Promise<Transaction[]> {
-    const transactions = await getData<Transaction>(TRANSACTIONS_PATH);
-    return transactions
-        .map(t => ({...t, date: new Date(t.date)}))
-        .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const snapshot = await db.collection('transactions').orderBy('date', 'desc').get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(doc => convertTimestamps<Transaction>({ id: doc.id, ...doc.data() }));
 }
 
 export async function addTransaction(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
-    const transactions = await getTransactions();
-    const newTransaction: Transaction = {
-        id: String(Date.now() + Math.random()),
+    const docRef = await db.collection('transactions').add(transactionData);
+    return {
+        id: docRef.id,
         ...transactionData,
     };
-    transactions.push(newTransaction);
-    await setData(TRANSACTIONS_PATH, transactions);
-    return newTransaction;
 }
 
 export async function updateTransaction(id: string, transactionData: Partial<Omit<Transaction, 'id'>>): Promise<Transaction | undefined> {
-    const transactions = await getTransactions();
-    const index = transactions.findIndex(t => t.id === id);
-    if (index === -1) return undefined;
-    const updatedTransaction = { ...transactions[index], ...transactionData };
-    transactions[index] = updatedTransaction;
-    await setData(TRANSACTIONS_PATH, transactions);
-    return updatedTransaction;
+    const docRef = db.collection('transactions').doc(id);
+    await docRef.update(transactionData);
+    const updatedDoc = await docRef.get();
+    return convertTimestamps<Transaction>({ id: updatedDoc.id, ...updatedDoc.data() });
 }
 
 export async function deleteTransaction(id: string): Promise<boolean> {
-    let transactions = await getTransactions();
-    const initialLength = transactions.length;
-    transactions = transactions.filter(t => t.id !== id);
-    await setData(TRANSACTIONS_PATH, transactions);
-    return transactions.length < initialLength;
+    await db.collection('transactions').doc(id).delete();
+    return true;
 }
-
-    
