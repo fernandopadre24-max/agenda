@@ -19,9 +19,8 @@ import {
     addTransaction as dbAddTransaction,
     updateTransaction as dbUpdateTransaction,
     deleteTransaction as dbDeleteTransaction,
-    getTransactions,
 } from './data';
-import type { Event, Artista, Contratante, ActionResponse, Transaction } from './types';
+import type { Event, ActionResponse } from './types';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 const eventFormSchema = z.object({
@@ -76,7 +75,7 @@ export type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
 export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
 
-const createEventFromForm = (data: EventFormValues): Partial<Omit<Event, 'id'>> => {
+const createEventDataObject = (data: EventFormValues): Omit<Event, 'id'> => {
     const event: any = {
         date: Timestamp.fromDate(data.date),
         hora: data.hora,
@@ -86,22 +85,20 @@ const createEventFromForm = (data: EventFormValues): Partial<Omit<Event, 'id'>> 
         saida: data.saida,
         cidade: data.cidade,
         local: data.local,
-        status: 'pendente'
+        status: 'pendente',
+        receber: FieldValue.delete(),
+        pagar: FieldValue.delete(),
     };
 
     if (data.financeType === 'receber' && data.valor !== undefined && data.status) {
         event.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
-        event.pagar = FieldValue.delete();
     } else if (data.financeType === 'pagar' && data.valor !== undefined && data.status) {
         event.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
-        event.receber = FieldValue.delete();
-    } else {
-        event.pagar = FieldValue.delete();
-        event.receber = FieldValue.delete();
     }
 
     return event;
 }
+
 
 export async function createEventAction(data: EventFormValues): Promise<ActionResponse> {
   const validatedFields = eventFormSchema.safeParse(data);
@@ -115,8 +112,8 @@ export async function createEventAction(data: EventFormValues): Promise<ActionRe
   }
 
   try {
-    const newEventData = createEventFromForm(validatedFields.data);
-    const newEvent = await dbAddEvent(newEventData as Omit<Event, 'id'>);
+    const newEventData = createEventDataObject(validatedFields.data);
+    const newEvent = await dbAddEvent(newEventData);
     
     revalidatePath('/');
     revalidatePath('/agenda');
@@ -142,7 +139,7 @@ export async function updateEventAction(id: string, data: EventFormValues): Prom
     }
     
     try {
-        const eventUpdateData = createEventFromForm(validatedFields.data);
+        const eventUpdateData = createEventDataObject(validatedFields.data);
         const updatedEvent = await dbUpdateEvent(id, eventUpdateData);
         
         revalidatePath('/');

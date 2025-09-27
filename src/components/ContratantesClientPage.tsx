@@ -8,7 +8,7 @@ import { ContratanteActions } from '@/components/ContratanteActions';
 import { type Contratante } from '@/lib/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import { useToast } from '@/hooks/use-toast';
-import { createContratanteAction, deleteContratanteAction, updateContratanteAction } from '@/lib/actions';
+import { createContratanteAction, updateContratanteAction } from '@/lib/actions';
 import { Badge } from './ui/badge';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -54,7 +54,7 @@ function ContratanteForm({
 
   const onSubmit = async (data: ContratanteFormValues) => {
     startTransition(async () => {
-      const action = isEditing 
+      const action = isEditing && initialData
         ? updateContratanteAction(initialData.id, data)
         : createContratanteAction(data);
       

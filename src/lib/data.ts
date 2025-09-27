@@ -2,7 +2,6 @@
 
 import type { Event, Contratante, Artista, Transaction } from './types';
 import { db } from './firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
 
 // --- Helper Functions ---
 
