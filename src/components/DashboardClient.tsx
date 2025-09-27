@@ -27,18 +27,15 @@ export function DashboardClient({
     router.refresh();
   };
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      // Se o usuário fechar (cancelar), também atualizamos a chave para garantir que da próxima vez ele pegue dados novos
-      setSheetKey(Date.now());
-    }
-    setIsCreateSheetOpen(open);
+  const handleOpenCreate = () => {
+    setSheetKey(Date.now()); // Garante que o form sempre tenha dados novos ao abrir
+    setIsCreateSheetOpen(true);
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setIsCreateSheetOpen(true)}>
+        <Button onClick={handleOpenCreate}>
           <Plus className="mr-2 h-4 w-4" /> Novo Evento
         </Button>
       </div>
@@ -49,11 +46,11 @@ export function DashboardClient({
         initialContratantes={initialContratantes}
       />
       
-      <Sheet key={sheetKey} open={isCreateSheetOpen} onOpenChange={handleOpenChange}>
+      <Sheet key={sheetKey} open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
         <SheetContent className="p-0">
           <EventForm
               onSave={handleSaveSuccess}
-              onCancel={() => handleOpenChange(false)}
+              onCancel={() => setIsCreateSheetOpen(false)}
             />
         </SheetContent>
       </Sheet>
