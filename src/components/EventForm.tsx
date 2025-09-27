@@ -7,7 +7,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -86,6 +86,13 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
   });
 
   const financeType = form.watch('financeType');
+  const horaValue = form.watch('hora');
+
+  useEffect(() => {
+    if (horaValue && !form.getValues('entrada')) {
+      form.setValue('entrada', horaValue);
+    }
+  }, [horaValue, form]);
   
   const onSubmit = async (data: EventFormValues) => {
     startTransition(async () => {
