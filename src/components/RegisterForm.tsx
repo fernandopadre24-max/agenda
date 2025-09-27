@@ -165,7 +165,7 @@ export function RegisterForm() {
           </CardContent>
         </Card>
 
-        <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
+        <Button type="submit" className="w-full">
           Criar Conta
         </Button>
       </form>

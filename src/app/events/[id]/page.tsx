@@ -1,11 +1,13 @@
 import { notFound } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
-import { getEventById } from '@/lib/data';
+import { getArtistas, getContratantes, getEventById, getEvents } from '@/lib/data';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, Briefcase, User,LogIn, LogOut, ArrowDown, ArrowUp, MapPin } from 'lucide-react';
 import { EventActions } from '@/components/EventActions';
+import type { Event } from '@/lib/types';
+
 
 function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: React.ReactNode }) {
     return (
@@ -20,10 +22,23 @@ function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType, lab
 }
 
 export default async function EventDetailPage({ params }: { params: { id: string } }) {
-  const event = await getEventById(params.id);
+  const [event, artistas, contratantes, allEvents] = await Promise.all([
+    getEventById(params.id),
+    getArtistas(),
+    getContratantes(),
+    getEvents(),
+  ]);
+
   if (!event) {
     notFound();
   }
+  
+  const pastEvents = allEvents.map(
+    (e: Event) =>
+      `Evento para ${e.contratante} com ${e.artista} em ${new Date(
+        e.date
+      ).toLocaleDateString()} às ${e.hora}.`
+  );
 
   const financialInfo = event.receber || event.pagar;
   const isReceiving = !!event.receber;
@@ -72,7 +87,12 @@ export default async function EventDetailPage({ params }: { params: { id: string
         )}
         
         <div className="pt-4">
-            <EventActions eventId={event.id} />
+            <EventActions 
+                event={event}
+                artistas={artistas}
+                contratantes={contratantes}
+                pastEvents={pastEvents}
+            />
         </div>
       </main>
     </div>
