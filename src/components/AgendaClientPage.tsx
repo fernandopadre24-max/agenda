@@ -1,17 +1,36 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import type { Event } from '@/lib/types';
+import type { Artista, Contratante, Event } from '@/lib/types';
 import { isSameDay } from 'date-fns';
 import { Card } from './ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { EventList } from './EventList';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 
-export function AgendaClientPage({ initialEvents }: { initialEvents: Event[] }) {
+export function AgendaClientPage({
+  initialEvents,
+  initialArtistas,
+  initialContratantes,
+  pastEvents,
+}: {
+  initialEvents: Event[];
+  initialArtistas: Artista[];
+  initialContratantes: Contratante[];
+  pastEvents: string[];
+}) {
   const [isMounted, setIsMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedArtista, setSelectedArtista] = useState('all');
+  const [selectedContratante, setSelectedContratante] = useState('all');
 
   useEffect(() => {
     setIsMounted(true);
@@ -19,25 +38,58 @@ export function AgendaClientPage({ initialEvents }: { initialEvents: Event[] }) 
 
   const displayedEvents = useMemo(() => {
     if (!isMounted) return [];
-    
+
+    let filteredEvents = initialEvents;
+
     if (selectedDate) {
-        return initialEvents.filter(e => isSameDay(new Date(e.date), selectedDate));
+      filteredEvents = filteredEvents.filter(e =>
+        isSameDay(new Date(e.date), selectedDate)
+      );
     }
 
-    // Return all upcoming events by default if no date is selected
-    const now = new Date();
-    now.setHours(0,0,0,0);
-    return initialEvents.filter(e => new Date(e.date) >= now);
+    if (selectedArtista !== 'all') {
+      filteredEvents = filteredEvents.filter(
+        e => e.artista === selectedArtista
+      );
+    }
 
-  }, [initialEvents, isMounted, selectedDate]);
+    if (selectedContratante !== 'all') {
+      filteredEvents = filteredEvents.filter(
+        e => e.contratante === selectedContratante
+      );
+    }
+
+    if (!selectedDate && selectedArtista === 'all' && selectedContratante === 'all') {
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        return initialEvents.filter(e => new Date(e.date) >= now);
+    }
+
+
+    return filteredEvents;
+  }, [
+    initialEvents,
+    isMounted,
+    selectedDate,
+    selectedArtista,
+    selectedContratante,
+  ]);
 
   const eventDates = useMemo(() => {
     return initialEvents.map(event => new Date(event.date));
   }, [initialEvents]);
 
+  const resetFilters = () => {
+    setSelectedDate(undefined);
+    setSelectedArtista('all');
+    setSelectedContratante('all');
+  }
+
   if (!isMounted) {
     return null;
   }
+
+  const hasActiveFilters = selectedDate || selectedArtista !== 'all' || selectedContratante !== 'all';
 
   return (
     <div className="space-y-4">
@@ -54,20 +106,41 @@ export function AgendaClientPage({ initialEvents }: { initialEvents: Event[] }) 
           className="w-full"
         />
       </Card>
+      
+      <div className="grid grid-cols-2 gap-2">
+        <Select value={selectedArtista} onValueChange={setSelectedArtista}>
+            <SelectTrigger>
+                <SelectValue placeholder="Filtrar por artista" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all">Todos os Artistas</SelectItem>
+                {initialArtistas.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
+            </SelectContent>
+        </Select>
+            <Select value={selectedContratante} onValueChange={setSelectedContratante}>
+            <SelectTrigger>
+                <SelectValue placeholder="Filtrar por contratante" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all">Todos os Contratantes</SelectItem>
+                {initialContratantes.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+            </SelectContent>
+        </Select>
+      </div>
 
-      {selectedDate && (
+      {hasActiveFilters && (
         <div className="flex justify-between items-center">
             <h2 className="text-lg font-headline">
-                Eventos em {selectedDate.toLocaleDateString('pt-BR', {day: '2-digit', month: 'long'})}
+                {selectedDate ? `Eventos em ${selectedDate.toLocaleDateString('pt-BR', {day: '2-digit', month: 'long'})}` : 'Eventos Filtrados'}
             </h2>
-            <Button variant="ghost" size="sm" onClick={() => setSelectedDate(undefined)}>
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
                 <X className="mr-2 h-4 w-4" />
-                Limpar
+                Limpar filtros
             </Button>
         </div>
       )}
 
-      <EventList events={displayedEvents} />
+      <EventList events={displayedEvents} artistas={initialArtistas} contratantes={initialContratantes} pastEvents={pastEvents} />
     </div>
   );
 }
