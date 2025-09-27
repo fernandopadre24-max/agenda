@@ -75,8 +75,8 @@ export type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
 export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
 
-const createEventFromForm = (data: EventFormValues): Omit<Event, 'id' | 'status'> => {
-    const event: Omit<Event, 'id' | 'status'> = {
+const createEventFromForm = (data: EventFormValues): Partial<Event> => {
+    const event: Partial<Event> = {
         date: data.date,
         hora: data.hora,
         contratante: data.contratante,
@@ -85,6 +85,8 @@ const createEventFromForm = (data: EventFormValues): Omit<Event, 'id' | 'status'
         saida: data.saida,
         cidade: data.cidade,
         local: data.local,
+        receber: undefined, // Reset financial info
+        pagar: undefined,
     };
 
     if (data.financeType === 'receber' && data.valor !== undefined && data.status) {
@@ -108,8 +110,8 @@ export async function createEventAction(data: EventFormValues): Promise<ActionRe
   }
 
   try {
-    const newEvent = createEventFromForm(validatedFields.data);
-    await dbAddEvent({...newEvent, status: 'pendente'});
+    const newEventData = createEventFromForm(validatedFields.data);
+    await dbAddEvent({...newEventData, status: 'pendente'} as Omit<Event, 'id'>);
     revalidatePath('/');
     revalidatePath('/agenda');
     revalidatePath('/financeiro');

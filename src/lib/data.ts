@@ -70,7 +70,16 @@ export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id
     const eventIndex = events.findIndex(event => event.id === id);
     if(eventIndex === -1) return undefined;
 
-    const updatedEvent = { ...events[eventIndex], ...eventData, id };
+    // Garante que o status não seja sobrescrito se não for fornecido
+    const currentEvent = events[eventIndex];
+    const updatedEvent = { 
+        ...currentEvent, 
+        ...eventData, 
+        id,
+        // Mantém o status original se eventData não tiver um novo status
+        status: 'status' in eventData ? eventData.status : currentEvent.status
+    } as Event;
+
     events[eventIndex] = updatedEvent;
     setData(EVENTS_PATH, events);
     return updatedEvent;
