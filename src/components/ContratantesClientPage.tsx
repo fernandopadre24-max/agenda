@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
+import { useRouter } from 'next/navigation';
 
 
 const contratanteFormSchema = z.object({
@@ -33,7 +34,7 @@ function ContratanteForm({
     onCancel,
     initialData,
 }: { 
-    onSave: (contratante: Contratante) => void,
+    onSave: () => void,
     onCancel: () => void,
     initialData?: Contratante,
 }) {
@@ -60,8 +61,7 @@ function ContratanteForm({
 
       if (result.success && result.data) {
         toast({ title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
-        onSave(result.data as Contratante);
-        form.reset();
+        onSave();
       } else {
         toast({
           variant: 'destructive',
@@ -79,7 +79,7 @@ function ContratanteForm({
             <SheetTitle className="font-headline">{isEditing ? 'Editar Contratante' : 'Novo Contratante'}</SheetTitle>
         </SheetHeader>
         <ScrollArea className="flex-1 px-6">
-            <CardContent className="space-y-4 p-0">
+            <div className="space-y-4 pr-1">
                 <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem><FormLabel>Nome do Contratante</FormLabel><FormControl><Input placeholder="Nome da empresa, evento ou pessoa" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
@@ -95,7 +95,7 @@ function ContratanteForm({
                 <FormField control={form.control} name="phone" render={({ field }) => (
                     <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
-            </CardContent>
+            </div>
         </ScrollArea>
         <div className="p-4 border-t flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
@@ -112,31 +112,31 @@ export function ContratantesClientPage({ initialContratantes, deleteAction }: {
     initialContratantes: Contratante[],
     deleteAction: (id: string) => Promise<any>
 }) {
-  const [contratantes, setContratantes] = useState(initialContratantes);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingContratante, setEditingContratante] = useState<Contratante | undefined>(undefined);
   const { toast } = useToast();
+  const router = useRouter();
+  const [isDeleting, startDeleteTransition] = useTransition();
 
-  const handleSave = (savedContratante: Contratante) => {
-    const isEditing = contratantes.some(c => c.id === savedContratante.id);
-    if (isEditing) {
-        setContratantes(prev => prev.map(c => c.id === savedContratante.id ? savedContratante : c));
-    } else {
-        setContratantes(prev => [...prev, savedContratante].sort((a,b) => a.name.localeCompare(b.name)));
-    }
-    handleCloseSheet();
+
+  const handleSaveSuccess = () => {
+    setIsSheetOpen(false);
+    setEditingContratante(undefined);
+    router.refresh();
   }
 
   const handleDelete = async (id: string) => {
-    toast({ title: 'Excluindo contratante...' });
-    const result = await deleteAction(id);
+    startDeleteTransition(async () => {
+        toast({ title: 'Excluindo contratante...' });
+        const result = await deleteAction(id);
 
-    if (result.success) {
-        toast({ title: 'Contratante excluído com sucesso.' });
-        setContratantes(prev => prev.filter(c => c.id !== id));
-    } else {
-        toast({ variant: 'destructive', title: 'Erro ao excluir contratante.', description: result.message })
-    }
+        if (result.success) {
+            toast({ title: 'Contratante excluído com sucesso.' });
+            router.refresh();
+        } else {
+            toast({ variant: 'destructive', title: 'Erro ao excluir contratante.', description: result.message })
+        }
+    });
   }
 
   const handleEdit = (contratante: Contratante) => {
@@ -162,9 +162,9 @@ export function ContratantesClientPage({ initialContratantes, deleteAction }: {
         </Button>
       </div>
 
-       {contratantes.length > 0 ? (
+       {initialContratantes.length > 0 ? (
           <div className="space-y-4">
-            {contratantes.map(contratante => (
+            {initialContratantes.map(contratante => (
               <Card key={contratante.id}>
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
@@ -182,7 +182,8 @@ export function ContratantesClientPage({ initialContratantes, deleteAction }: {
                     </div>
                     <ContratanteActions 
                         onEdit={() => handleEdit(contratante)} 
-                        onDelete={() => handleDelete(contratante.id)} 
+                        onDelete={() => handleDelete(contratante.id)}
+                        isDeleting={isDeleting}
                     />
                   </div>
                 </CardHeader>
@@ -222,7 +223,7 @@ export function ContratantesClientPage({ initialContratantes, deleteAction }: {
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
             <ContratanteForm 
-                onSave={handleSave} 
+                onSave={handleSaveSuccess} 
                 onCancel={handleCloseSheet}
                 initialData={editingContratante}
             />

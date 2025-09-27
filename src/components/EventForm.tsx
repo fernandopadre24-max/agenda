@@ -123,9 +123,9 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="space-y-6 pr-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex flex-col h-full">
+        <ScrollArea className="flex-1 px-6">
+            <div className="space-y-6 pr-1">
                 <Card>
                     <CardHeader><CardTitle className="font-headline">Informações do Evento</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
@@ -248,7 +248,7 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
                 </Card>
             </div>
         </ScrollArea>
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background flex gap-2">
+        <div className="p-4 border-t bg-background flex gap-2">
             {onCancel && (
                 <Button type="button" variant="outline" onClick={onCancel} className="w-full">
                     Cancelar

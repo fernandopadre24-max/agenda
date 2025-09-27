@@ -44,14 +44,12 @@ export function DashboardClient({
           <SheetHeader className="p-6">
             <SheetTitle className="font-headline">Criar Novo Evento</SheetTitle>
           </SheetHeader>
-          <div className="p-6 pt-0">
-             <EventForm
-                artistas={initialArtistas}
-                contratantes={initialContratantes}
-                pastEvents={pastEvents}
-                onCancel={handleCloseSheet}
-              />
-          </div>
+          <EventForm
+              artistas={initialArtistas}
+              contratantes={initialContratantes}
+              pastEvents={pastEvents}
+              onCancel={handleCloseSheet}
+            />
         </SheetContent>
       </Sheet>
     </div>

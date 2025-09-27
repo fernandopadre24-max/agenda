@@ -1,6 +1,6 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Loader2, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-export function ArtistaActions({ onEdit, onDelete }: { onEdit: () => void, onDelete: () => void }) {
+export function ArtistaActions({ onEdit, onDelete, isDeleting }: { onEdit: () => void, onDelete: () => void, isDeleting: boolean }) {
 
   return (
     <div className="flex items-center gap-1">
@@ -37,7 +37,10 @@ export function ArtistaActions({ onEdit, onDelete }: { onEdit: () => void, onDel
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">Continuar</AlertDialogAction>
+                <AlertDialogAction onClick={onDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                    {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Continuar
+                </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

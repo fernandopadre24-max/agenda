@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -47,6 +47,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from './ui/badge';
+import { useRouter } from 'next/navigation';
 
 const transactionFormSchema = z.object({
   description: z.string().min(3, 'A descrição é obrigatória.'),
@@ -66,13 +67,13 @@ export function TransacoesClientPage({
   initialTransactions: Transaction[];
   initialEvents: Event[];
 }) {
-  const [transactions, setTransactions] = useState(initialTransactions);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isPending, startTransition] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [editingTransactionId, setEditingTransactionId] = useState<
     string | null
   >(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   const generalBalance = useMemo(() => {
     const eventBalance = initialEvents.reduce((acc, event) => {
@@ -85,7 +86,7 @@ export function TransacoesClientPage({
       return acc;
     }, 0);
 
-    const transactionBalance = transactions.reduce((acc, tx) => {
+    const transactionBalance = initialTransactions.reduce((acc, tx) => {
         if(tx.status === 'concluido') {
             if (tx.type === 'receber') {
                 acc += tx.value;
@@ -97,7 +98,7 @@ export function TransacoesClientPage({
     }, 0);
 
     return eventBalance + transactionBalance;
-  }, [initialEvents, transactions]);
+  }, [initialEvents, initialTransactions]);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
@@ -111,50 +112,34 @@ export function TransacoesClientPage({
 
   useEffect(() => {
     if (editingTransactionId) {
-      const tx = transactions.find(t => t.id === editingTransactionId);
+      const tx = initialTransactions.find(t => t.id === editingTransactionId);
       if (tx) {
         form.reset({
           description: tx.description,
           value: tx.value,
           type: tx.type,
-          date: tx.date,
+          date: new Date(tx.date),
         });
         setIsFormOpen(true);
       }
     }
-  }, [editingTransactionId, transactions, form]);
+  }, [editingTransactionId, initialTransactions, form]);
 
   const onSubmit = (data: TransactionFormValues) => {
-    startTransition(true);
-    const action = editingTransactionId
-      ? updateTransactionAction(editingTransactionId, data)
-      : createTransactionAction(data);
+    startTransition(async () => {
+      const action = editingTransactionId
+        ? updateTransactionAction(editingTransactionId, data)
+        : createTransactionAction(data);
 
-    action.then(result => {
-      if (result.success && result.data) {
+      const result = await action;
+      if (result.success) {
         toast({
           title: `Transação ${
             editingTransactionId ? 'atualizada' : 'adicionada'
           }!`,
         });
-        if (editingTransactionId) {
-          setTransactions(prev =>
-            prev
-              .map(t =>
-                t.id === editingTransactionId ? (result.data as Transaction) : t
-              )
-              .sort(
-                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-              )
-          );
-        } else {
-          setTransactions(prev =>
-            [result.data as Transaction, ...prev].sort(
-              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            )
-          );
-        }
         resetForm();
+        router.refresh();
       } else {
         toast({
           variant: 'destructive',
@@ -162,16 +147,15 @@ export function TransacoesClientPage({
           description: result.message,
         });
       }
-      startTransition(false);
     });
   };
 
   const handleDelete = (id: string) => {
-    startTransition(true);
-    deleteTransactionAction(id).then(result => {
+    startTransition(async () => {
+      const result = await deleteTransactionAction(id);
       if (result.success) {
         toast({ title: 'Transação excluída!' });
-        setTransactions(prev => prev.filter(t => t.id !== id));
+        router.refresh();
       } else {
         toast({
           variant: 'destructive',
@@ -179,7 +163,6 @@ export function TransacoesClientPage({
           description: result.message,
         });
       }
-      startTransition(false);
     });
   };
 
@@ -199,10 +182,10 @@ export function TransacoesClientPage({
   };
 
   const handleToggleForm = () => {
-    if (isFormOpen && editingTransactionId) {
+    if (isFormOpen) {
       resetForm();
     } else {
-      setIsFormOpen(!isFormOpen);
+      setIsFormOpen(true);
     }
   };
 
@@ -343,8 +326,8 @@ export function TransacoesClientPage({
 
       <div className="space-y-3">
         <h3 className="text-lg font-headline">Histórico de Transações Manuais</h3>
-        {transactions.length > 0 ? (
-          transactions.map(tx => (
+        {initialTransactions.length > 0 ? (
+          initialTransactions.map(tx => (
             <Card key={tx.id}>
               <CardContent className="p-3 flex justify-between items-center">
                 <div className="flex-1">
@@ -418,6 +401,7 @@ export function TransacoesClientPage({
                           onClick={() => handleDelete(tx.id)}
                           disabled={isPending}
                         >
+                          {isPending ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
                           Excluir
                         </AlertDialogAction>
                       </AlertDialogFooter>

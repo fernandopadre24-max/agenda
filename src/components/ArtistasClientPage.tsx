@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
+import { useRouter } from 'next/navigation';
 
 const artistaFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
@@ -29,7 +30,7 @@ function ArtistaForm({
   onCancel,
   initialData
 }: {
-  onSave: (artista: Artista) => void;
+  onSave: () => void;
   onCancel: () => void;
   initialData?: Artista;
 }) {
@@ -56,8 +57,7 @@ function ArtistaForm({
 
       if (result.success && result.data) {
         toast({ title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
-        onSave(result.data as Artista);
-        form.reset();
+        onSave();
       } else {
         toast({
           variant: 'destructive',
@@ -75,7 +75,7 @@ function ArtistaForm({
             <SheetTitle className="font-headline">{isEditing ? 'Editar Artista' : 'Novo Artista'}</SheetTitle>
         </SheetHeader>
         <ScrollArea className="flex-1 px-6">
-            <CardContent className="space-y-4 p-0">
+            <div className="space-y-4 pr-1">
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
@@ -88,7 +88,7 @@ function ArtistaForm({
               <FormField control={form.control} name="phone" render={({ field }) => (
                 <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
-            </CardContent>
+            </div>
         </ScrollArea>
         <div className="p-4 border-t flex justify-end gap-2">
            <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
@@ -103,30 +103,29 @@ function ArtistaForm({
 
 
 export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artista[] }) {
-  const [artistas, setArtistas] = useState(initialArtistas);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingArtista, setEditingArtista] = useState<Artista | undefined>(undefined);
   const { toast } = useToast();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const handleSave = (savedArtista: Artista) => {
-    const isEditing = artistas.some(a => a.id === savedArtista.id);
-    if (isEditing) {
-        setArtistas(prev => prev.map(a => a.id === savedArtista.id ? savedArtista : a));
-    } else {
-        setArtistas(prev => [...prev, savedArtista].sort((a, b) => a.name.localeCompare(b.name)));
-    }
-    handleCloseSheet();
+  const handleSaveSuccess = () => {
+    setIsSheetOpen(false);
+    setEditingArtista(undefined);
+    router.refresh();
   };
 
-  const handleDelete = async (id: string) => {
-    toast({ title: 'Excluindo artista...' });
-    const result = await deleteArtistaAction(id);
-    if (result.success) {
-      toast({ title: 'Artista excluído com sucesso.' });
-      setArtistas(prev => prev.filter(a => a.id !== id));
-    } else {
-      toast({ variant: 'destructive', title: 'Erro ao excluir artista.', description: result.message });
-    }
+  const handleDelete = (id: string) => {
+    startTransition(async () => {
+        toast({ title: 'Excluindo artista...' });
+        const result = await deleteArtistaAction(id);
+        if (result.success) {
+            toast({ title: 'Artista excluído com sucesso.' });
+            router.refresh();
+        } else {
+            toast({ variant: 'destructive', title: 'Erro ao excluir artista.', description: result.message });
+        }
+    });
   };
   
   const handleEdit = (artista: Artista) => {
@@ -152,9 +151,9 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
         </Button>
       </div>
 
-       {artistas.length > 0 ? (
+       {initialArtistas.length > 0 ? (
         <div className="space-y-4">
-          {artistas.map(artista => (
+          {initialArtistas.map(artista => (
             <Card key={artista.id}>
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
@@ -164,7 +163,8 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
                   </CardTitle>
                   <ArtistaActions 
                     onEdit={() => handleEdit(artista)} 
-                    onDelete={() => handleDelete(artista.id)} 
+                    onDelete={() => handleDelete(artista.id)}
+                    isDeleting={isPending}
                   />
                 </div>
               </CardHeader>
@@ -204,7 +204,7 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
             <ArtistaForm 
-                onSave={handleSave} 
+                onSave={handleSaveSuccess} 
                 onCancel={handleCloseSheet} 
                 initialData={editingArtista}
             />
