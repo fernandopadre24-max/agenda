@@ -135,13 +135,24 @@ export function ArtistasClientPage({
   return (
     <>
       <div className="flex justify-end">
-        <Button onClick={handleAddNew}>
-            <Plus className="mr-2 h-4 w-4" /> Novo Artista
-        </Button>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild>
+             <Button onClick={handleAddNew}>
+                <Plus className="mr-2 h-4 w-4" /> Novo Artista
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
+              <ArtistaForm 
+                  onSave={handleSaveSuccess} 
+                  onCancel={handleCloseSheet} 
+                  initialData={editingArtista}
+              />
+          </SheetContent>
+        </Sheet>
       </div>
 
        {initialArtistas.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-4 mt-4">
           {initialArtistas.map(artista => (
             <Card key={artista.id}>
               <CardHeader className="pb-3">
@@ -183,21 +194,11 @@ export function ArtistasClientPage({
         <div className="text-center py-12 text-muted-foreground">
           <Mic className="mx-auto h-12 w-12" />
           <p className="mt-4">Nenhum artista cadastrado.</p>
-          <Button onClick={handleAddNew} className="mt-4">
+           <Button onClick={handleAddNew} className="mt-4">
               <Plus className="mr-2 h-4 w-4" /> Cadastrar Artista
           </Button>
         </div>
       )}
-      
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="p-0" onOpenChange={ (open) => { if(!open) handleCloseSheet() }}>
-            <ArtistaForm 
-                onSave={handleSaveSuccess} 
-                onCancel={handleCloseSheet} 
-                initialData={editingArtista}
-            />
-        </SheetContent>
-      </Sheet>
     </>
   );
 }
