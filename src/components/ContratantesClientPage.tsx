@@ -204,7 +204,7 @@ export function ContratantesClientPage({ initialContratantes }: {
         )}
         
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent className="p-0" onOpenChange={ (open) => { if(!open) handleCloseSheet() }}>
+          <SheetContent className="p-0">
             <ContratanteForm 
                 onSave={handleSaveSuccess} 
                 onCancel={handleCloseSheet}

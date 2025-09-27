@@ -214,7 +214,7 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
             </div>
         </Card>
         <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-            <SheetContent className="p-0" onOpenChange={ (open) => { if(!open) handleCloseSheet() }}>
+            <SheetContent className="p-0">
                  <SheetHeader className="p-6">
                     <SheetTitle className="font-headline">Editar Evento</SheetTitle>
                 </SheetHeader>

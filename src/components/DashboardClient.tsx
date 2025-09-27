@@ -44,7 +44,7 @@ export function DashboardClient({
       />
       
       <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
-        <SheetContent className="p-0" onOpenChange={ (open) => { if(!open) handleCloseSheet() }}>
+        <SheetContent className="p-0">
           <SheetHeader className="p-6">
             <SheetTitle className="font-headline">Criar Novo Evento</SheetTitle>
           </SheetHeader>

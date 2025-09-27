@@ -189,7 +189,7 @@ export function ArtistasClientPage({
         </div>
       )}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent className="p-0" onOpenChange={ (open) => { if(!open) handleCloseSheet() }}>
+          <SheetContent className="p-0">
               <ArtistaForm 
                   onSave={handleSaveSuccess} 
                   onCancel={handleCloseSheet} 
