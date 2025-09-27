@@ -14,8 +14,8 @@ function convertTimestamps<T>(docData: any): T {
   if (!docData) return docData;
   const data = { ...docData };
   for (const key in data) {
+    // Check if the value is a Firestore Timestamp
     if (data[key] && typeof data[key].toDate === 'function') {
-      // This is a Firestore Timestamp
       data[key] = data[key].toDate();
     }
   }
@@ -27,15 +27,14 @@ function convertTimestamps<T>(docData: any): T {
 
 export async function getEvents(): Promise<Event[]> {
   try {
-    const snapshot = await db.collection('events').orderBy('date', 'asc').get();
+    const snapshot = await db.collection('events').get();
     if (snapshot.empty) {
       return [];
     }
-    return snapshot.docs.map(doc => convertTimestamps<Event>({ id: doc.id, ...doc.data() }));
+    const events = snapshot.docs.map(doc => convertTimestamps<Event>({ id: doc.id, ...doc.data() }));
+    return events.sort((a, b) => a.date.getTime() - b.date.getTime());
   } catch (error) {
     console.error("Error fetching events:", error);
-    // If the collection doesn't exist, Firestore throws an error.
-    // We'll return an empty array in this case.
     return [];
   }
 }
@@ -77,11 +76,12 @@ export async function deleteEvent(id: string): Promise<boolean> {
 
 export async function getContratantes(): Promise<Contratante[]> {
   try {
-    const snapshot = await db.collection('contratantes').orderBy('name', 'asc').get();
+    const snapshot = await db.collection('contratantes').get();
     if (snapshot.empty) {
       return [];
     }
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contratante));
+    const contratantes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contratante));
+    return contratantes.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error("Error fetching contratantes:", error);
     return [];
@@ -125,11 +125,12 @@ export async function deleteContratante(id: string): Promise<boolean> {
 
 export async function getArtistas(): Promise<Artista[]> {
   try {
-    const snapshot = await db.collection('artistas').orderBy('name', 'asc').get();
+    const snapshot = await db.collection('artistas').get();
     if (snapshot.empty) {
       return [];
     }
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Artista));
+    const artistas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Artista));
+    return artistas.sort((a,b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error("Error fetching artistas:", error);
     return [];
@@ -173,11 +174,12 @@ export async function deleteArtista(id: string): Promise<boolean> {
 
 export async function getTransactions(): Promise<Transaction[]> {
     try {
-        const snapshot = await db.collection('transactions').orderBy('date', 'desc').get();
+        const snapshot = await db.collection('transactions').get();
         if (snapshot.empty) {
             return [];
         }
-        return snapshot.docs.map(doc => convertTimestamps<Transaction>({ id: doc.id, ...doc.data() }));
+        const transactions = snapshot.docs.map(doc => convertTimestamps<Transaction>({ id: doc.id, ...doc.data() }));
+        return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
     } catch(error) {
         console.error("Error fetching transactions:", error);
         return [];
