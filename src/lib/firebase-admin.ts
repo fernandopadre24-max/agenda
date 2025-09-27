@@ -7,8 +7,20 @@ if (!admin.apps.length) {
   // it will use the service account credentials from the environment variables.
   // GOOGLE_APPLICATION_CREDENTIALS should be set for local development.
   // In Firebase App Hosting, the credentials are automatically available.
-  admin.initializeApp();
+  
+  // Disabling Firebase initialization to debug UI issues.
+  /*
+  try {
+    admin.initializeApp();
+  } catch (e) {
+    console.error('Firebase admin initialization error', e);
+  }
+  */
 }
 
-export const db = admin.firestore();
-export const auth = admin.auth();
+// @ts-nocheck
+// export const db = admin.firestore();
+// export const auth = admin.auth();
+
+export const db = undefined;
+export const auth = undefined;
