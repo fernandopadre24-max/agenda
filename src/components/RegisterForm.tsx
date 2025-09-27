@@ -165,7 +165,7 @@ export function RegisterForm() {
           </CardContent>
         </Card>
 
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" variant="default">
           Criar Conta
         </Button>
       </form>

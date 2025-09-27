@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { type Event } from '@/lib/types';
+import { type Artista, type Contratante, type Event } from '@/lib/types';
 import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, Check, Mic, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
@@ -22,13 +22,16 @@ import {
 import { deleteEventAction, updateEventCompletionStatusAction, updateEventStatusAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
+import { EventForm } from './EventForm';
 
 
-export function EventCard({ event }: { event: Event }) {
+export function EventCard({ event, artistas, contratantes, pastEvents }: { event: Event, artistas: Artista[], contratantes: Contratante[], pastEvents: string[] }) {
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   
   useEffect(() => {
     setIsMounted(true);
@@ -67,6 +70,9 @@ export function EventCard({ event }: { event: Event }) {
     });
   }
 
+  const handleEdit = () => {
+    setIsEditSheetOpen(true);
+  }
 
   if (!isMounted) {
     return null;
@@ -117,86 +123,101 @@ export function EventCard({ event }: { event: Event }) {
 
 
   return (
-      <Card className={`hover:border-primary transition-all duration-200 ${event.status === 'realizado' ? 'opacity-60' : ''}`}>
-        <div className="flex">
-            <Link href={`/events/${event.id}`} className="flex-1">
-                <div className="flex">
-                    <div className="flex flex-col items-center justify-center p-2.5 bg-secondary/50 border-r border-border w-16">
-                        <span className="text-xs uppercase font-bold text-primary">{month}</span>
-                        <span className="text-2xl font-bold">{day}</span>
+      <>
+        <Card className={`hover:border-primary transition-all duration-200 ${event.status === 'realizado' ? 'opacity-60' : ''}`}>
+            <div className="flex">
+                <Link href={`/events/${event.id}`} className="flex-1">
+                    <div className="flex">
+                        <div className="flex flex-col items-center justify-center p-2.5 bg-secondary/50 border-r border-border w-16">
+                            <span className="text-xs uppercase font-bold text-primary">{month}</span>
+                            <span className="text-2xl font-bold">{day}</span>
+                        </div>
+                        <div className="flex-1 p-3">
+                        <div className="flex justify-between items-start">
+                            <CardTitle className="font-headline text-base leading-tight flex items-center gap-2">
+                                <Briefcase className="h-4 w-4" />
+                                {event.contratante}
+                            </CardTitle>
+                            {renderFinancials()}
+                        </div>
+                        <CardDescription className="flex items-center gap-2 text-xs text-muted-foreground pt-1 pl-1">
+                            <Mic className="h-3 w-3" />
+                            {event.artista}
+                        </CardDescription>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1 pl-1">
+                            {time}
+                            {event.status === 'realizado' && <Badge variant="outline">Realizado</Badge>}
+                        </div>
+                        </div>
                     </div>
-                    <div className="flex-1 p-3">
-                      <div className="flex justify-between items-start">
-                          <CardTitle className="font-headline text-base leading-tight flex items-center gap-2">
-                            <Briefcase className="h-4 w-4" />
-                            {event.contratante}
-                          </CardTitle>
-                          {renderFinancials()}
-                      </div>
-                      <CardDescription className="flex items-center gap-2 text-xs text-muted-foreground pt-1 pl-1">
-                          <Mic className="h-3 w-3" />
-                          {event.artista}
-                      </CardDescription>
-                       <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1 pl-1">
-                        {time}
-                        {event.status === 'realizado' && <Badge variant="outline">Realizado</Badge>}
-                       </div>
-                    </div>
-                </div>
-            </Link>
-            <div className="p-1 border-l flex flex-col justify-center items-center">
-                {showCompletionAction && (
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10" 
-                        onClick={(e) => { e.stopPropagation(); handleCompletionStatusUpdate(); }}
-                        disabled={isPending}
-                        aria-label={"Marcar como Realizado"}
-                      >
-                        <Check className="h-4 w-4" />
-                    </Button>
-                )}
-                {(showReceberAction || showPagarAction) && (
-                     <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-green-500 hover:text-green-500 hover:bg-green-500/10" 
-                        onClick={(e) => { e.stopPropagation(); handleFinancialStatusUpdate(showReceberAction ? 'receber' : 'pagar'); }}
-                        disabled={isPending}
-                        aria-label={showReceberAction ? "Marcar como Recebido" : "Marcar como Pago"}
-                      >
-                        <DollarSign className="h-4 w-4" />
-                    </Button>
-                )}
-                <Button variant="ghost" size="icon" asChild className="h-8 w-8">
-                    <Link href={`/events/${event.id}/edit`} onClick={(e) => e.stopPropagation()}>
+                </Link>
+                <div className="p-1 border-l flex flex-col justify-center items-center">
+                    {showCompletionAction && (
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10" 
+                            onClick={(e) => { e.stopPropagation(); handleCompletionStatusUpdate(); }}
+                            disabled={isPending}
+                            aria-label={"Marcar como Realizado"}
+                        >
+                            <Check className="h-4 w-4" />
+                        </Button>
+                    )}
+                    {(showReceberAction || showPagarAction) && (
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-green-500 hover:text-green-500 hover:bg-green-500/10" 
+                            onClick={(e) => { e.stopPropagation(); handleFinancialStatusUpdate(showReceberAction ? 'receber' : 'pagar'); }}
+                            disabled={isPending}
+                            aria-label={showReceberAction ? "Marcar como Recebido" : "Marcar como Pago"}
+                        >
+                            <DollarSign className="h-4 w-4" />
+                        </Button>
+                    )}
+                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleEdit(); }}>
                         <Edit className="h-4 w-4" />
                         <span className="sr-only">Editar</span>
-                    </Link>
-                </Button>
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Excluir</span>
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o evento.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="bg-destructive hover:bg-destructive/90">Continuar</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Excluir</span>
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. Isso excluirá permanentemente o evento.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="bg-destructive hover:bg-destructive/90">Continuar</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
             </div>
-        </div>
-      </Card>
+        </Card>
+        <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+            <SheetContent className="p-0" onInteractOutside={() => setIsEditSheetOpen(false)}>
+                 <SheetHeader className="p-6">
+                    <SheetTitle className="font-headline">Editar Evento</SheetTitle>
+                </SheetHeader>
+                <div className="p-6 pt-0">
+                    <EventForm
+                        event={event}
+                        artistas={artistas}
+                        contratantes={contratantes}
+                        pastEvents={pastEvents}
+                    />
+                </div>
+            </SheetContent>
+        </Sheet>
+      </>
   );
 }
