@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getContratantes } from '@/lib/data';
@@ -14,7 +15,7 @@ export default async function ContratantesPage() {
       <main className="flex-1 p-4 md:p-6 space-y-4">
         <ContratantesClientPage 
             initialContratantes={contratantes}
-            deleteAction={deleteContratanteAction}
+            deleteContratanteAction={deleteContratanteAction}
         />
       </main>
     </div>

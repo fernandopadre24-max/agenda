@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useTransition, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -108,9 +109,9 @@ function ContratanteForm({
   );
 }
 
-export function ContratantesClientPage({ initialContratantes, deleteAction }: { 
+export function ContratantesClientPage({ initialContratantes, deleteContratanteAction }: { 
     initialContratantes: Contratante[],
-    deleteAction: (id: string) => Promise<any>
+    deleteContratanteAction: (id: string) => Promise<any>
 }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingContratante, setEditingContratante] = useState<Contratante | undefined>(undefined);
@@ -128,7 +129,7 @@ export function ContratantesClientPage({ initialContratantes, deleteAction }: {
   const handleDelete = async (id: string) => {
     startDeleteTransition(async () => {
         toast({ title: 'Excluindo contratante...' });
-        const result = await deleteAction(id);
+        const result = await deleteContratanteAction(id);
 
         if (result.success) {
             toast({ title: 'Contratante excluído com sucesso.' });
