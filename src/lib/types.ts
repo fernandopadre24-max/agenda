@@ -50,6 +50,6 @@ export type ActionResponse = {
     success: boolean;
     message: string;
     redirectPath?: string;
-    data?: Artista | Contratante | Transaction;
+    data?: Artista | Contratante | Transaction | Event;
     errors?: { [key: string]: string[] | undefined; };
 }

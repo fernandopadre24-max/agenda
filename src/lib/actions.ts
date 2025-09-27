@@ -75,8 +75,8 @@ export type ArtistaFormValues = z.infer<typeof artistaFormSchema>;
 export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
 
-const createEventFromForm = (data: EventFormValues): Omit<Event, 'id' | 'status'> => {
-    const event: Omit<Event, 'id' | 'status'> = {
+const createEventFromForm = (data: EventFormValues): Partial<Omit<Event, 'id'>> => {
+    const event: Partial<Omit<Event, 'id'>> = {
         date: data.date,
         hora: data.hora,
         contratante: data.contratante,
@@ -85,15 +85,17 @@ const createEventFromForm = (data: EventFormValues): Omit<Event, 'id' | 'status'
         saida: data.saida,
         cidade: data.cidade,
         local: data.local,
-        receber: undefined,
-        pagar: undefined,
     };
 
     if (data.financeType === 'receber' && data.valor !== undefined && data.status) {
         event.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
-    }
-    if (data.financeType === 'pagar' && data.valor !== undefined && data.status) {
+        event.pagar = undefined;
+    } else if (data.financeType === 'pagar' && data.valor !== undefined && data.status) {
         event.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
+        event.receber = undefined;
+    } else {
+        event.pagar = undefined;
+        event.receber = undefined;
     }
     return event;
 }
@@ -110,7 +112,7 @@ export async function createEventAction(data: EventFormValues): Promise<ActionRe
   }
 
   try {
-    const newEventData = createEventFromForm(validatedFields.data);
+    const newEventData = createEventFromForm(validatedFields.data) as Omit<Event, 'id'>;
     const newEvent = await dbAddEvent({...newEventData, status: 'pendente'});
     
     revalidatePath('/');
@@ -138,6 +140,10 @@ export async function updateEventAction(id: string, data: EventFormValues): Prom
     
     try {
         const eventUpdateData = createEventFromForm(validatedFields.data);
+        // Firestore specific: remove undefined fields so they are deleted from the document
+        if (eventUpdateData.pagar === undefined) delete eventUpdateData.pagar;
+        if (eventUpdateData.receber === undefined) delete eventUpdateData.receber;
+
         const updatedEvent = await dbUpdateEvent(id, eventUpdateData);
         
         revalidatePath('/');

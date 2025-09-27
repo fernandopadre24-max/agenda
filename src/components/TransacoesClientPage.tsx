@@ -117,7 +117,7 @@ export function TransacoesClientPage({
           description: tx.description,
           value: tx.value,
           type: tx.type,
-          date: new Date(tx.date),
+          date: tx.date,
         });
         setIsFormOpen(true);
       }
@@ -287,7 +287,6 @@ export function TransacoesClientPage({
                       <FormControl>
                         <Input
                           type="date"
-                          {...field}
                           onChange={e => field.onChange(e.target.valueAsDate)}
                           value={field.value.toISOString().split('T')[0]}
                         />
