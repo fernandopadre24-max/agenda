@@ -20,12 +20,10 @@ export function AgendaClientPage({
   initialEvents,
   initialArtistas,
   initialContratantes,
-  pastEvents,
 }: {
   initialEvents: Event[];
   initialArtistas: Artista[];
   initialContratantes: Contratante[];
-  pastEvents: string[];
 }) {
   const [isMounted, setIsMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -140,7 +138,7 @@ export function AgendaClientPage({
         </div>
       )}
 
-      <EventList events={displayedEvents} artistas={initialArtistas} contratantes={initialContratantes} pastEvents={pastEvents} />
+      <EventList events={displayedEvents} />
     </div>
   );
 }

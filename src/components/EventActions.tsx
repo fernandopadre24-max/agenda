@@ -18,19 +18,13 @@ import {
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent } from './ui/sheet';
 import { EventForm } from './EventForm';
-import type { Artista, Contratante, Event } from '@/lib/types';
+import type { Event } from '@/lib/types';
 
 
 export function EventActions({ 
-    event,
-    artistas,
-    contratantes,
-    pastEvents
+    event
 }: { 
-    event: Event,
-    artistas: Artista[],
-    contratantes: Contratante[],
-    pastEvents: string[]
+    event: Event
 }) {
   const { toast } = useToast();
   const router = useRouter();
@@ -102,9 +96,6 @@ export function EventActions({
             <SheetContent className="p-0">
                 <EventForm
                     event={event}
-                    artistas={artistas}
-                    contratantes={contratantes}
-                    pastEvents={pastEvents}
                     onSave={handleSaveSuccess}
                     onCancel={() => setIsSheetOpen(false)}
                 />

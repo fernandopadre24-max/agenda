@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { type Artista, type Contratante, type Event } from '@/lib/types';
+import { type Event } from '@/lib/types';
 import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, Check, Mic, DollarSign, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
@@ -26,7 +26,7 @@ import { Sheet, SheetContent } from './ui/sheet';
 import { EventForm } from './EventForm';
 
 
-export function EventCard({ event, artistas, contratantes, pastEvents }: { event: Event, artistas: Artista[], contratantes: Contratante[], pastEvents: string[] }) {
+export function EventCard({ event }: { event: Event }) {
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -220,9 +220,6 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
             <SheetContent className="p-0">
                 <EventForm
                     event={event}
-                    artistas={artistas}
-                    contratantes={contratantes}
-                    pastEvents={pastEvents}
                     onSave={handleSaveSuccess}
                     onCancel={() => setIsEditSheetOpen(false)}
                 />

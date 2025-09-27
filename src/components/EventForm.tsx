@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useTransition, useEffect } from 'react';
+import { useTransition, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { createEventAction, updateEventAction } from '@/lib/actions';
+import { getArtistas, getContratantes } from '@/lib/data';
 import type { Event, Contratante, Artista, ActionResponse } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -44,11 +45,11 @@ const eventFormSchema = z.object({
   status: z.enum(['pendente', 'concluido']).optional(),
 }).refine(data => {
     if (data.financeType !== 'nenhum') {
-        return data.valor !== undefined && data.status !== undefined;
+        return data.valor !== undefined && data.valor > 0 && data.status !== undefined;
     }
     return true;
 }, {
-    message: 'Valor e status são obrigatórios para transações financeiras.',
+    message: 'Valor (maior que zero) e status são obrigatórios para transações financeiras.',
     path: ['valor'],
 });
 
@@ -56,18 +57,38 @@ export type EventFormValues = z.infer<typeof eventFormSchema>;
 
 interface EventFormProps {
     event?: Event;
-    artistas: Artista[];
-    contratantes: Contratante[];
-    pastEvents: string[];
     onSave: () => void;
     onCancel: () => void;
 }
 
-export function EventForm({ event, artistas, contratantes, onSave, onCancel }: EventFormProps) {
+export function EventForm({ event, onSave, onCancel }: EventFormProps) {
   const isEditing = !!event;
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+
+  const [artistas, setArtistas] = useState<Artista[]>([]);
+  const [contratantes, setContratantes] = useState<Contratante[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   
+  useEffect(() => {
+    async function fetchData() {
+        setIsLoadingData(true);
+        try {
+            const [artistasData, contratantesData] = await Promise.all([
+                getArtistas(),
+                getContratantes()
+            ]);
+            setArtistas(artistasData);
+            setContratantes(contratantesData);
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Erro ao carregar dados', description: 'Não foi possível buscar artistas e contratantes.' });
+        } finally {
+            setIsLoadingData(false);
+        }
+    }
+    fetchData();
+  }, [toast]);
+
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -132,6 +153,12 @@ export function EventForm({ event, artistas, contratantes, onSave, onCancel }: E
         </SheetHeader>
         <ScrollArea>
             <div className="space-y-6 px-6 pr-7">
+                {isLoadingData ? (
+                    <div className="flex justify-center items-center h-40">
+                        <Loader2 className="animate-spin text-primary" />
+                    </div>
+                ) : (
+                <>
                 <Card>
                     <CardHeader><CardTitle className="font-headline text-lg">Informações do Evento</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
@@ -252,13 +279,15 @@ export function EventForm({ event, artistas, contratantes, onSave, onCancel }: E
                         )}
                     </CardContent>
                 </Card>
+                </>
+                )}
             </div>
         </ScrollArea>
         <div className="p-4 border-t bg-background flex gap-2">
             <Button type="button" variant="outline" onClick={onCancel} className="w-full">
                 Cancelar
             </Button>
-            <Button type="submit" disabled={isPending} className="w-full">
+            <Button type="submit" disabled={isPending || isLoadingData} className="w-full">
                 {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
             </Button>
         </div>

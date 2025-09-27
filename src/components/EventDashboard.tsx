@@ -73,13 +73,6 @@ export function EventDashboard({
       setIsLoading(false);
     }
   };
-  
-  const pastEventsStrings = useMemo(() => initialEvents.map(
-    (e: Event) =>
-      `Evento para ${e.contratante} com ${e.artista} em ${new Date(
-        e.date
-      ).toLocaleDateString()} às ${e.hora}.`
-  ), [initialEvents]);
 
   const displayedEvents = useMemo(() => {
     if (!isMounted) return [];
@@ -213,9 +206,6 @@ export function EventDashboard({
       {aiResponse && <p className="text-sm text-muted-foreground italic px-1">"{aiResponse}"</p>}
       <EventList 
         events={displayedEvents} 
-        artistas={initialArtistas} 
-        contratantes={initialContratantes} 
-        pastEvents={pastEventsStrings} 
       />
     </div>
   );

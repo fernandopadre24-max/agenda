@@ -1,17 +1,11 @@
 import { EventCard } from './EventCard';
-import type { Event, Artista, Contratante } from '@/lib/types';
+import type { Event } from '@/lib/types';
 import { CalendarX } from 'lucide-react';
 
 export function EventList({ 
     events, 
-    artistas, 
-    contratantes, 
-    pastEvents 
 }: { 
     events: Event[], 
-    artistas: Artista[], 
-    contratantes: Contratante[], 
-    pastEvents: string[] 
 }) {
   if (events.length === 0) {
     return (
@@ -27,9 +21,6 @@ export function EventList({
         <EventCard 
             key={event.id} 
             event={event} 
-            artistas={artistas}
-            contratantes={contratantes}
-            pastEvents={pastEvents}
         />
       ))}
     </div>
