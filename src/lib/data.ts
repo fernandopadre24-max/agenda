@@ -106,10 +106,11 @@ export async function getContratanteById(id: string): Promise<Contratante | unde
 
 export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
   const docRef = await db.collection('contratantes').add(contratanteData);
+  const newContratanteData = (await docRef.get()).data();
   return {
     id: docRef.id,
-    ...contratanteData,
-  };
+    ...newContratanteData,
+  } as Contratante;
 }
 
 export async function updateContratante(id: string, contratanteData: Partial<Omit<Contratante, 'id'>>): Promise<Contratante | undefined> {
@@ -156,10 +157,11 @@ export async function getArtistaById(id: string): Promise<Artista | undefined> {
 
 export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Artista> {
   const docRef = await db.collection('artistas').add(artistaData);
+  const newArtistaData = (await docRef.get()).data();
   return {
     id: docRef.id,
-    ...artistaData,
-  };
+    ...newArtistaData,
+  } as Artista;
 }
 
 export async function updateArtista(id: string, artistaData: Partial<Omit<Artista, 'id'>>): Promise<Artista | undefined> {
