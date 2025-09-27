@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Mic, Mail, Phone, Music, Loader2 } from 'lucide-react';
 import { ArtistaActions } from '@/components/ArtistaActions';
 import { type Artista } from '@/lib/types';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from './ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { createArtistaAction, updateArtistaAction } from '@/lib/actions';
 import { useForm } from 'react-hook-form';
@@ -55,7 +55,7 @@ function ArtistaForm({
 
       const result = await action;
 
-      if (result.success && result.data) {
+      if (result.success) {
         toast({ title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
         onSave();
       } else {
@@ -135,20 +135,9 @@ export function ArtistasClientPage({
   return (
     <>
       <div className="flex justify-end">
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-             <Button onClick={handleAddNew}>
-                <Plus className="mr-2 h-4 w-4" /> Novo Artista
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
-              <ArtistaForm 
-                  onSave={handleSaveSuccess} 
-                  onCancel={handleCloseSheet} 
-                  initialData={editingArtista}
-              />
-          </SheetContent>
-        </Sheet>
+        <Button onClick={handleAddNew}>
+            <Plus className="mr-2 h-4 w-4" /> Novo Artista
+        </Button>
       </div>
 
        {initialArtistas.length > 0 ? (
@@ -199,6 +188,15 @@ export function ArtistasClientPage({
           </Button>
         </div>
       )}
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetContent className="p-0" onOpenChange={ (open) => { if(!open) handleCloseSheet() }}>
+              <ArtistaForm 
+                  onSave={handleSaveSuccess} 
+                  onCancel={handleCloseSheet} 
+                  initialData={editingArtista}
+              />
+          </SheetContent>
+        </Sheet>
     </>
   );
 }
