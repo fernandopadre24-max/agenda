@@ -1,4 +1,6 @@
 'use client';
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Edit, Loader2, Trash2 } from 'lucide-react';
 import {
@@ -12,8 +14,27 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
+import { deleteContratanteAction } from '@/lib/actions';
 
-export function ContratanteActions({ onEdit, onDelete, isDeleting }: { onEdit: () => void, onDelete: () => void, isDeleting: boolean }) {
+export function ContratanteActions({ contratanteId, onEdit }: { contratanteId: string, onEdit: () => void }) {
+  const [isDeleting, startDeleteTransition] = useTransition();
+  const { toast } = useToast();
+  const router = useRouter();
+  
+  const handleDelete = () => {
+    startDeleteTransition(async () => {
+        toast({ title: 'Excluindo contratante...' });
+        const result = await deleteContratanteAction(contratanteId);
+
+        if (result.success) {
+            toast({ title: 'Contratante excluído com sucesso.' });
+            router.refresh();
+        } else {
+            toast({ variant: 'destructive', title: 'Erro ao excluir contratante.', description: result.message })
+        }
+    });
+  }
 
   return (
     <div className="flex items-center gap-1">
@@ -37,7 +58,7 @@ export function ContratanteActions({ onEdit, onDelete, isDeleting }: { onEdit: (
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
                     {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Continuar
                 </AlertDialogAction>

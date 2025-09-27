@@ -104,16 +104,12 @@ function ArtistaForm({
 
 export function ArtistasClientPage({ 
     initialArtistas,
-    deleteArtistaAction,
  }: { 
     initialArtistas: Artista[];
-    deleteArtistaAction: (id: string) => Promise<any>;
 }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingArtista, setEditingArtista] = useState<Artista | undefined>(undefined);
-  const { toast } = useToast();
   const router = useRouter();
-  const [isDeleting, startDeleteTransition] = useTransition();
 
   const handleSaveSuccess = () => {
     setIsSheetOpen(false);
@@ -121,19 +117,6 @@ export function ArtistasClientPage({
     router.refresh();
   };
 
-  const handleDelete = (id: string) => {
-    startDeleteTransition(async () => {
-        toast({ title: 'Excluindo artista...' });
-        const result = await deleteArtistaAction(id);
-        if (result.success) {
-            toast({ title: 'Artista excluído com sucesso.' });
-            router.refresh();
-        } else {
-            toast({ variant: 'destructive', title: 'Erro ao excluir artista.', description: result.message });
-        }
-    });
-  };
-  
   const handleEdit = (artista: Artista) => {
     setEditingArtista(artista);
     setIsSheetOpen(true);
@@ -168,9 +151,8 @@ export function ArtistasClientPage({
                     {artista.name}
                   </CardTitle>
                   <ArtistaActions 
+                    artistaId={artista.id}
                     onEdit={() => handleEdit(artista)} 
-                    onDelete={() => handleDelete(artista.id)}
-                    isDeleting={isDeleting}
                   />
                 </div>
               </CardHeader>

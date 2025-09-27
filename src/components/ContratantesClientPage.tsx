@@ -109,35 +109,18 @@ function ContratanteForm({
   );
 }
 
-export function ContratantesClientPage({ initialContratantes, deleteContratanteAction }: { 
+export function ContratantesClientPage({ initialContratantes }: { 
     initialContratantes: Contratante[],
-    deleteContratanteAction: (id: string) => Promise<any>
 }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingContratante, setEditingContratante] = useState<Contratante | undefined>(undefined);
-  const { toast } = useToast();
   const router = useRouter();
-  const [isDeleting, startDeleteTransition] = useTransition();
 
 
   const handleSaveSuccess = () => {
     setIsSheetOpen(false);
     setEditingContratante(undefined);
     router.refresh();
-  }
-
-  const handleDelete = async (id: string) => {
-    startDeleteTransition(async () => {
-        toast({ title: 'Excluindo contratante...' });
-        const result = await deleteContratanteAction(id);
-
-        if (result.success) {
-            toast({ title: 'Contratante excluído com sucesso.' });
-            router.refresh();
-        } else {
-            toast({ variant: 'destructive', title: 'Erro ao excluir contratante.', description: result.message })
-        }
-    });
   }
 
   const handleEdit = (contratante: Contratante) => {
@@ -182,9 +165,8 @@ export function ContratantesClientPage({ initialContratantes, deleteContratanteA
                       )}
                     </div>
                     <ContratanteActions 
+                        contratanteId={contratante.id}
                         onEdit={() => handleEdit(contratante)} 
-                        onDelete={() => handleDelete(contratante.id)}
-                        isDeleting={isDeleting}
                     />
                   </div>
                 </CardHeader>

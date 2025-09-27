@@ -1,4 +1,6 @@
 'use client';
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Edit, Loader2, Trash2 } from 'lucide-react';
 import {
@@ -12,8 +14,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
+import { deleteArtistaAction } from '@/lib/actions';
 
-export function ArtistaActions({ onEdit, onDelete, isDeleting }: { onEdit: () => void, onDelete: () => void, isDeleting: boolean }) {
+export function ArtistaActions({ artistaId, onEdit }: { artistaId: string, onEdit: () => void }) {
+  const [isDeleting, startDeleteTransition] = useTransition();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleDelete = () => {
+    startDeleteTransition(async () => {
+        toast({ title: 'Excluindo artista...' });
+        const result = await deleteArtistaAction(artistaId);
+        if (result.success) {
+            toast({ title: 'Artista excluído com sucesso.' });
+            router.refresh();
+        } else {
+            toast({ variant: 'destructive', title: 'Erro ao excluir artista.', description: result.message });
+        }
+    });
+  };
 
   return (
     <div className="flex items-center gap-1">
@@ -37,7 +57,7 @@ export function ArtistaActions({ onEdit, onDelete, isDeleting }: { onEdit: () =>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
                     {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Continuar
                 </AlertDialogAction>
