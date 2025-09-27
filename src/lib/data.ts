@@ -2,6 +2,7 @@
 
 import type { Event, Contratante, Artista, Transaction } from './types';
 import { db } from './firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 // --- Helper Functions ---
 
@@ -56,10 +57,10 @@ export async function getEventById(id: string): Promise<Event | undefined> {
 
 export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
   const docRef = await db.collection('events').add(eventData);
-  const newEventData = (await docRef.get()).data();
+  const newEventSnapshot = await docRef.get();
   return convertTimestamps<Event>({
     id: docRef.id,
-    ...newEventData,
+    ...newEventSnapshot.data(),
   });
 }
 
@@ -106,10 +107,10 @@ export async function getContratanteById(id: string): Promise<Contratante | unde
 
 export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
   const docRef = await db.collection('contratantes').add(contratanteData);
-  const newContratanteData = (await docRef.get()).data();
+  const newContratanteSnapshot = await docRef.get();
   return {
     id: docRef.id,
-    ...newContratanteData,
+    ...newContratanteSnapshot.data(),
   } as Contratante;
 }
 
@@ -157,10 +158,10 @@ export async function getArtistaById(id: string): Promise<Artista | undefined> {
 
 export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Artista> {
   const docRef = await db.collection('artistas').add(artistaData);
-  const newArtistaData = (await docRef.get()).data();
+  const newArtistaSnapshot = await docRef.get();
   return {
     id: docRef.id,
-    ...newArtistaData,
+    ...newArtistaSnapshot.data(),
   } as Artista;
 }
 
@@ -180,13 +181,11 @@ export async function deleteArtista(id: string): Promise<boolean> {
 
 export async function getTransactions(): Promise<Transaction[]> {
     try {
-        const snapshot = await db.collection('transactions').get();
+        const snapshot = await db.collection('transactions').orderBy('date', 'desc').get();
         if (snapshot.empty) {
             return [];
         }
-        const transactions = snapshot.docs.map(doc => convertTimestamps<Transaction>({ id: doc.id, ...doc.data() }));
-        // Sort in-memory
-        return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
+        return snapshot.docs.map(doc => convertTimestamps<Transaction>({ id: doc.id, ...doc.data() }));
     } catch(error) {
         console.error("Error fetching transactions:", error);
         return [];
@@ -195,10 +194,10 @@ export async function getTransactions(): Promise<Transaction[]> {
 
 export async function addTransaction(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
     const docRef = await db.collection('transactions').add(transactionData);
-    const newTransactionData = (await docRef.get()).data();
+    const newTransactionSnapshot = await docRef.get();
     return convertTimestamps<Transaction>({
         id: docRef.id,
-        ...newTransactionData,
+        ...newTransactionSnapshot.data(),
     });
 }
 

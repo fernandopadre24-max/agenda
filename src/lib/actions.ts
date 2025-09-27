@@ -86,6 +86,7 @@ const createEventFromForm = (data: EventFormValues): Partial<Omit<Event, 'id'>> 
         saida: data.saida,
         cidade: data.cidade,
         local: data.local,
+        status: 'pendente'
     };
 
     if (data.financeType === 'receber' && data.valor !== undefined && data.status) {
@@ -114,8 +115,8 @@ export async function createEventAction(data: EventFormValues): Promise<ActionRe
   }
 
   try {
-    const newEventData = createEventFromForm(validatedFields.data) as Omit<Event, 'id'>;
-    const newEvent = await dbAddEvent({...newEventData, status: 'pendente'});
+    const newEventData = createEventFromForm(validatedFields.data);
+    const newEvent = await dbAddEvent(newEventData as Omit<Event, 'id'>);
     
     revalidatePath('/');
     revalidatePath('/agenda');
@@ -187,7 +188,8 @@ export async function createContratanteAction(data: ContratanteFormValues): Prom
         revalidatePath('/agenda');
         return { success: true, message: 'Contratante criado com sucesso.', data: newContratante };
     } catch (e) {
-        return { success: false, message: 'Ocorreu um erro ao criar o contratante.' };
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Ocorreu um erro ao criar o contratante: ${errorMessage}` };
     }
 }
 
@@ -207,7 +209,8 @@ export async function updateContratanteAction(id: string, data: ContratanteFormV
         revalidatePath('/agenda');
         return { success: true, message: 'Contratante atualizado com sucesso.', data: updatedContratante };
     } catch (e) {
-        return { success: false, message: 'Ocorreu um erro ao atualizar o contratante.' };
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Ocorreu um erro ao atualizar o contratante: ${errorMessage}` };
     }
 }
 
@@ -233,7 +236,8 @@ export async function deleteContratanteAction(id: string): Promise<ActionRespons
         revalidatePath('/agenda');
         return { success: true, message: 'Contratante deletado com sucesso.' };
     } catch (e) {
-        return { success: false, message: 'Ocorreu um erro ao deletar o contratante.' };
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Ocorreu um erro ao deletar o contratante: ${errorMessage}` };
     }
 }
 
@@ -253,7 +257,8 @@ export async function createArtistaAction(data: ArtistaFormValues): Promise<Acti
         revalidatePath('/agenda');
         return { success: true, message: 'Artista criado com sucesso.', data: newArtista };
     } catch (e) {
-        return { success: false, message: 'Ocorreu um erro ao criar o artista.' };
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Ocorreu um erro ao criar o artista: ${errorMessage}` };
     }
 }
 
@@ -273,7 +278,8 @@ export async function updateArtistaAction(id: string, data: ArtistaFormValues): 
         revalidatePath('/agenda');
         return { success: true, message: 'Artista atualizado com sucesso.', data: updatedArtista };
     } catch (e) {
-        return { success: false, message: 'Ocorreu um erro ao atualizar o artista.' };
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Ocorreu um erro ao atualizar o artista: ${errorMessage}` };
     }
 }
 
@@ -298,7 +304,8 @@ export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
         revalidatePath('/agenda');
         return { success: true, message: 'Artista deletado com sucesso.' };
     } catch (e) {
-        return { success: false, message: 'Ocorreu um erro ao deletar o artista.' };
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Ocorreu um erro ao deletar o artista: ${errorMessage}` };
     }
 }
 
@@ -365,35 +372,6 @@ export async function createTransactionAction(data: TransactionFormValues): Prom
         return { success: false, message: 'Dados inválidos.', errors: validatedFields.error.flatten().fieldErrors };
     }
 
-    if (validatedFields.data.type === 'pagar') {
-        const allTransactions = await getTransactions();
-        const allEvents = await getEvents();
-        
-        const eventBalance = allEvents.reduce((acc, event) => {
-            if (event.receber?.status === 'recebido') {
-                acc += event.receber.valor;
-            }
-            if (event.pagar?.status === 'pago') {
-                acc -= event.pagar.valor;
-            }
-            return acc;
-        }, 0);
-
-        const transactionBalance = allTransactions.reduce((acc, tx) => {
-            if (tx.status === 'concluido') {
-                if (tx.type === 'receber') return acc + tx.value;
-                if (tx.type === 'pagar') return acc - tx.value;
-            }
-            return acc;
-        }, 0);
-        
-        const totalBalance = eventBalance + transactionBalance;
-
-        if (totalBalance < validatedFields.data.value) {
-            return { success: false, message: 'Saldo insuficiente para efetuar este pagamento.' };
-        }
-    }
-
     try {
         const transactionWithTimestamp = {
             ...validatedFields.data,
@@ -404,7 +382,8 @@ export async function createTransactionAction(data: TransactionFormValues): Prom
         revalidatePath('/transacoes');
         return { success: true, message: 'Transação criada com sucesso.', data: newTransaction };
     } catch (e) {
-        return { success: false, message: 'Falha ao criar transação.' };
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Falha ao criar transação: ${errorMessage}` };
     }
 }
 
@@ -425,7 +404,8 @@ export async function updateTransactionAction(id: string, data: Partial<Transact
         revalidatePath('/transacoes');
         return { success: true, message: 'Transação atualizada.', data: updatedTransaction };
     } catch (e) {
-        return { success: false, message: 'Falha ao atualizar transação.' };
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Falha ao atualizar transação: ${errorMessage}` };
     }
 }
 
@@ -436,6 +416,7 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
         revalidatePath('/transacoes');
         return { success: true, message: 'Transação excluída.' };
     } catch (e) {
-        return { success: false, message: 'Falha ao excluir transação.' };
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        return { success: false, message: `Falha ao excluir transação: ${errorMessage}` };
     }
 }
