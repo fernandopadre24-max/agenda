@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { EventDashboard } from './EventDashboard';
@@ -20,9 +21,12 @@ export function DashboardClient({
   pastEvents: string[];
 }) {
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
+  const router = useRouter();
 
   const handleCloseSheet = () => {
     setIsCreateSheetOpen(false);
+    // We refresh the router to ensure the new data is fetched by the server component
+    router.refresh();
   };
 
   return (
@@ -40,7 +44,7 @@ export function DashboardClient({
       />
       
       <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
-        <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
+        <SheetContent className="p-0" onOpenChange={ (open) => { if(!open) handleCloseSheet() }}>
           <SheetHeader className="p-6">
             <SheetTitle className="font-headline">Criar Novo Evento</SheetTitle>
           </SheetHeader>

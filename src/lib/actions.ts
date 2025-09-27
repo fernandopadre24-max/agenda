@@ -22,7 +22,7 @@ import {
     getTransactions,
 } from './data';
 import type { Event, Artista, Contratante, ActionResponse, Transaction } from './types';
-import { Timestamp } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
@@ -90,8 +90,13 @@ const createEventFromForm = (data: EventFormValues): Partial<Omit<Event, 'id'>> 
 
     if (data.financeType === 'receber' && data.valor !== undefined && data.status) {
         event.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
+        event.pagar = FieldValue.delete(); // Ensure only one financial type exists
     } else if (data.financeType === 'pagar' && data.valor !== undefined && data.status) {
         event.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
+        event.receber = FieldValue.delete(); // Ensure only one financial type exists
+    } else {
+        event.pagar = FieldValue.delete();
+        event.receber = FieldValue.delete();
     }
 
     return event;
@@ -137,15 +142,6 @@ export async function updateEventAction(id: string, data: EventFormValues): Prom
     
     try {
         const eventUpdateData = createEventFromForm(validatedFields.data);
-        // Firestore specific: remove undefined fields so they are deleted from the document
-        if (!eventUpdateData.pagar) {
-            delete eventUpdateData.pagar;
-        }
-        if (!eventUpdateData.receber) {
-             delete eventUpdateData.receber;
-        }
-
-
         const updatedEvent = await dbUpdateEvent(id, eventUpdateData);
         
         revalidatePath('/');
@@ -188,6 +184,7 @@ export async function createContratanteAction(data: ContratanteFormValues): Prom
         const newContratante = await dbAddContratante(validatedFields.data);
         revalidatePath('/contratantes');
         revalidatePath('/');
+        revalidatePath('/agenda');
         return { success: true, message: 'Contratante criado com sucesso.', data: newContratante };
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao criar o contratante.' };
@@ -207,6 +204,7 @@ export async function updateContratanteAction(id: string, data: ContratanteFormV
         const updatedContratante = await dbUpdateContratante(id, validatedFields.data);
         revalidatePath('/contratantes');
         revalidatePath('/');
+        revalidatePath('/agenda');
         return { success: true, message: 'Contratante atualizado com sucesso.', data: updatedContratante };
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao atualizar o contratante.' };
@@ -232,6 +230,7 @@ export async function deleteContratanteAction(id: string): Promise<ActionRespons
         await dbDeleteContratante(id);
         revalidatePath('/contratantes');
         revalidatePath('/');
+        revalidatePath('/agenda');
         return { success: true, message: 'Contratante deletado com sucesso.' };
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao deletar o contratante.' };
@@ -251,6 +250,7 @@ export async function createArtistaAction(data: ArtistaFormValues): Promise<Acti
         const newArtista = await dbAddArtista(validatedFields.data);
         revalidatePath('/artistas');
         revalidatePath('/');
+        revalidatePath('/agenda');
         return { success: true, message: 'Artista criado com sucesso.', data: newArtista };
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao criar o artista.' };
@@ -270,6 +270,7 @@ export async function updateArtistaAction(id: string, data: ArtistaFormValues): 
         const updatedArtista = await dbUpdateArtista(id, validatedFields.data);
         revalidatePath('/artistas');
         revalidatePath('/');
+        revalidatePath('/agenda');
         return { success: true, message: 'Artista atualizado com sucesso.', data: updatedArtista };
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao atualizar o artista.' };
@@ -294,6 +295,7 @@ export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
         await dbDeleteArtista(id);
         revalidatePath('/artistas');
         revalidatePath('/');
+        revalidatePath('/agenda');
         return { success: true, message: 'Artista deletado com sucesso.' };
     } catch (e) {
         return { success: false, message: 'Ocorreu um erro ao deletar o artista.' };
@@ -322,6 +324,7 @@ export async function updateEventStatusAction(eventId: string, type: 'pagar' | '
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');
         revalidatePath(`/events/${eventId}`);
+        revalidatePath('/agenda');
         
         return { success: true, message: 'Status do evento atualizado com sucesso!' };
 
@@ -344,6 +347,7 @@ export async function updateEventCompletionStatusAction(eventId: string): Promis
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');
         revalidatePath(`/events/${eventId}`);
+        revalidatePath('/agenda');
         
         return { success: true, message: 'Status do evento atualizado para "realizado"!' };
 
@@ -435,6 +439,3 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
         return { success: false, message: 'Falha ao excluir transação.' };
     }
 }
-
-    
-

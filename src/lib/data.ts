@@ -32,9 +32,11 @@ export async function getEvents(): Promise<Event[]> {
       return [];
     }
     const events = snapshot.docs.map(doc => convertTimestamps<Event>({ id: doc.id, ...doc.data() }));
+    // Sort in-memory to avoid complex Firestore indexes
     return events.sort((a, b) => a.date.getTime() - b.date.getTime());
   } catch (error) {
     console.error("Error fetching events:", error);
+    // Return empty array if collection doesn't exist or another error occurs
     return [];
   }
 }
@@ -81,6 +83,7 @@ export async function getContratantes(): Promise<Contratante[]> {
       return [];
     }
     const contratantes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contratante));
+    // Sort in-memory
     return contratantes.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error("Error fetching contratantes:", error);
@@ -130,6 +133,7 @@ export async function getArtistas(): Promise<Artista[]> {
       return [];
     }
     const artistas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Artista));
+    // Sort in-memory
     return artistas.sort((a,b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error("Error fetching artistas:", error);
@@ -179,6 +183,7 @@ export async function getTransactions(): Promise<Transaction[]> {
             return [];
         }
         const transactions = snapshot.docs.map(doc => convertTimestamps<Transaction>({ id: doc.id, ...doc.data() }));
+        // Sort in-memory
         return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
     } catch(error) {
         console.error("Error fetching transactions:", error);

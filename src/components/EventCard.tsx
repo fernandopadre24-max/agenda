@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { type Artista, type Contratante, type Event } from '@/lib/types';
-import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, Check, Mic, DollarSign } from 'lucide-react';
+import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, Check, Mic, DollarSign, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { useEffect, useState, useTransition } from 'react';
@@ -37,11 +37,17 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
     setIsMounted(true);
   }, []);
 
-  const handleDelete = async () => {
-    toast({ title: 'Excluindo evento...' });
-    await deleteEventAction(event.id);
-    toast({ title: 'Evento excluído com sucesso.' });
-    router.refresh();
+  const handleDelete = () => {
+    startTransition(async () => {
+        toast({ title: 'Excluindo evento...' });
+        const result = await deleteEventAction(event.id);
+        if (result.success) {
+            toast({ title: 'Evento excluído com sucesso.' });
+            router.refresh();
+        } else {
+            toast({ variant: 'destructive', title: 'Erro ao excluir evento.', description: result.message });
+        }
+    });
   };
 
   const handleFinancialStatusUpdate = (type: 'pagar' | 'receber') => {
@@ -76,6 +82,7 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
   
   const handleCloseSheet = () => {
     setIsEditSheetOpen(false);
+    router.refresh();
   }
 
   if (!isMounted) {
@@ -156,71 +163,71 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
                     </div>
                 </Link>
                 <div className="p-1 border-l flex flex-col justify-center items-center">
-                    {showCompletionAction && (
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10" 
-                            onClick={(e) => { e.stopPropagation(); handleCompletionStatusUpdate(); }}
-                            disabled={isPending}
-                            aria-label={"Marcar como Realizado"}
-                        >
-                            <Check className="h-4 w-4" />
-                        </Button>
-                    )}
-                    {(showReceberAction || showPagarAction) && (
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-green-500 hover:text-green-500 hover:bg-green-500/10" 
-                            onClick={(e) => { e.stopPropagation(); handleFinancialStatusUpdate(showReceberAction ? 'receber' : 'pagar'); }}
-                            disabled={isPending}
-                            aria-label={showReceberAction ? "Marcar como Recebido" : "Marcar como Pago"}
-                        >
-                            <DollarSign className="h-4 w-4" />
-                        </Button>
-                    )}
-                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleEdit(); }}>
-                        <Edit className="h-4 w-4" />
-                        <span className="sr-only">Editar</span>
-                    </Button>
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Excluir</span>
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin my-2"/> : (
+                        <>
+                            {showCompletionAction && (
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10" 
+                                    onClick={(e) => { e.stopPropagation(); handleCompletionStatusUpdate(); }}
+                                    aria-label={"Marcar como Realizado"}
+                                >
+                                    <Check className="h-4 w-4" />
+                                </Button>
+                            )}
+                            {(showReceberAction || showPagarAction) && (
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 text-green-500 hover:text-green-500 hover:bg-green-500/10" 
+                                    onClick={(e) => { e.stopPropagation(); handleFinancialStatusUpdate(showReceberAction ? 'receber' : 'pagar'); }}
+                                    aria-label={showReceberAction ? "Marcar como Recebido" : "Marcar como Pago"}
+                                >
+                                    <DollarSign className="h-4 w-4" />
+                                </Button>
+                            )}
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleEdit(); }}>
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Editar</span>
                             </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. Isso excluirá permanentemente o evento.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="bg-destructive hover:bg-destructive/90">Continuar</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Excluir</span>
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Esta ação não pode ser desfeita. Isso excluirá permanentemente o evento.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Continuar</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </>
+                    )}
                 </div>
             </div>
         </Card>
         <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-            <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
+            <SheetContent className="p-0" onOpenChange={ (open) => { if(!open) handleCloseSheet() }}>
                  <SheetHeader className="p-6">
                     <SheetTitle className="font-headline">Editar Evento</SheetTitle>
                 </SheetHeader>
-                <div className="p-6 pt-0">
-                    <EventForm
-                        event={event}
-                        artistas={artistas}
-                        contratantes={contratantes}
-                        pastEvents={pastEvents}
-                        onCancel={handleCloseSheet}
-                    />
-                </div>
+                <EventForm
+                    event={event}
+                    artistas={artistas}
+                    contratantes={contratantes}
+                    pastEvents={pastEvents}
+                    onCancel={handleCloseSheet}
+                />
             </SheetContent>
         </Sheet>
       </>

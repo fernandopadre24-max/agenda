@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarPlus, Edit, Trash2 } from 'lucide-react';
+import { CalendarPlus, Edit, Loader2, Trash2 } from 'lucide-react';
 import { deleteEventAction } from '@/lib/actions';
 import {
   AlertDialog,
@@ -35,6 +35,7 @@ export function EventActions({
   const { toast } = useToast();
   const router = useRouter();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   const handleReminder = () => {
     toast({
@@ -45,11 +46,17 @@ export function EventActions({
   };
 
   const handleDelete = async () => {
-    toast({ title: 'Excluindo evento...' });
-    await deleteEventAction(event.id);
-    toast({ title: 'Evento excluído com sucesso.' });
-    router.push('/');
-    router.refresh();
+    startDeleteTransition(async () => {
+      toast({ title: 'Excluindo evento...' });
+      const result = await deleteEventAction(event.id);
+      if(result.success) {
+        toast({ title: 'Evento excluído com sucesso.' });
+        router.push('/');
+        router.refresh(); // This ensures the list on the homepage is updated
+      } else {
+        toast({ title: 'Erro ao excluir evento.', description: result.message, variant: 'destructive' });
+      }
+    });
   };
   
   const handleEdit = () => {
@@ -85,7 +92,10 @@ export function EventActions({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Continuar</AlertDialogAction>
+                    <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Continuar
+                    </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -96,15 +106,13 @@ export function EventActions({
                  <SheetHeader className="p-6">
                     <SheetTitle className="font-headline">Editar Evento</SheetTitle>
                 </SheetHeader>
-                <div className="p-6 pt-0">
-                    <EventForm
-                        event={event}
-                        artistas={artistas}
-                        contratantes={contratantes}
-                        pastEvents={pastEvents}
-                        onCancel={handleCloseSheet}
-                    />
-                </div>
+                <EventForm
+                    event={event}
+                    artistas={artistas}
+                    contratantes={contratantes}
+                    pastEvents={pastEvents}
+                    onCancel={handleCloseSheet}
+                />
             </SheetContent>
       </Sheet>
     </>

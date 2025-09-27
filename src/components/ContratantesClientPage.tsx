@@ -221,7 +221,7 @@ export function ContratantesClientPage({ initialContratantes, deleteAction }: {
         )}
         
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
+          <SheetContent className="p-0" onOpenChange={ (open) => { if(!open) handleCloseSheet() }}>
             <ContratanteForm 
                 onSave={handleSaveSuccess} 
                 onCancel={handleCloseSheet}

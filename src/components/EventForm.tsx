@@ -7,7 +7,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition, useEffect } from 'react';
+import { useTransition, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -73,7 +73,7 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
     defaultValues: {
       contratante: event?.contratante ?? '',
       artista: event?.artista ?? '',
-      date: event?.date ? new Date(event.date) : new Date(),
+      date: event?.date ? event.date : new Date(),
       hora: event?.hora ?? '',
       entrada: event?.entrada ?? '',
       saida: event?.saida ?? '',
@@ -124,8 +124,8 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex flex-col h-full">
-        <ScrollArea className="flex-1 px-6">
-            <div className="space-y-6 pr-1">
+        <ScrollArea className="flex-1 px-1">
+            <div className="space-y-6 pr-6 pl-6">
                 <Card>
                     <CardHeader><CardTitle className="font-headline">Informações do Evento</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
@@ -248,7 +248,7 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
                 </Card>
             </div>
         </ScrollArea>
-        <div className="p-4 border-t bg-background flex gap-2">
+        <div className="p-4 border-t bg-background flex gap-2 sticky bottom-0">
             {onCancel && (
                 <Button type="button" variant="outline" onClick={onCancel} className="w-full">
                     Cancelar

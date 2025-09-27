@@ -202,7 +202,7 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
       )}
       
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
+        <SheetContent className="p-0" onOpenChange={ (open) => { if(!open) handleCloseSheet() }}>
             <ArtistaForm 
                 onSave={handleSaveSuccess} 
                 onCancel={handleCloseSheet} 

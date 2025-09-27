@@ -118,7 +118,7 @@ export function TransacoesClientPage({
           description: tx.description,
           value: tx.value,
           type: tx.type,
-          date: new Date(tx.date),
+          date: tx.date, // It's already a Date object
         });
         setIsFormOpen(true);
       }
@@ -186,6 +186,13 @@ export function TransacoesClientPage({
       resetForm();
     } else {
       setIsFormOpen(true);
+      setEditingTransactionId(null);
+      form.reset({
+        description: '',
+        value: 0,
+        type: 'receber',
+        date: new Date(),
+      });
     }
   };
 
@@ -400,6 +407,7 @@ export function TransacoesClientPage({
                         <AlertDialogAction
                           onClick={() => handleDelete(tx.id)}
                           disabled={isPending}
+                          className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                         >
                           {isPending ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
                           Excluir
