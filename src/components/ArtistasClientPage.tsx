@@ -7,7 +7,7 @@ import { ArtistaActions } from '@/components/ArtistaActions';
 import { type Artista } from '@/lib/types';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from './ui/sheet';
 import { useToast } from '@/hooks/use-toast';
-import { createArtistaAction, deleteArtistaAction, updateArtistaAction } from '@/lib/actions';
+import { createArtistaAction, updateArtistaAction } from '@/lib/actions';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -49,7 +49,7 @@ function ArtistaForm({
 
   const onSubmit = (data: ArtistaFormValues) => {
     startTransition(async () => {
-      const action = isEditing
+      const action = isEditing && initialData
         ? updateArtistaAction(initialData.id, data)
         : createArtistaAction(data);
 
@@ -102,12 +102,18 @@ function ArtistaForm({
 }
 
 
-export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artista[] }) {
+export function ArtistasClientPage({ 
+    initialArtistas,
+    deleteArtistaAction,
+ }: { 
+    initialArtistas: Artista[];
+    deleteArtistaAction: (id: string) => Promise<any>;
+}) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingArtista, setEditingArtista] = useState<Artista | undefined>(undefined);
   const { toast } = useToast();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   const handleSaveSuccess = () => {
     setIsSheetOpen(false);
@@ -116,7 +122,7 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
   };
 
   const handleDelete = (id: string) => {
-    startTransition(async () => {
+    startDeleteTransition(async () => {
         toast({ title: 'Excluindo artista...' });
         const result = await deleteArtistaAction(id);
         if (result.success) {
@@ -164,7 +170,7 @@ export function ArtistasClientPage({ initialArtistas }: { initialArtistas: Artis
                   <ArtistaActions 
                     onEdit={() => handleEdit(artista)} 
                     onDelete={() => handleDelete(artista.id)}
-                    isDeleting={isPending}
+                    isDeleting={isDeleting}
                   />
                 </div>
               </CardHeader>

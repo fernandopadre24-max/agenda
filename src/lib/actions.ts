@@ -91,10 +91,10 @@ const createEventFromForm = (data: EventFormValues): Partial<Omit<Event, 'id'>> 
 
     if (data.financeType === 'receber' && data.valor !== undefined && data.status) {
         event.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
-        event.pagar = FieldValue.delete(); // Ensure only one financial type exists
+        event.pagar = FieldValue.delete();
     } else if (data.financeType === 'pagar' && data.valor !== undefined && data.status) {
         event.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
-        event.receber = FieldValue.delete(); // Ensure only one financial type exists
+        event.receber = FieldValue.delete();
     } else {
         event.pagar = FieldValue.delete();
         event.receber = FieldValue.delete();
