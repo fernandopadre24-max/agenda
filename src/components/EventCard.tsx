@@ -90,9 +90,6 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
   }
 
   const eventDate = new Date(event.date);
-  eventDate.setUTCHours(0,0,0,0);
-  const now = new Date();
-  now.setHours(0,0,0,0);
   
   const day = eventDate.toLocaleDateString('pt-BR', { day: '2-digit', timeZone: 'UTC' });
   const month = eventDate.toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' }).replace('.', '');

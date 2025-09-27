@@ -61,7 +61,7 @@ export function AgendaClientPage({
 
     if (!selectedDate && selectedArtista === 'all' && selectedContratante === 'all') {
         const now = new Date();
-        now.setHours(0,0,0,0);
+        now.setUTCHours(0,0,0,0);
         return initialEvents.filter(e => new Date(e.date) >= now);
     }
 
