@@ -152,7 +152,7 @@ export async function updateEventAction(id: string, data: EventFormValues): Prom
         
         return { success: true, message: 'Evento atualizado com sucesso!', data: updatedEvent };
     } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro desconhecido.';
+        const errorMessage = e instanceof Error ? e.message : 'Ocorreu um erro ao atualizar o evento: ${errorMessage}';
         return { success: false, message: `Ocorreu um erro ao atualizar o evento: ${errorMessage}` };
     }
 }
