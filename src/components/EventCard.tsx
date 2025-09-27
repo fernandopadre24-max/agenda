@@ -73,6 +73,10 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
   const handleEdit = () => {
     setIsEditSheetOpen(true);
   }
+  
+  const handleCloseSheet = () => {
+    setIsEditSheetOpen(false);
+  }
 
   if (!isMounted) {
     return null;
@@ -204,7 +208,7 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
             </div>
         </Card>
         <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-            <SheetContent className="p-0" onInteractOutside={() => setIsEditSheetOpen(false)}>
+            <SheetContent className="p-0" onInteractOutside={handleCloseSheet}>
                  <SheetHeader className="p-6">
                     <SheetTitle className="font-headline">Editar Evento</SheetTitle>
                 </SheetHeader>
@@ -214,6 +218,7 @@ export function EventCard({ event, artistas, contratantes, pastEvents }: { event
                         artistas={artistas}
                         contratantes={contratantes}
                         pastEvents={pastEvents}
+                        onCancel={handleCloseSheet}
                     />
                 </div>
             </SheetContent>

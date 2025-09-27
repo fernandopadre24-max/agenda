@@ -5,13 +5,22 @@ import { useRouter } from 'next/navigation';
 
 export function PageHeader({ title, showBackButton = false }: { title: string, showBackButton?: boolean }) {
   const router = useRouter();
+  
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/');
+    }
+  };
+
   return (
     <header className="bg-background border-b border-border p-2.5 flex items-center gap-2 sticky top-0 z-20">
       {showBackButton && (
         <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.back()}
+            onClick={handleBack}
             className="hover:bg-secondary"
         >
             <ArrowLeft className="h-6 w-6" />

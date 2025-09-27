@@ -141,7 +141,6 @@ export async function updateEventAction(id: string, data: EventFormValues): Prom
     revalidatePath('/agenda');
     revalidatePath('/financeiro');
     revalidatePath(`/events/${id}`);
-    revalidatePath(`/events/${id}/edit`);
     return { success: true, message: 'Evento atualizado com sucesso!', redirectPath: `/events/${id}` };
 }
 
@@ -194,7 +193,6 @@ export async function updateContratanteAction(id: string, data: ContratanteFormV
         return { success: false, message: 'Ocorreu um erro ao atualizar o contratante.' };
     }
     revalidatePath('/contratantes');
-    revalidatePath(`/contratantes/${id}/edit`);
     revalidatePath('/');
     return { success: true, message: 'Contratante atualizado com sucesso.', data: updatedContratante };
 }
@@ -260,7 +258,6 @@ export async function updateArtistaAction(id: string, data: ArtistaFormValues): 
         return { success: false, message: 'Ocorreu um erro ao atualizar o artista.' };
     }
     revalidatePath('/artistas');
-    revalidatePath(`/artistas/${id}/edit`);
     revalidatePath('/');
     return { success: true, message: 'Artista atualizado com sucesso.', data: updatedArtista };
 }

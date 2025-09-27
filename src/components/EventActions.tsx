@@ -102,6 +102,7 @@ export function EventActions({
                         artistas={artistas}
                         contratantes={contratantes}
                         pastEvents={pastEvents}
+                        onCancel={handleCloseSheet}
                     />
                 </div>
             </SheetContent>

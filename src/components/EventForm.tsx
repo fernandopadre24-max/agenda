@@ -59,9 +59,10 @@ interface EventFormProps {
     artistas: Artista[];
     contratantes: Contratante[];
     pastEvents: string[];
+    onCancel?: () => void;
 }
 
-export function EventForm({ event, artistas, contratantes }: EventFormProps) {
+export function EventForm({ event, artistas, contratantes, onCancel }: EventFormProps) {
   const isEditing = !!event;
   const router = useRouter();
   const { toast } = useToast();
@@ -99,10 +100,10 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
         toast({
           title: `Evento ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
         });
-        if (result.redirectPath) {
-          router.push(result.redirectPath);
-          router.refresh();
+        if (onCancel) {
+            onCancel();
         }
+        router.refresh();
       } else {
         toast({
           variant: 'destructive',
@@ -240,7 +241,12 @@ export function EventForm({ event, artistas, contratantes }: EventFormProps) {
                 </Card>
             </div>
         </ScrollArea>
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background flex gap-2">
+            {onCancel && (
+                <Button type="button" variant="outline" onClick={onCancel} className="w-full">
+                    Cancelar
+                </Button>
+            )}
             <Button type="submit" disabled={isPending} className="w-full">
                 {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Evento')}
             </Button>

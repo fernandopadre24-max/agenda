@@ -1,33 +1,31 @@
+'use server';
 import { AppHeader } from '@/components/AppHeader';
 import { getEvents, getArtistas, getContratantes } from '@/lib/data';
-import { EventDashboard } from '@/components/EventDashboard';
-import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { DashboardClient } from '@/components/DashboardClient';
 
 export default async function HomePage() {
-  const [events, artistas, contratantes] = await Promise.all([
-    getEvents(),
-    getArtistas(),
-    getContratantes(),
-  ]);
+  const events = await getEvents();
+  const artistas = await getArtistas();
+  const contratantes = await getContratantes();
+  
+  const pastEventsStrings = events.map(
+    (e) =>
+      `Evento para ${e.contratante} com ${e.artista} em ${new Date(
+        e.date
+      ).toLocaleDateString()} às ${e.hora}.`
+  ) ?? [];
 
   return (
     <div className="flex flex-col flex-1">
       <AppHeader />
       <main className="flex-1 p-4 md:p-6">
-        <EventDashboard 
-          initialEvents={events} 
+        <DashboardClient 
+          initialEvents={events}
           initialArtistas={artistas}
           initialContratantes={contratantes}
+          pastEvents={pastEventsStrings}
         />
       </main>
-      <Link
-        href="/events/new"
-        className="absolute bottom-20 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:bg-primary/90 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        aria-label="Adicionar Novo Evento"
-      >
-        <Plus className="h-6 w-6" />
-      </Link>
     </div>
   );
 }
