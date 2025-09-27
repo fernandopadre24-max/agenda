@@ -73,7 +73,7 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
     defaultValues: {
       contratante: event?.contratante ?? '',
       artista: event?.artista ?? '',
-      date: event?.date ? event.date : new Date(),
+      date: event?.date ? new Date(event.date) : new Date(),
       hora: event?.hora ?? '',
       entrada: event?.entrada ?? '',
       saida: event?.saida ?? '',
@@ -93,6 +93,12 @@ export function EventForm({ event, artistas, contratantes, onCancel }: EventForm
       form.setValue('entrada', horaValue);
     }
   }, [horaValue, form]);
+
+  useEffect(() => {
+    if(financeType !== 'nenhum' && form.getValues('status') === undefined) {
+      form.setValue('status', 'pendente');
+    }
+  }, [financeType, form]);
   
   const onSubmit = async (data: EventFormValues) => {
     startTransition(async () => {

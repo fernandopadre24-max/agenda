@@ -67,7 +67,8 @@ export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
 export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id'>>): Promise<Event | undefined> {
     const docRef = db.collection('events').doc(id);
     await docRef.update(eventData);
-    return await getEventById(id);
+    const updatedDoc = await docRef.get();
+    return convertTimestamps<Event>({ id: updatedDoc.id, ...updatedDoc.data() });
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {
