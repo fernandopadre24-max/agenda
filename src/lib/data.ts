@@ -57,7 +57,7 @@ export async function getEventById(id: string): Promise<Event | undefined> {
 export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
   const events = await getEvents();
   const newEvent: Event = {
-    id: String(Date.now()),
+    id: String(Date.now() + Math.random()),
     ...eventData,
   };
   events.push(newEvent);
