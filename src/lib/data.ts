@@ -32,8 +32,12 @@ async function readDB(): Promise<DB> {
     }
     const db = JSON.parse(data);
     // Dates are stored as strings in JSON, so we need to convert them back to Date objects
-    db.events.forEach((event: Event) => event.date = new Date(event.date));
-    db.transactions.forEach((tx: Transaction) => tx.date = new Date(tx.date));
+    if (db.events) {
+      db.events.forEach((event: Event) => event.date = new Date(event.date));
+    }
+    if (db.transactions) {
+      db.transactions.forEach((tx: Transaction) => tx.date = new Date(tx.date));
+    }
     return db;
   } catch (error) {
     // If the file doesn't exist, create it with a default structure
@@ -60,14 +64,14 @@ const getNextId = (db: DB) => (db.nextId++).toString();
 export async function getEvents(): Promise<Event[]> {
   const db = await readDB();
   // Return a deep copy to prevent mutation issues with server-side caching
-  const events: Event[] = JSON.parse(JSON.stringify(db.events));
+  const events: Event[] = JSON.parse(JSON.stringify(db.events || []));
   events.forEach(e => e.date = new Date(e.date));
   return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 export async function getEventById(id: string): Promise<Event | undefined> {
   const db = await readDB();
-  const event = db.events.find(e => e.id === id);
+  const event = (db.events || []).find(e => e.id === id);
   if (!event) return undefined;
   // Return a deep copy
   const eventCopy: Event = JSON.parse(JSON.stringify(event));
@@ -79,6 +83,7 @@ export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
   const db = await readDB();
   const newId = getNextId(db);
   const newEvent: Event = { ...eventData, id: newId, date: new Date(eventData.date) };
+  db.events = db.events || [];
   db.events.push(newEvent);
   await writeDB(db);
   return newEvent;
@@ -86,7 +91,7 @@ export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
 
 export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id'>>): Promise<Event | undefined> {
     const db = await readDB();
-    const eventIndex = db.events.findIndex(e => e.id === id);
+    const eventIndex = (db.events || []).findIndex(e => e.id === id);
     if (eventIndex === -1) return undefined;
 
     const existingEvent = db.events[eventIndex];
@@ -112,6 +117,7 @@ export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id
 
 export async function deleteEvent(id: string): Promise<boolean> {
   const db = await readDB();
+  if (!db.events) return false;
   const initialLength = db.events.length;
   db.events = db.events.filter(e => e.id !== id);
   const success = db.events.length < initialLength;
@@ -123,7 +129,7 @@ export async function deleteEvent(id: string): Promise<boolean> {
 export async function getContratantes(): Promise<Contratante[]> {
   const db = await readDB();
   // Return a deep copy
-  const contratantes: Contratante[] = JSON.parse(JSON.stringify(db.contratantes));
+  const contratantes: Contratante[] = JSON.parse(JSON.stringify(db.contratantes || []));
   return contratantes.sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -131,6 +137,7 @@ export async function addContratante(contratanteData: Omit<Contratante, 'id'>): 
   const db = await readDB();
   const newId = getNextId(db);
   const newContratante: Contratante = { ...contratanteData, id: newId };
+  db.contratantes = db.contratantes || [];
   db.contratantes.push(newContratante);
   await writeDB(db);
   return newContratante;
@@ -138,7 +145,7 @@ export async function addContratante(contratanteData: Omit<Contratante, 'id'>): 
 
 export async function updateContratante(id: string, contratanteData: Partial<Omit<Contratante, 'id'>>): Promise<Contratante | undefined> {
     const db = await readDB();
-    const index = db.contratantes.findIndex(c => c.id === id);
+    const index = (db.contratantes || []).findIndex(c => c.id === id);
     if (index === -1) return undefined;
 
     const oldName = db.contratantes[index].name;
@@ -147,7 +154,7 @@ export async function updateContratante(id: string, contratanteData: Partial<Omi
     db.contratantes[index] = { ...db.contratantes[index], ...contratanteData };
 
     if (newName && oldName !== newName) {
-      db.events.forEach((event) => {
+      (db.events || []).forEach((event) => {
         if (event.contratante === oldName) {
           event.contratante = newName;
         }
@@ -160,6 +167,7 @@ export async function updateContratante(id: string, contratanteData: Partial<Omi
 
 export async function deleteContratante(id: string): Promise<boolean> {
     const db = await readDB();
+    if (!db.contratantes) return false;
     const initialLength = db.contratantes.length;
     db.contratantes = db.contratantes.filter(c => c.id !== id);
     const success = db.contratantes.length < initialLength;
@@ -172,7 +180,7 @@ export async function deleteContratante(id: string): Promise<boolean> {
 export async function getArtistas(): Promise<Artista[]> {
   const db = await readDB();
   // Return a deep copy
-  const artistas: Artista[] = JSON.parse(JSON.stringify(db.artistas));
+  const artistas: Artista[] = JSON.parse(JSON.stringify(db.artistas || []));
   return artistas.sort((a,b) => a.name.localeCompare(b.name));
 }
 
@@ -180,6 +188,7 @@ export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Arti
   const db = await readDB();
   const newId = getNextId(db);
   const newArtista: Artista = { ...artistaData, id: newId };
+  db.artistas = db.artistas || [];
   db.artistas.push(newArtista);
   await writeDB(db);
   return newArtista;
@@ -187,7 +196,7 @@ export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Arti
 
 export async function updateArtista(id: string, artistaData: Partial<Omit<Artista, 'id'>>): Promise<Artista | undefined> {
     const db = await readDB();
-    const index = db.artistas.findIndex(a => a.id === id);
+    const index = (db.artistas || []).findIndex(a => a.id === id);
     if (index === -1) return undefined;
     
     const oldName = db.artistas[index].name;
@@ -196,7 +205,7 @@ export async function updateArtista(id: string, artistaData: Partial<Omit<Artist
     db.artistas[index] = { ...db.artistas[index], ...artistaData };
 
     if (newName && oldName !== newName) {
-      db.events.forEach((event) => {
+      (db.events || []).forEach((event) => {
         if (event.artista === oldName) {
           event.artista = newName;
         }
@@ -209,6 +218,7 @@ export async function updateArtista(id: string, artistaData: Partial<Omit<Artist
 
 export async function deleteArtista(id: string): Promise<boolean> {
     const db = await readDB();
+    if (!db.artistas) return false;
     const initialLength = db.artistas.length;
     db.artistas = db.artistas.filter(a => a.id !== id);
     const success = db.artistas.length < initialLength;
@@ -221,7 +231,7 @@ export async function deleteArtista(id: string): Promise<boolean> {
 export async function getTransactions(): Promise<Transaction[]> {
     const db = await readDB();
     // Return a deep copy
-    const transactions: Transaction[] = JSON.parse(JSON.stringify(db.transactions));
+    const transactions: Transaction[] = JSON.parse(JSON.stringify(db.transactions || []));
     transactions.forEach(tx => tx.date = new Date(tx.date));
     return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
@@ -230,14 +240,15 @@ export async function addTransaction(transactionData: Omit<Transaction, 'id'>): 
     const db = await readDB();
     const newId = `trans-${getNextId(db)}`;
     const newTransaction: Transaction = { ...transactionData, id: newId, date: new Date(transactionData.date) };
+    db.transactions = db.transactions || [];
     db.transactions.push(newTransaction);
     await writeDB(db);
-    return newTransaction;
+return newTransaction;
 }
 
 export async function updateTransaction(id: string, transactionData: Partial<Omit<Transaction, 'id'>>): Promise<Transaction | undefined> {
     const db = await readDB();
-    const index = db.transactions.findIndex(t => t.id === id);
+    const index = (db.transactions || []).findIndex(t => t.id === id);
     if (index === -1) return undefined;
 
     const update = { ...transactionData };
@@ -252,6 +263,7 @@ export async function updateTransaction(id: string, transactionData: Partial<Omi
 
 export async function deleteTransaction(id: string): Promise<boolean> {
     const db = await readDB();
+    if (!db.transactions) return false;
     const initialLength = db.transactions.length;
     db.transactions = db.transactions.filter(t => t.id !== id);
     const success = db.transactions.length < initialLength;

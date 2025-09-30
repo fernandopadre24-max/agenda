@@ -169,8 +169,8 @@ export function EventForm({
             {isEditing ? 'Editar Evento' : 'Novo Evento'}
           </SheetTitle>
         </SheetHeader>
-        <div className="p-6 flex-1">
-        <ScrollArea className="h-full">
+        <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full p-6">
           <div className="space-y-6">
               <Card>
                 <CardHeader>

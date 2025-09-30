@@ -76,8 +76,8 @@ function ContratanteForm({
          <SheetHeader>
             <SheetTitle className="font-headline">{isEditing ? 'Editar Contratante' : 'Novo Contratante'}</SheetTitle>
         </SheetHeader>
-        <div className="p-6 flex-1">
-          <ScrollArea className="h-full">
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full p-6">
             <div className="space-y-4">
                 <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem><FormLabel>Nome do Contratante</FormLabel><FormControl><Input placeholder="Nome da empresa, evento ou pessoa" {...field} /></FormControl><FormMessage /></FormItem>
