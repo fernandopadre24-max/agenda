@@ -128,7 +128,7 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Contratante</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value} >
+                              <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder={contratantes.length === 0 ? "Nenhum contratante" : "Selecione um contratante"} />
@@ -136,7 +136,7 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
                                 </FormControl>
                                 <SelectContent>
                                   {contratantes.map((c) => (
-                                    <SelectItem key={c.id} value={c.name}>
+                                    <SelectItem key={c.name} value={c.name}>
                                       {c.name}
                                     </SelectItem>
                                   ))}
@@ -160,7 +160,7 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
                                 </FormControl>
                                 <SelectContent>
                                   {artistas.map((a) => (
-                                    <SelectItem key={a.id} value={a.name}>
+                                    <SelectItem key={a.name} value={a.name}>
                                       {a.name}
                                     </SelectItem>
                                   ))}

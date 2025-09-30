@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -18,13 +18,7 @@ export function DashboardClient({
   contratantes: Contratante[];
 }) {
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
-  const [currentEvents, setCurrentEvents] = useState(initialEvents);
   const router = useRouter();
-
-  // This useEffect ensures that the state is updated when server props change.
-  useEffect(() => {
-    setCurrentEvents(initialEvents);
-  }, [initialEvents]);
 
   const handleSaveSuccess = () => {
     setIsCreateSheetOpen(false);
@@ -44,7 +38,7 @@ export function DashboardClient({
       </div>
 
       <EventDashboard
-        initialEvents={currentEvents}
+        initialEvents={initialEvents}
         artistas={artistas}
         contratantes={contratantes}
       />
