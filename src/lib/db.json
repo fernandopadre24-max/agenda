@@ -8,9 +8,17 @@
       "phone": "",
       "category": "",
       "id": "1"
+    },
+    {
+      "name": "Boteco do Beiju",
+      "responsibleName": "",
+      "email": "",
+      "phone": "",
+      "category": "",
+      "id": "2"
     }
   ],
   "artistas": [],
   "transactions": [],
-  "nextId": 2
+  "nextId": 3
 }

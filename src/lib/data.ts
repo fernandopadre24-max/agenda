@@ -18,6 +18,18 @@ type DB = {
 async function readDB(): Promise<DB> {
   try {
     const data = await fs.readFile(dbPath, 'utf-8');
+    if (!data) {
+        // If the file is empty, create it with a default structure
+        const defaultDB: DB = {
+            events: [],
+            contratantes: [],
+            artistas: [],
+            transactions: [],
+            nextId: 1,
+        };
+        await writeDB(defaultDB);
+        return defaultDB;
+    }
     const db = JSON.parse(data);
     // Dates are stored as strings in JSON, so we need to convert them back to Date objects
     db.events.forEach((event: Event) => event.date = new Date(event.date));
@@ -47,12 +59,20 @@ const getNextId = (db: DB) => (db.nextId++).toString();
 // --- Event Functions ---
 export async function getEvents(): Promise<Event[]> {
   const db = await readDB();
-  return [...db.events].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Return a deep copy to prevent mutation issues with server-side caching
+  const events: Event[] = JSON.parse(JSON.stringify(db.events));
+  events.forEach(e => e.date = new Date(e.date));
+  return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 export async function getEventById(id: string): Promise<Event | undefined> {
   const db = await readDB();
-  return db.events.find(e => e.id === id);
+  const event = db.events.find(e => e.id === id);
+  if (!event) return undefined;
+  // Return a deep copy
+  const eventCopy: Event = JSON.parse(JSON.stringify(event));
+  eventCopy.date = new Date(eventCopy.date);
+  return eventCopy;
 }
 
 export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
@@ -102,7 +122,9 @@ export async function deleteEvent(id: string): Promise<boolean> {
 // --- Contratante Functions ---
 export async function getContratantes(): Promise<Contratante[]> {
   const db = await readDB();
-  return [...db.contratantes].sort((a, b) => a.name.localeCompare(b.name));
+  // Return a deep copy
+  const contratantes: Contratante[] = JSON.parse(JSON.stringify(db.contratantes));
+  return contratantes.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
@@ -122,15 +144,16 @@ export async function updateContratante(id: string, contratanteData: Partial<Omi
     const oldName = db.contratantes[index].name;
     const newName = contratanteData.name;
     
+    db.contratantes[index] = { ...db.contratantes[index], ...contratanteData };
+
     if (newName && oldName !== newName) {
-      db.events.forEach((event, eventIndex) => {
+      db.events.forEach((event) => {
         if (event.contratante === oldName) {
-          db.events[eventIndex].contratante = newName;
+          event.contratante = newName;
         }
       });
     }
 
-    db.contratantes[index] = { ...db.contratantes[index], ...contratanteData };
     await writeDB(db);
     return db.contratantes[index];
 }
@@ -148,7 +171,9 @@ export async function deleteContratante(id: string): Promise<boolean> {
 // --- Artista Functions ---
 export async function getArtistas(): Promise<Artista[]> {
   const db = await readDB();
-  return [...db.artistas].sort((a,b) => a.name.localeCompare(b.name));
+  // Return a deep copy
+  const artistas: Artista[] = JSON.parse(JSON.stringify(db.artistas));
+  return artistas.sort((a,b) => a.name.localeCompare(b.name));
 }
 
 export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Artista> {
@@ -168,15 +193,16 @@ export async function updateArtista(id: string, artistaData: Partial<Omit<Artist
     const oldName = db.artistas[index].name;
     const newName = artistaData.name;
 
+    db.artistas[index] = { ...db.artistas[index], ...artistaData };
+
     if (newName && oldName !== newName) {
-      db.events.forEach((event, eventIndex) => {
+      db.events.forEach((event) => {
         if (event.artista === oldName) {
-          db.events[eventIndex].artista = newName;
+          event.artista = newName;
         }
       });
     }
     
-    db.artistas[index] = { ...db.artistas[index], ...artistaData };
     await writeDB(db);
     return db.artistas[index];
 }
@@ -194,7 +220,10 @@ export async function deleteArtista(id: string): Promise<boolean> {
 // --- Transaction Functions ---
 export async function getTransactions(): Promise<Transaction[]> {
     const db = await readDB();
-    return [...db.transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Return a deep copy
+    const transactions: Transaction[] = JSON.parse(JSON.stringify(db.transactions));
+    transactions.forEach(tx => tx.date = new Date(tx.date));
+    return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 export async function addTransaction(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
