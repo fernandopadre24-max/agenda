@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useTransition, useEffect, useState } from 'react';
+import { useTransition, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -73,9 +73,9 @@ export function EventForm({ event, onSave, onCancel, artistas, contratantes }: E
       contratante: event?.contratante ?? '',
       artista: event?.artista ?? '',
       date: event?.date ? new Date(event.date) : new Date(),
-      hora: event?.hora ?? '',
-      entrada: event?.entrada ?? '',
-      saida: event?.saida ?? '',
+      hora: event?.hora ?? '19:00',
+      entrada: event?.entrada ?? '18:00',
+      saida: event?.saida ?? '22:00',
       cidade: event?.cidade ?? '',
       local: event?.local ?? '',
       financeType: event?.receber ? 'receber' : event?.pagar ? 'pagar' : 'nenhum',
@@ -85,14 +85,7 @@ export function EventForm({ event, onSave, onCancel, artistas, contratantes }: E
   });
 
   const financeType = form.watch('financeType');
-  const horaValue = form.watch('hora');
-
-  useEffect(() => {
-    if (horaValue && !form.getValues('entrada')) {
-      form.setValue('entrada', horaValue);
-    }
-  }, [horaValue, form]);
-
+  
   useEffect(() => {
     if(financeType !== 'nenhum' && form.getValues('status') === undefined) {
       form.setValue('status', 'pendente');
@@ -141,7 +134,7 @@ export function EventForm({ event, onSave, onCancel, artistas, contratantes }: E
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Contratante</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
+                              <Select onValueChange={field.onChange} value={field.value} >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder={contratantes.length === 0 ? "Nenhum contratante cadastrado" : "Selecione um contratante"} />

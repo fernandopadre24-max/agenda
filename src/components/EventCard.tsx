@@ -24,17 +24,21 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent } from './ui/sheet';
 import { EventForm } from './EventForm';
-import { getArtistas, getContratantes } from '@/lib/data';
 
-
-export function EventCard({ event }: { event: Event }) {
+export function EventCard({ 
+  event,
+  artistas,
+  contratantes
+}: { 
+  event: Event,
+  artistas: Artista[],
+  contratantes: Contratante[]
+}) {
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
-  const [artistas, setArtistas] = useState<Artista[]>([]);
-  const [contratantes, setContratantes] = useState<Contratante[]>([]);
   
   useEffect(() => {
     setIsMounted(true);
@@ -84,13 +88,7 @@ export function EventCard({ event }: { event: Event }) {
     router.refresh();
   }
   
-  const handleOpenEdit = async () => {
-    const [fetchedArtistas, fetchedContratantes] = await Promise.all([
-      getArtistas(),
-      getContratantes()
-    ]);
-    setArtistas(fetchedArtistas);
-    setContratantes(fetchedContratantes);
+  const handleOpenEdit = () => {
     setIsEditSheetOpen(true);
   }
 

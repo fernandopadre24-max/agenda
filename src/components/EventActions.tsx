@@ -23,17 +23,18 @@ import { getArtistas, getContratantes } from '@/lib/data';
 
 
 export function EventActions({ 
-    event
+    event,
+    artistas,
+    contratantes
 }: { 
-    event: Event
+    event: Event;
+    artistas: Artista[];
+    contratantes: Contratante[];
 }) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
-
-  const [artistas, setArtistas] = useState<Artista[]>([]);
-  const [contratantes, setContratantes] = useState<Contratante[]>([]);
 
   const handleReminder = () => {
     toast({
@@ -62,13 +63,7 @@ export function EventActions({
     router.refresh();
   }
 
-  const handleOpenEdit = async () => {
-    const [fetchedArtistas, fetchedContratantes] = await Promise.all([
-      getArtistas(),
-      getContratantes()
-    ]);
-    setArtistas(fetchedArtistas);
-    setContratantes(fetchedContratantes);
+  const handleOpenEdit = () => {
     setIsSheetOpen(true);
   }
 

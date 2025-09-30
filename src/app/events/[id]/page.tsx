@@ -1,6 +1,7 @@
+'use server';
 import { notFound } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
-import { getEventById } from '@/lib/data';
+import { getEventById, getArtistas, getContratantes } from '@/lib/data';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +22,11 @@ function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType, lab
 }
 
 export default async function EventDetailPage({ params }: { params: { id: string } }) {
-  const event = await getEventById(params.id);
+  const [event, artistas, contratantes] = await Promise.all([
+    getEventById(params.id),
+    getArtistas(),
+    getContratantes()
+  ]);
 
   if (!event) {
     notFound();
@@ -76,6 +81,8 @@ export default async function EventDetailPage({ params }: { params: { id: string
         <div className="pt-4">
             <EventActions 
                 event={event}
+                artistas={artistas}
+                contratantes={contratantes}
             />
         </div>
       </main>
