@@ -157,7 +157,6 @@ export async function createContratanteAction(data: z.infer<typeof contratanteFo
     try {
         const newContratante = await dbAddContratante(validatedFields.data);
         revalidatePath('/contratantes');
-        revalidatePath('/');
         return { success: true, message: 'Contratante criado!', data: newContratante };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao criar contratante.' };
@@ -192,7 +191,6 @@ export async function deleteContratanteAction(id: string): Promise<ActionRespons
         
         await dbDeleteContratante(id);
         revalidatePath('/contratantes');
-        revalidatePath('/');
         return { success: true, message: 'Contratante deletado.' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao deletar contratante.' };
@@ -209,7 +207,6 @@ export async function createArtistaAction(data: z.infer<typeof artistaFormSchema
     try {
         const newArtista = await dbAddArtista(validatedFields.data);
         revalidatePath('/artistas');
-        revalidatePath('/');
         return { success: true, message: 'Artista criado!', data: newArtista };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao criar o artista.' };
@@ -243,7 +240,6 @@ export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
         }
         await dbDeleteArtista(id);
         revalidatePath('/artistas');
-        revalidatePath('/');
         return { success: true, message: 'Artista deletado.' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao deletar artista.' };

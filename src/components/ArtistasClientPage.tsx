@@ -59,7 +59,7 @@ function ArtistaForm({
       if (result.success) {
         toast({ title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
         onSave();
-        router.push('/'); // REDIRECIONA para forçar o recarregamento dos dados
+        router.refresh();
       } else {
         toast({
           variant: 'destructive',
@@ -116,7 +116,6 @@ export function ArtistasClientPage({
   const handleSaveSuccess = () => {
     setIsSheetOpen(false);
     setEditingArtista(undefined);
-    // O redirecionamento agora é feito dentro do formulário
   };
 
   const handleEdit = (artista: Artista) => {
