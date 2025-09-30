@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useTransition } from 'react';
+import { useTransition, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -125,6 +125,14 @@ export function EventForm({
   });
 
   const financeType = form.watch('financeType');
+  const hora = form.watch('hora');
+
+  useEffect(() => {
+    if (hora && !isEditing) {
+      form.setValue('entrada', hora, { shouldValidate: true });
+    }
+  }, [hora, isEditing, form]);
+
 
   const onSubmit = async (data: EventFormValues) => {
     startTransition(async () => {
