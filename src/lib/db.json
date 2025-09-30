@@ -1,7 +1,16 @@
 {
   "events": [],
-  "contratantes": [],
+  "contratantes": [
+    {
+      "name": "Botekão",
+      "responsibleName": "",
+      "email": "",
+      "phone": "",
+      "category": "",
+      "id": "1"
+    }
+  ],
   "artistas": [],
   "transactions": [],
-  "nextId": 1
+  "nextId": 2
 }
