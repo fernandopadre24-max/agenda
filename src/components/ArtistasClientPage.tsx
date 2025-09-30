@@ -38,7 +38,6 @@ function ArtistaForm({
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const isEditing = !!initialData;
-  const router = useRouter();
 
   const form = useForm<ArtistaFormValues>({
     resolver: zodResolver(artistaFormSchema),
@@ -60,7 +59,6 @@ function ArtistaForm({
       if (result.success) {
         toast({ title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
         onSave();
-        router.refresh();
       } else {
         toast({
           variant: 'destructive',
@@ -95,7 +93,7 @@ function ArtistaForm({
         </ScrollArea>
         <SheetFooter>
            <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
-           <Button type="submit" disabled={isPending}>
+           <Button type="submit" disabled={isPending} variant="default">
             {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Artista')}
           </Button>
         </SheetFooter>
@@ -112,10 +110,12 @@ export function ArtistasClientPage({
 }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingArtista, setEditingArtista] = useState<Artista | undefined>(undefined);
+  const router = useRouter();
 
   const handleSaveSuccess = () => {
     setIsSheetOpen(false);
     setEditingArtista(undefined);
+    router.refresh();
   };
 
   const handleEdit = (artista: Artista) => {
@@ -136,7 +136,7 @@ export function ArtistasClientPage({
   return (
     <>
       <div className="flex justify-end">
-        <Button onClick={handleAddNew}>
+        <Button onClick={handleAddNew} variant="default">
             <Plus className="mr-2 h-4 w-4" /> Novo Artista
         </Button>
       </div>
@@ -184,7 +184,7 @@ export function ArtistasClientPage({
         <div className="text-center py-12 text-muted-foreground">
           <Mic className="mx-auto h-12 w-12" />
           <p className="mt-4">Nenhum artista cadastrado.</p>
-           <Button onClick={handleAddNew} className="mt-4">
+           <Button onClick={handleAddNew} className="mt-4" variant="default">
               <Plus className="mr-2 h-4 w-4" /> Cadastrar Artista
           </Button>
         </div>

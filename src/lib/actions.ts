@@ -81,18 +81,17 @@ const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Partial<Om
         local: data.local,
         status: 'pendente', // Default status on creation/update
     };
-
-    // Explicitly clear financial info first
-    event.pagar = undefined;
-    event.receber = undefined;
     
+    // This approach ensures that we don't accidentally keep old financial data.
+    const eventUpdate: Partial<Omit<Event, 'id'>> = { ...event, pagar: undefined, receber: undefined };
+
     if (data.financeType === 'receber' && data.valor && data.status) {
-        event.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
+        eventUpdate.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
     } else if (data.financeType === 'pagar' && data.valor && data.status) {
-        event.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
+        eventUpdate.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
     }
 
-    return event;
+    return eventUpdate;
 }
 
 

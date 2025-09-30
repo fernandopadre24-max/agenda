@@ -2,7 +2,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, User, Mail, Phone, Tag, Briefcase, Loader2 } from 'lucide-react';
+import { Plus, User, Mail, Phone, Tag, Briefcase, Loader2, Users } from 'lucide-react';
 import { ContratanteActions } from '@/components/ContratanteActions';
 import { type Contratante } from '@/lib/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from './ui/sheet';
@@ -41,7 +41,6 @@ function ContratanteForm({
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const isEditing = !!initialData;
-  const router = useRouter();
 
   const form = useForm<ContratanteFormValues>({
     resolver: zodResolver(contratanteFormSchema),
@@ -63,7 +62,6 @@ function ContratanteForm({
       if (result.success) {
         toast({ title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
         onSave();
-        router.refresh();
       } else {
         toast({
           variant: 'destructive',
@@ -101,7 +99,7 @@ function ContratanteForm({
         </ScrollArea>
         <SheetFooter>
             <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending} variant="default">
                 {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Contratante')}
             </Button>
         </SheetFooter>
@@ -115,10 +113,12 @@ export function ContratantesClientPage({ initialContratantes }: {
 }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingContratante, setEditingContratante] = useState<Contratante | undefined>(undefined);
+  const router = useRouter();
 
   const handleSaveSuccess = () => {
     setIsSheetOpen(false);
     setEditingContratante(undefined);
+    router.refresh();
   }
 
   const handleEdit = (contratante: Contratante) => {
@@ -139,7 +139,7 @@ export function ContratantesClientPage({ initialContratantes }: {
   return (
     <>
       <div className="flex justify-end">
-        <Button onClick={handleAddNew}>
+        <Button onClick={handleAddNew} variant="default">
           <Plus className="mr-2 h-4 w-4" /> Novo Contratante
         </Button>
       </div>
@@ -193,9 +193,9 @@ export function ContratantesClientPage({ initialContratantes }: {
           </div>
         ) : (
           <div className="text-center py-12 text-muted-foreground">
-            <User className="mx-auto h-12 w-12" />
+            <Users className="mx-auto h-12 w-12" />
             <p className="mt-4">Nenhum contratante cadastrado.</p>
-            <Button onClick={handleAddNew} className="mt-4">
+            <Button onClick={handleAddNew} className="mt-4" variant="default">
               <Plus className="mr-2 h-4 w-4" /> Cadastrar Contratante
             </Button>
           </div>

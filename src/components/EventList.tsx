@@ -15,7 +15,8 @@ export function EventList({
     return (
       <div className="text-center py-12 text-muted-foreground">
         <CalendarX className="mx-auto h-12 w-12" />
-        <p className="mt-4">Nenhum evento encontrado para os filtros selecionados.</p>
+        <p className="mt-4">Nenhum evento encontrado.</p>
+        <p className="text-sm">Cadastre um novo evento para começar.</p>
       </div>
     );
   }

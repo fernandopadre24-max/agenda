@@ -40,7 +40,8 @@ export function EventDashboard({
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    setEvents(initialEvents);
+  }, [initialEvents]);
 
   const handleSearch = async () => {
     if (!query) {
@@ -82,10 +83,10 @@ export function EventDashboard({
     now.setHours(0,0,0,0);
     
     if (filter === 'past') {
-      filteredEvents = events.filter(e => new Date(e.date) < now);
+      filteredEvents = filteredEvents.filter(e => new Date(e.date) < now);
     }
     if (filter === 'upcoming') {
-      filteredEvents = events.filter(e => new Date(e.date) >= now);
+      filteredEvents = filteredEvents.filter(e => new Date(e.date) >= now);
     }
 
     if (selectedDate) {
@@ -107,6 +108,15 @@ export function EventDashboard({
     return initialEvents.map(event => new Date(event.date));
   }, [initialEvents]);
 
+   const resetFilters = () => {
+      setSelectedDate(undefined);
+      setSelectedArtista('all');
+      setSelectedContratante('all');
+      setQuery('');
+      setEvents(initialEvents);
+      setAiResponse('');
+   }
+
   return (
     <div className="space-y-4">
         <div className="space-y-2">
@@ -119,7 +129,7 @@ export function EventDashboard({
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="bg-card flex-1"
                 />
-                <Button onClick={handleSearch} disabled={isLoading} className="bg-primary hover:bg-primary/90">
+                <Button onClick={handleSearch} disabled={isLoading} variant="default">
                 {isLoading ? <Loader2 className="animate-spin" /> : <Search />}
                 <span className="sr-only">Buscar</span>
                 </Button>
@@ -152,7 +162,7 @@ export function EventDashboard({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">Todos os Artistas</SelectItem>
-                        {(artistas || []).map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
+                        {artistas?.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Select value={selectedContratante} onValueChange={setSelectedContratante}>
@@ -161,7 +171,7 @@ export function EventDashboard({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">Todos os Contratantes</SelectItem>
-                        {(contratantes || []).map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        {contratantes?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -188,14 +198,7 @@ export function EventDashboard({
 
       {(selectedDate || selectedArtista !== 'all' || selectedContratante !== 'all') && (
           <div className="flex justify-start">
-             <Button variant="outline" size="sm" onClick={() => {
-                setSelectedDate(undefined);
-                setSelectedArtista('all');
-                setSelectedContratante('all');
-                setQuery('');
-                setEvents(initialEvents);
-                setAiResponse('');
-             }}>
+             <Button variant="ghost" size="sm" onClick={resetFilters}>
                 <X className="mr-2 h-4 w-4" />
                 Limpar filtros
             </Button>

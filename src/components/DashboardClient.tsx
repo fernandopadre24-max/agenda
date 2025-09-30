@@ -32,13 +32,15 @@ export function DashboardClient({
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={handleOpenCreate}>
+        <Button onClick={handleOpenCreate} variant="default">
           <Plus className="mr-2 h-4 w-4" /> Novo Evento
         </Button>
       </div>
 
       <EventDashboard
         initialEvents={initialEvents}
+        artistas={artistas}
+        contratantes={contratantes}
       />
       
       <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>

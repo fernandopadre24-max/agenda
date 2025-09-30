@@ -72,7 +72,7 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
     defaultValues: {
       contratante: event?.contratante ?? '',
       artista: event?.artista ?? '',
-      date: event?.date ? new Date(event.date) : new Date(),
+      date: event?.date ? new Date(event.date) : undefined,
       hora: event?.hora ?? '19:00',
       entrada: event?.entrada ?? '18:00',
       saida: event?.saida ?? '22:00',
@@ -136,7 +136,7 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
                                 </FormControl>
                                 <SelectContent>
                                   {contratantes.map((c) => (
-                                    <SelectItem key={c.name} value={c.name}>
+                                    <SelectItem key={c.id} value={c.name}>
                                       {c.name}
                                     </SelectItem>
                                   ))}
@@ -160,7 +160,7 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
                                 </FormControl>
                                 <SelectContent>
                                   {artistas.map((a) => (
-                                    <SelectItem key={a.name} value={a.name}>
+                                    <SelectItem key={a.id} value={a.name}>
                                       {a.name}
                                     </SelectItem>
                                   ))}
@@ -200,9 +200,6 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
                                         mode="single"
                                         selected={field.value}
                                         onSelect={field.onChange}
-                                        disabled={(date) =>
-                                        date < new Date('1900-01-01')
-                                        }
                                         initialFocus
                                     />
                                     </PopoverContent>
@@ -247,7 +244,7 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
                         {financeType !== 'nenhum' && (
                             <>
                                 <FormField control={form.control} name="valor" render={({ field }) => (
-                                    <FormItem><FormLabel>Valor</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Valor</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} onChange={e => field.onChange(e.target.valueAsNumber || 0)} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                 <FormField
                                     control={form.control}
@@ -274,7 +271,7 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
         </ScrollArea>
         <SheetFooter>
           <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending} variant="default">
             {isPending ? <Loader2 className="animate-spin" /> : 'Salvar Evento'}
           </Button>
         </SheetFooter>

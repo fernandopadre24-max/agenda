@@ -19,7 +19,6 @@ import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent } from './ui/sheet';
 import { EventForm } from './EventForm';
 import type { Event, Artista, Contratante } from '@/lib/types';
-import { getArtistas, getContratantes } from '@/lib/data';
 
 
 export function EventActions({ 
