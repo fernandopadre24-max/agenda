@@ -87,6 +87,8 @@ export async function updateContratante(id: string, contratanteData: Partial<Omi
 
     const oldName = memoryDB.contratantes[index].name;
     const newName = contratanteData.name;
+    
+    // If the name is being updated, also update it in all related events
     if (newName && oldName !== newName) {
         memoryDB.events.forEach(event => {
             if (event.contratante === oldName) {
@@ -124,6 +126,8 @@ export async function updateArtista(id: string, artistaData: Partial<Omit<Artist
     
     const oldName = memoryDB.artistas[index].name;
     const newName = artistaData.name;
+
+    // If the name is being updated, also update it in all related events
     if (newName && oldName !== newName) {
         memoryDB.events.forEach(event => {
             if (event.artista === oldName) {

@@ -129,6 +129,13 @@ export function ContratantesClientPage({ initialContratantes }: {
     setIsSheetOpen(true);
   }
 
+  const handleSheetOpenChange = (open: boolean) => {
+    if (!open) {
+      setEditingContratante(undefined);
+    }
+    setIsSheetOpen(open);
+  }
+
   return (
     <>
       <div className="flex justify-end">
@@ -194,11 +201,11 @@ export function ContratantesClientPage({ initialContratantes }: {
           </div>
         )}
         
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
           <SheetContent>
             <ContratanteForm 
                 onSave={handleSaveSuccess} 
-                onCancel={() => setIsSheetOpen(false)}
+                onCancel={() => handleSheetOpenChange(false)}
                 initialData={editingContratante}
             />
           </SheetContent>

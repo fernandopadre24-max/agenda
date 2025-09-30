@@ -125,6 +125,13 @@ export function ArtistasClientPage({
     setEditingArtista(undefined);
     setIsSheetOpen(true);
   }
+
+  const handleSheetOpenChange = (open: boolean) => {
+    if (!open) {
+      setEditingArtista(undefined);
+    }
+    setIsSheetOpen(open);
+  }
   
   return (
     <>
@@ -182,11 +189,11 @@ export function ArtistasClientPage({
           </Button>
         </div>
       )}
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+      <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
           <SheetContent>
               <ArtistaForm 
                   onSave={handleSaveSuccess} 
-                  onCancel={() => setIsSheetOpen(false)} 
+                  onCancel={() => handleSheetOpenChange(false)} 
                   initialData={editingArtista}
               />
           </SheetContent>
