@@ -18,17 +18,14 @@ export function DashboardClient({
   initialContratantes: Contratante[];
 }) {
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
-  const [sheetKey, setSheetKey] = useState(Date.now()); // Chave para forçar remontagem
   const router = useRouter();
 
   const handleSaveSuccess = () => {
     setIsCreateSheetOpen(false);
-    setSheetKey(Date.now()); // Atualiza a chave para forçar a remontagem do Sheet
     router.refresh();
   };
 
   const handleOpenCreate = () => {
-    setSheetKey(Date.now()); // Garante que o form sempre tenha dados novos ao abrir
     setIsCreateSheetOpen(true);
   }
 
@@ -46,11 +43,13 @@ export function DashboardClient({
         initialContratantes={initialContratantes}
       />
       
-      <Sheet key={sheetKey} open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
+      <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
         <SheetContent className="p-0">
           <EventForm
               onSave={handleSaveSuccess}
               onCancel={() => setIsCreateSheetOpen(false)}
+              artistas={initialArtistas}
+              contratantes={initialContratantes}
             />
         </SheetContent>
       </Sheet>

@@ -41,6 +41,7 @@ function ContratanteForm({
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const isEditing = !!initialData;
+  const router = useRouter();
 
   const form = useForm<ContratanteFormValues>({
     resolver: zodResolver(contratanteFormSchema),
@@ -62,6 +63,7 @@ function ContratanteForm({
       if (result.success) {
         toast({ title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
         onSave();
+        router.push('/'); // REDIRECIONA para forçar o recarregamento dos dados
       } else {
         toast({
           variant: 'destructive',
@@ -119,7 +121,7 @@ export function ContratantesClientPage({ initialContratantes }: {
   const handleSaveSuccess = () => {
     setIsSheetOpen(false);
     setEditingContratante(undefined);
-    router.refresh();
+    // O redirecionamento agora é feito dentro do formulário
   }
 
   const handleEdit = (contratante: Contratante) => {

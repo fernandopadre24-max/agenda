@@ -22,7 +22,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { createEventAction, updateEventAction } from '@/lib/actions';
-import { getArtistas, getContratantes } from '@/lib/data';
 import type { Event, Contratante, Artista, ActionResponse } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -59,35 +58,14 @@ interface EventFormProps {
     event?: Event;
     onSave: () => void;
     onCancel: () => void;
+    artistas: Artista[];
+    contratantes: Contratante[];
 }
 
-export function EventForm({ event, onSave, onCancel }: EventFormProps) {
+export function EventForm({ event, onSave, onCancel, artistas, contratantes }: EventFormProps) {
   const isEditing = !!event;
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-
-  const [artistas, setArtistas] = useState<Artista[]>([]);
-  const [contratantes, setContratantes] = useState<Contratante[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
-  
-  useEffect(() => {
-    async function fetchData() {
-        setIsLoadingData(true);
-        try {
-            const [artistasData, contratantesData] = await Promise.all([
-                getArtistas(),
-                getContratantes()
-            ]);
-            setArtistas(artistasData);
-            setContratantes(contratantesData);
-        } catch (error) {
-            toast({ variant: 'destructive', title: 'Erro ao carregar dados', description: 'Não foi possível buscar artistas e contratantes.' });
-        } finally {
-            setIsLoadingData(false);
-        }
-    }
-    fetchData();
-  }, [event]); // Re-fetch when the event prop changes (e.g., opening for new vs. edit)
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -153,12 +131,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
         </SheetHeader>
         <ScrollArea>
             <div className="space-y-6 px-6 pr-7">
-                {isLoadingData ? (
-                    <div className="flex justify-center items-center h-40">
-                        <Loader2 className="animate-spin text-primary" />
-                    </div>
-                ) : (
-                <>
+                
                 <Card>
                     <CardHeader><CardTitle className="font-headline text-lg">Informações do Evento</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
@@ -309,13 +282,12 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
                         )}
                     </CardContent>
                 </Card>
-                </>
-                )}
+                
             </div>
         </ScrollArea>
         <div className="p-4 border-t flex justify-end gap-2 bg-background">
           <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
-          <Button type="submit" disabled={isPending || isLoadingData}>
+          <Button type="submit" disabled={isPending}>
             {isPending ? <Loader2 className="animate-spin" /> : 'Salvar Evento'}
           </Button>
         </div>
