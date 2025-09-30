@@ -123,11 +123,11 @@ export async function updateContratante(id: string, contratanteData: Partial<Omi
     const newName = contratanteData.name;
     
     if (newName && oldName !== newName) {
-        db.events.forEach(event => {
-            if (event.contratante === oldName) {
-                event.contratante = newName;
-            }
-        });
+      db.events.forEach((event, eventIndex) => {
+        if (event.contratante === oldName) {
+          db.events[eventIndex].contratante = newName;
+        }
+      });
     }
 
     db.contratantes[index] = { ...db.contratantes[index], ...contratanteData };
@@ -169,11 +169,11 @@ export async function updateArtista(id: string, artistaData: Partial<Omit<Artist
     const newName = artistaData.name;
 
     if (newName && oldName !== newName) {
-        db.events.forEach(event => {
-            if (event.artista === oldName) {
-                event.artista = newName;
-            }
-        });
+      db.events.forEach((event, eventIndex) => {
+        if (event.artista === oldName) {
+          db.events[eventIndex].artista = newName;
+        }
+      });
     }
     
     db.artistas[index] = { ...db.artistas[index], ...artistaData };
