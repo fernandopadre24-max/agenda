@@ -7,7 +7,6 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -90,19 +89,20 @@ interface EventFormProps {
   event?: Event;
   artistas: Artista[];
   contratantes: Contratante[];
-  onSaveSuccess: () => void;
+  onSave: () => void;
+  onCancel: () => void;
 }
 
 export function EventForm({
   event,
   artistas,
   contratantes,
-  onSaveSuccess,
+  onSave,
+  onCancel,
 }: EventFormProps) {
   const isEditing = !!event;
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -139,7 +139,7 @@ export function EventForm({
         toast({
           title: `Evento ${isEditing ? 'atualizado' : 'criado'} com sucesso!`,
         });
-        onSaveSuccess();
+        onSave();
       } else {
         toast({
           variant: 'destructive',
@@ -180,10 +180,15 @@ export function EventForm({
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
+                          disabled={!contratantes || contratantes.length === 0}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={!contratantes || contratantes.length === 0 ? "Nenhum contratante cadastrado" : "Selecione um contratante"} />
+                              <SelectValue placeholder={
+                                !contratantes || contratantes.length === 0 
+                                ? "Nenhum contratante cadastrado" 
+                                : "Selecione um contratante"
+                              } />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -207,10 +212,15 @@ export function EventForm({
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
+                          disabled={!artistas || artistas.length === 0}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={!artistas || artistas.length === 0 ? "Nenhum artista cadastrado" : "Selecione um artista"} />
+                              <SelectValue placeholder={
+                                !artistas || artistas.length === 0
+                                ? "Nenhum artista cadastrado"
+                                : "Selecione um artista"
+                              } />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -458,7 +468,7 @@ export function EventForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => onSaveSuccess()}
+            onClick={onCancel}
           >
             Cancelar
           </Button>
