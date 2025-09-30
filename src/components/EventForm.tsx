@@ -87,7 +87,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
         }
     }
     fetchData();
-  }, []);
+  }, [event]); // Re-fetch when the event prop changes (e.g., opening for new vs. edit)
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
