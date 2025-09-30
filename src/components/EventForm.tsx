@@ -161,9 +161,8 @@ export function EventForm({
             {isEditing ? 'Editar Evento' : 'Novo Evento'}
           </SheetTitle>
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto">
-          <ScrollArea className="h-full">
-            <div className="space-y-6 p-6">
+        <ScrollArea className="flex-1">
+          <div className="space-y-6 p-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="font-headline text-lg">
@@ -454,8 +453,7 @@ export function EventForm({
                 </CardContent>
               </Card>
             </div>
-          </ScrollArea>
-        </div>
+        </ScrollArea>
         <SheetFooter>
           <Button
             type="button"
