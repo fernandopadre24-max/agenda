@@ -183,7 +183,7 @@ export function EventForm({
                         >
                           <FormControl>
                             <SelectTrigger>
-                               <SelectValue placeholder={!contratantes || contratantes.length === 0 ? "Nenhum contratante" : "Selecione um contratante"} />
+                               <SelectValue placeholder={!contratantes || contratantes.length === 0 ? "Nenhum contratante cadastrado" : "Selecione um contratante"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -211,7 +211,7 @@ export function EventForm({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={!artistas || artistas.length === 0 ? "Nenhum artista" : "Selecione um artista"} />
+                              <SelectValue placeholder={!artistas || artistas.length === 0 ? "Nenhum artista cadastrado" : "Selecione um artista"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
