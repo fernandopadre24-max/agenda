@@ -6,24 +6,12 @@ import { Timestamp } from 'firebase-admin/firestore';
 // --- In-Memory Database ---
 // NOTE: This data will reset on every server restart.
 let memoryDB = {
-  events: [
-     { id: '1', date: new Date('2024-08-15T22:00:00.000Z'), hora: '22:00', contratante: 'Casamento Joana & Miguel', artista: 'Banda Sinfonia', entrada: '21:00', saida: '02:00', cidade: 'São Paulo', local: 'Buffet Felicidade', status: 'pendente', receber: { valor: 3500, status: 'pendente' } },
-     { id: '2', date: new Date('2024-08-20T19:00:00.000Z'), hora: '19:00', contratante: 'Empresa XYZ', artista: 'DJ Anima', entrada: '18:30', saida: '23:00', cidade: 'Rio de Janeiro', local: 'Espaço Corporativo', status: 'pendente', receber: { valor: 2000, status: 'recebido' } },
-     { id: '3', date: new Date('2024-09-01T15:00:00.000Z'), hora: '15:00', contratante: 'Aniversário de 50 anos', artista: 'Voz e Violão MPB', entrada: '14:00', saida: '18:00', cidade: 'Belo Horizonte', local: 'Chácara Paraíso', status: 'realizado', receber: { valor: 1200, status: 'recebido' } }
-  ] as Event[],
-  contratantes: [
-    { id: '1', name: 'Casamento Joana & Miguel', category: 'Casamento' },
-    { id: '2', name: 'Empresa XYZ', category: 'Corporativo' },
-    { id: '3', name: 'Aniversário de 50 anos', category: 'Aniversário' }
-  ] as Contratante[],
-  artistas: [
-    { id: '1', name: 'Banda Sinfonia', serviceType: 'Banda' },
-    { id: '2', name: 'DJ Anima', serviceType: 'DJ' },
-    { id: '3', name: 'Voz e Violão MPB', serviceType: 'Músico' }
-  ] as Artista[],
+  events: [] as Event[],
+  contratantes: [] as Contratante[],
+  artistas: [] as Artista[],
   transactions: [] as Transaction[],
 };
-let nextId = 4;
+let nextId = 1;
 const getNextId = () => (nextId++).toString();
 
 
