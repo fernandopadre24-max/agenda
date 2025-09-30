@@ -8,7 +8,7 @@ export default async function ContratantesPage() {
   const contratantes = await getContratantes();
 
   return (
-    <div className="flex flex-col min-h-full bg-background">
+    <div className="flex flex-col min-h-full">
       <PageHeader title="Contratantes" />
       <main className="flex-1 p-4 md:p-6 space-y-4">
         <ContratantesClientPage 

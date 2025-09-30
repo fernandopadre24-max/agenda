@@ -15,13 +15,12 @@ export function PageHeader({ title, showBackButton = false }: { title: string, s
   };
 
   return (
-    <header className="bg-background border-b border-border p-2.5 flex items-center gap-2 sticky top-0 z-20">
+    <header className="bg-background/80 backdrop-blur-sm border-b border-border/50 p-3 flex items-center gap-2 sticky top-0 z-20">
       {showBackButton && (
         <Button
             variant="ghost"
             size="icon"
             onClick={handleBack}
-            className="hover:bg-secondary"
         >
             <ArrowLeft className="h-6 w-6" />
             <span className="sr-only">Voltar</span>

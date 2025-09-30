@@ -8,12 +8,12 @@ export function EventList({
     contratantes
 }: { 
     events: Event[];
-    artistas?: Artista[];
-    contratantes?: Contratante[];
+    artistas: Artista[];
+    contratantes: Contratante[];
 }) {
   if (events.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-border rounded-xl">
         <CalendarX className="mx-auto h-12 w-12" />
         <p className="mt-4">Nenhum evento encontrado.</p>
         <p className="text-sm">Cadastre um novo evento para começar.</p>
@@ -21,13 +21,13 @@ export function EventList({
     );
   }
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {events.map(event => (
         <EventCard 
             key={event.id} 
             event={event} 
-            artistas={artistas || []}
-            contratantes={contratantes || []}
+            artistas={artistas}
+            contratantes={contratantes}
         />
       ))}
     </div>

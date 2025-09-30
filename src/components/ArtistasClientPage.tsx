@@ -37,6 +37,7 @@ function ArtistaForm({
 }) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const isEditing = !!initialData;
 
   const form = useForm<ArtistaFormValues>({
@@ -55,6 +56,7 @@ function ArtistaForm({
       if (result.success) {
         toast({ title: `Artista ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
         onSave();
+        router.refresh();
       } else {
         toast({
           variant: 'destructive',
@@ -108,12 +110,10 @@ export function ArtistasClientPage({
 }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingArtista, setEditingArtista] = useState<Artista | undefined>(undefined);
-  const router = useRouter();
 
   const handleSaveSuccess = () => {
     setIsSheetOpen(false);
     setEditingArtista(undefined);
-    router.refresh();
   };
 
   const handleEdit = (artista: Artista) => {
@@ -147,7 +147,7 @@ export function ArtistasClientPage({
             <Card key={artista.id}>
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 font-headline">
                     <Mic className="h-5 w-5 text-primary" />
                     {artista.name}
                   </CardTitle>
@@ -181,7 +181,7 @@ export function ArtistasClientPage({
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-border rounded-xl">
           <Mic className="mx-auto h-12 w-12" />
           <p className="mt-4">Nenhum artista cadastrado.</p>
            <Button onClick={handleAddNew} className="mt-4" variant="default">

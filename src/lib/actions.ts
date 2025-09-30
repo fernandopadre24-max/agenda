@@ -100,12 +100,12 @@ export async function createEventAction(data: z.infer<typeof eventFormSchema>): 
   }
   try {
     const newEventData = buildEventDataObject(validatedFields.data) as Omit<Event, 'id'>;
-    const newEvent = await dbAddEvent(newEventData);
+    await dbAddEvent(newEventData);
     revalidatePath('/');
     revalidatePath('/agenda');
     revalidatePath('/financeiro');
     revalidatePath('/transacoes');
-    return { success: true, message: 'Evento criado!', data: newEvent };
+    return { success: true, message: 'Evento criado!' };
   } catch (e) {
     return { success: false, message: e instanceof Error ? e.message : 'Falha ao criar evento.' };
   }
@@ -118,13 +118,13 @@ export async function updateEventAction(id: string, data: z.infer<typeof eventFo
     }
     try {
         const eventUpdateData = buildEventDataObject(validatedFields.data);
-        const updatedEvent = await dbUpdateEvent(id, eventUpdateData);
+        await dbUpdateEvent(id, eventUpdateData);
         revalidatePath('/');
         revalidatePath('/agenda');
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');
         revalidatePath(`/events/${id}`);
-        return { success: true, message: 'Evento atualizado!', data: updatedEvent };
+        return { success: true, message: 'Evento atualizado!' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao atualizar evento.' };
     }
@@ -151,10 +151,10 @@ export async function createContratanteAction(data: z.infer<typeof contratanteFo
         return { success: false, message: 'Dados inválidos.', errors: validatedFields.error.flatten().fieldErrors };
     }
     try {
-        const newContratante = await dbAddContratante(validatedFields.data);
+        await dbAddContratante(validatedFields.data);
         revalidatePath('/contratantes');
-        revalidatePath('/'); // To refresh dashboard list
-        return { success: true, message: 'Contratante criado!', data: newContratante };
+        revalidatePath('/');
+        return { success: true, message: 'Contratante criado!' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao criar contratante.' };
     }
@@ -166,11 +166,11 @@ export async function updateContratanteAction(id: string, data: z.infer<typeof c
         return { success: false, message: 'Dados inválidos.', errors: validatedFields.error.flatten().fieldErrors };
     }
     try {
-        const updatedContratante = await dbUpdateContratante(id, validatedFields.data);
+        await dbUpdateContratante(id, validatedFields.data);
         revalidatePath('/contratantes');
         revalidatePath('/');
         revalidatePath('/agenda');
-        return { success: true, message: 'Contratante atualizado!', data: updatedContratante };
+        return { success: true, message: 'Contratante atualizado!' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao atualizar contratante.' };
     }
@@ -203,10 +203,10 @@ export async function createArtistaAction(data: z.infer<typeof artistaFormSchema
         return { success: false, message: 'Dados inválidos.', errors: validatedFields.error.flatten().fieldErrors };
     }
     try {
-        const newArtista = await dbAddArtista(validatedFields.data);
+        await dbAddArtista(validatedFields.data);
         revalidatePath('/artistas');
-        revalidatePath('/'); // To refresh dashboard list
-        return { success: true, message: 'Artista criado!', data: newArtista };
+        revalidatePath('/');
+        return { success: true, message: 'Artista criado!' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao criar o artista.' };
     }
@@ -218,11 +218,11 @@ export async function updateArtistaAction(id: string, data: z.infer<typeof artis
         return { success: false, message: 'Dados inválidos.', errors: validatedFields.error.flatten().fieldErrors };
     }
     try {
-        const updatedArtista = await dbUpdateArtista(id, validatedFields.data);
+        await dbUpdateArtista(id, validatedFields.data);
         revalidatePath('/artistas');
         revalidatePath('/');
         revalidatePath('/agenda');
-        return { success: true, message: 'Artista atualizado!', data: updatedArtista };
+        return { success: true, message: 'Artista atualizado!' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao atualizar artista.' };
     }
@@ -298,10 +298,10 @@ export async function createTransactionAction(data: z.infer<typeof transactionFo
     }
     try {
         // Transactions are always considered 'concluido' upon manual creation for simplicity
-        const newTransaction = await dbAddTransaction({ ...validatedFields.data, status: 'concluido' });
+        await dbAddTransaction({ ...validatedFields.data, status: 'concluido' });
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');
-        return { success: true, message: 'Transação criada!', data: newTransaction };
+        return { success: true, message: 'Transação criada!' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao criar transação.' };
     }
@@ -313,10 +313,10 @@ export async function updateTransactionAction(id: string, data: Partial<z.infer<
         return { success: false, message: 'Dados inválidos.' };
     }
     try {
-        const updatedTransaction = await dbUpdateTransaction(id, validatedFields.data);
+        await dbUpdateTransaction(id, validatedFields.data);
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');
-        return { success: true, message: 'Transação atualizada.', data: updatedTransaction };
+        return { success: true, message: 'Transação atualizada.' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao atualizar transação.' };
     }

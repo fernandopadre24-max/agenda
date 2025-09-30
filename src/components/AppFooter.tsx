@@ -9,7 +9,7 @@ const navItems = [
   { href: '/', icon: Home, label: 'Início' },
   { href: '/agenda', icon: CalendarDays, label: 'Agenda' },
   { href: '/transacoes', icon: ArrowRightLeft, label: 'Transações'},
-  { href: '/contratantes', icon: Users, label: 'Contratantes' },
+  { href: '/contratantes', icon: Users, label: 'Clientes' },
   { href: '/artistas', icon: Mic, label: 'Artistas' },
   { href: '/financeiro', icon: DollarSign, label: 'Resumo' },
 ];
@@ -18,7 +18,7 @@ export function AppFooter() {
   const pathname = usePathname();
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border z-30 max-w-lg mx-auto">
+    <footer className="fixed bottom-0 left-0 right-0 h-16 bg-card/80 backdrop-blur-sm border-t border-border/50 z-30 max-w-lg mx-auto">
       <nav className="h-full">
         <ul className="flex justify-around items-center h-full">
           {navItems.map(({ href, icon: Icon, label }) => (

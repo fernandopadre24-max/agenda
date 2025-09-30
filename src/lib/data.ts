@@ -3,7 +3,6 @@
 import type { Event, Contratante, Artista, Transaction } from './types';
 
 // --- In-Memory Database ---
-// NOTE: This data will reset on every server restart.
 let memoryDB: {
   events: Event[],
   contratantes: Contratante[],
@@ -21,7 +20,6 @@ const getNextId = () => (nextId++).toString();
 
 // --- Event Functions ---
 export async function getEvents(): Promise<Event[]> {
-  // Ensure date objects are valid before sorting
   return [...memoryDB.events].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
@@ -31,7 +29,7 @@ export async function getEventById(id: string): Promise<Event | undefined> {
 
 export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
   const newId = getNextId();
-  const date = new Date(eventData.date); // Ensure it's a Date object
+  const date = new Date(eventData.date);
   const newEvent: Event = { ...eventData, id: newId, date };
   memoryDB.events.push(newEvent);
   return newEvent;
@@ -49,7 +47,6 @@ export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id
         updatedEventData.date = new Date(eventData.date);
     }
     
-    // Using hasOwnProperty to check for explicit undefined to allow unsetting pagar/receber
     if (Object.prototype.hasOwnProperty.call(eventData, 'pagar') && eventData.pagar === undefined) {
       delete (updatedEventData as Partial<Event>).pagar;
     }
@@ -88,7 +85,6 @@ export async function updateContratante(id: string, contratanteData: Partial<Omi
     const oldName = memoryDB.contratantes[index].name;
     const newName = contratanteData.name;
     
-    // If the name is being updated, also update it in all related events
     if (newName && oldName !== newName) {
         memoryDB.events.forEach(event => {
             if (event.contratante === oldName) {
@@ -127,7 +123,6 @@ export async function updateArtista(id: string, artistaData: Partial<Omit<Artist
     const oldName = memoryDB.artistas[index].name;
     const newName = artistaData.name;
 
-    // If the name is being updated, also update it in all related events
     if (newName && oldName !== newName) {
         memoryDB.events.forEach(event => {
             if (event.artista === oldName) {

@@ -40,6 +40,7 @@ function ContratanteForm({
 }) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const isEditing = !!initialData;
 
   const form = useForm<ContratanteFormValues>({
@@ -58,6 +59,7 @@ function ContratanteForm({
       if (result.success) {
         toast({ title: `Contratante ${isEditing ? 'atualizado' : 'criado'} com sucesso!` });
         onSave();
+        router.refresh();
       } else {
         toast({
           variant: 'destructive',
@@ -111,12 +113,10 @@ export function ContratantesClientPage({ initialContratantes }: {
 }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingContratante, setEditingContratante] = useState<Contratante | undefined>(undefined);
-  const router = useRouter();
 
   const handleSaveSuccess = () => {
     setIsSheetOpen(false);
     setEditingContratante(undefined);
-    router.refresh();
   }
 
   const handleEdit = (contratante: Contratante) => {
@@ -153,7 +153,7 @@ export function ContratantesClientPage({ initialContratantes }: {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <Briefcase className="h-5 w-5 text-primary" />
-                        <CardTitle>{contratante.name}</CardTitle>
+                        <CardTitle className="font-headline">{contratante.name}</CardTitle>
                       </div>
                       {contratante.category && (
                         <Badge variant="secondary" className="mt-2 ml-7">
@@ -192,7 +192,7 @@ export function ContratantesClientPage({ initialContratantes }: {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-border rounded-xl">
             <Users className="mx-auto h-12 w-12" />
             <p className="mt-4">Nenhum contratante cadastrado.</p>
             <Button onClick={handleAddNew} className="mt-4" variant="default">
