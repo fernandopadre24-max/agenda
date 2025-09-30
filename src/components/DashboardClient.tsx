@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -25,14 +25,10 @@ export function DashboardClient({
     router.refresh();
   };
 
-  const handleOpenCreate = () => {
-    setIsCreateSheetOpen(true);
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={handleOpenCreate} variant="default">
+        <Button onClick={() => setIsCreateSheetOpen(true)} variant="default">
           <Plus className="mr-2 h-4 w-4" /> Novo Evento
         </Button>
       </div>

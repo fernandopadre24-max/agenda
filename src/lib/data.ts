@@ -4,20 +4,25 @@ import type { Event, Contratante, Artista, Transaction } from './types';
 
 // --- In-Memory Database ---
 // NOTE: This data will reset on every server restart.
-let memoryDB = {
-  events: [] as Event[],
-  contratantes: [] as Contratante[],
-  artistas: [] as Artista[],
-  transactions: [] as Transaction[],
+let memoryDB: {
+  events: Event[],
+  contratantes: Contratante[],
+  artistas: Artista[],
+  transactions: Transaction[],
+} = {
+  events: [],
+  contratantes: [],
+  artistas: [],
+  transactions: [],
 };
+
 let nextId = 1;
 const getNextId = () => (nextId++).toString();
 
 // --- Event Functions ---
 export async function getEvents(): Promise<Event[]> {
-  const events = [...memoryDB.events];
   // Ensure date objects are valid before sorting
-  return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  return [...memoryDB.events].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 export async function getEventById(id: string): Promise<Event | undefined> {
@@ -38,20 +43,18 @@ export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id
 
     const existingEvent = memoryDB.events[eventIndex];
     
-    // Create a new object with the merged data
-    const updatedEventData = { ...existingEvent, ...eventData };
+    const updatedEventData: Event = { ...existingEvent, ...eventData };
 
-    // Handle date conversion
     if (eventData.date) {
         updatedEventData.date = new Date(eventData.date);
     }
-
-    // Explicitly handle removal of financial info
-    if (eventData.hasOwnProperty('pagar') && eventData.pagar === undefined) {
-      delete updatedEventData.pagar;
+    
+    // Using hasOwnProperty to check for explicit undefined to allow unsetting pagar/receber
+    if (Object.prototype.hasOwnProperty.call(eventData, 'pagar') && eventData.pagar === undefined) {
+      delete (updatedEventData as Partial<Event>).pagar;
     }
-    if (eventData.hasOwnProperty('receber') && eventData.receber === undefined) {
-      delete updatedEventData.receber;
+    if (Object.prototype.hasOwnProperty.call(eventData, 'receber') && eventData.receber === undefined) {
+      delete (updatedEventData as Partial<Event>).receber;
     }
     
     memoryDB.events[eventIndex] = updatedEventData;
@@ -68,8 +71,7 @@ export async function deleteEvent(id: string): Promise<boolean> {
 
 // --- Contratante Functions ---
 export async function getContratantes(): Promise<Contratante[]> {
-  const contratantes = [...memoryDB.contratantes];
-  return contratantes.sort((a, b) => a.name.localeCompare(b.name));
+  return [...memoryDB.contratantes].sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
@@ -83,7 +85,6 @@ export async function updateContratante(id: string, contratanteData: Partial<Omi
     const index = memoryDB.contratantes.findIndex(c => c.id === id);
     if (index === -1) return undefined;
 
-    // Update name in associated events if it changes
     const oldName = memoryDB.contratantes[index].name;
     const newName = contratanteData.name;
     if (newName && oldName !== newName) {
@@ -107,8 +108,7 @@ export async function deleteContratante(id: string): Promise<boolean> {
 
 // --- Artista Functions ---
 export async function getArtistas(): Promise<Artista[]> {
-  const artistas = [...memoryDB.artistas];
-  return artistas.sort((a,b) => a.name.localeCompare(b.name));
+  return [...memoryDB.artistas].sort((a,b) => a.name.localeCompare(b.name));
 }
 
 export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Artista> {
@@ -122,7 +122,6 @@ export async function updateArtista(id: string, artistaData: Partial<Omit<Artist
     const index = memoryDB.artistas.findIndex(a => a.id === id);
     if (index === -1) return undefined;
     
-    // Update name in associated events if it changes
     const oldName = memoryDB.artistas[index].name;
     const newName = artistaData.name;
     if (newName && oldName !== newName) {
@@ -146,8 +145,7 @@ export async function deleteArtista(id: string): Promise<boolean> {
 
 // --- Transaction Functions ---
 export async function getTransactions(): Promise<Transaction[]> {
-    const transactions = [...memoryDB.transactions];
-    return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return [...memoryDB.transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 export async function addTransaction(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {

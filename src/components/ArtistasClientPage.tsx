@@ -1,5 +1,5 @@
 'use client';
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Mic, Mail, Phone, Music, Loader2 } from 'lucide-react';
@@ -44,10 +44,6 @@ function ArtistaForm({
     defaultValues: initialData || { name: '', email: '', phone: '', serviceType: '' },
   });
   
-  useEffect(() => {
-    form.reset(initialData || { name: '', email: '', phone: '', serviceType: '' });
-  }, [initialData, form]);
-
   const onSubmit = (data: ArtistaFormValues) => {
     startTransition(async () => {
       const action = isEditing && initialData
@@ -71,12 +67,13 @@ function ArtistaForm({
 
   return (
     <Form {...form}>
-       <form onSubmit={form.handleSubmit(onSubmit)} className="grid h-full grid-rows-[auto,1fr,auto]">
+       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
         <SheetHeader>
           <SheetTitle className="font-headline">{isEditing ? 'Editar Artista' : 'Novo Artista'}</SheetTitle>
         </SheetHeader>
-        <ScrollArea>
-            <div className="space-y-4 px-6 py-4">
+        <div className="flex-1 overflow-y-auto">
+          <ScrollArea className="h-full">
+            <div className="space-y-4 p-6">
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
@@ -90,7 +87,8 @@ function ArtistaForm({
                 <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
             </div>
-        </ScrollArea>
+          </ScrollArea>
+        </div>
         <SheetFooter>
            <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
            <Button type="submit" disabled={isPending} variant="default">
@@ -127,14 +125,7 @@ export function ArtistasClientPage({
     setEditingArtista(undefined);
     setIsSheetOpen(true);
   }
-
-  const handleCloseSheet = (open: boolean) => {
-    if (!open) {
-        setEditingArtista(undefined);
-    }
-    setIsSheetOpen(open);
-  }
-
+  
   return (
     <>
       <div className="flex justify-end">
@@ -191,11 +182,11 @@ export function ArtistasClientPage({
           </Button>
         </div>
       )}
-      <Sheet open={isSheetOpen} onOpenChange={handleCloseSheet}>
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetContent>
               <ArtistaForm 
                   onSave={handleSaveSuccess} 
-                  onCancel={() => handleCloseSheet(false)} 
+                  onCancel={() => setIsSheetOpen(false)} 
                   initialData={editingArtista}
               />
           </SheetContent>

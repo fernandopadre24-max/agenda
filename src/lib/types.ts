@@ -49,7 +49,6 @@ export type Transaction = {
 export type ActionResponse = {
     success: boolean;
     message: string;
-    redirectPath?: string;
-    data?: Artista | Contratante | Transaction | Event;
+    data?: any;
     errors?: { [key: string]: string[] | undefined; };
 }

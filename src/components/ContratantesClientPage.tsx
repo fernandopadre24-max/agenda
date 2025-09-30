@@ -1,5 +1,5 @@
 'use client';
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, User, Mail, Phone, Tag, Briefcase, Loader2, Users } from 'lucide-react';
@@ -47,10 +47,6 @@ function ContratanteForm({
     defaultValues: initialData || { name: '', responsibleName: '', email: '', phone: '', category: '' },
   });
 
-  useEffect(() => {
-    form.reset(initialData || { name: '', responsibleName: '', email: '', phone: '', category: '' });
-  }, [initialData, form]);
-
   const onSubmit = async (data: ContratanteFormValues) => {
     startTransition(async () => {
       const action = isEditing && initialData
@@ -74,11 +70,12 @@ function ContratanteForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid h-full grid-rows-[auto,1fr,auto]">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
          <SheetHeader>
             <SheetTitle className="font-headline">{isEditing ? 'Editar Contratante' : 'Novo Contratante'}</SheetTitle>
         </SheetHeader>
-        <ScrollArea>
+        <div className="flex-1 overflow-y-auto">
+          <ScrollArea className="h-full">
             <div className="space-y-4 p-6">
                 <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem><FormLabel>Nome do Contratante</FormLabel><FormControl><Input placeholder="Nome da empresa, evento ou pessoa" {...field} /></FormControl><FormMessage /></FormItem>
@@ -96,7 +93,8 @@ function ContratanteForm({
                     <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
             </div>
-        </ScrollArea>
+          </ScrollArea>
+        </div>
         <SheetFooter>
             <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
             <Button type="submit" disabled={isPending} variant="default">
@@ -129,13 +127,6 @@ export function ContratantesClientPage({ initialContratantes }: {
   const handleAddNew = () => {
     setEditingContratante(undefined);
     setIsSheetOpen(true);
-  }
-  
-  const handleCloseSheet = (open: boolean) => {
-    if (!open) {
-        setEditingContratante(undefined);
-    }
-    setIsSheetOpen(open);
   }
 
   return (
@@ -203,11 +194,11 @@ export function ContratantesClientPage({ initialContratantes }: {
           </div>
         )}
         
-        <Sheet open={isSheetOpen} onOpenChange={handleCloseSheet}>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetContent>
             <ContratanteForm 
                 onSave={handleSaveSuccess} 
-                onCancel={() => handleCloseSheet(false)}
+                onCancel={() => setIsSheetOpen(false)}
                 initialData={editingContratante}
             />
           </SheetContent>

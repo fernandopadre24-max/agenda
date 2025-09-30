@@ -22,7 +22,6 @@ import {
 } from './data';
 import type { Event, ActionResponse } from './types';
 
-// Schemas
 const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
   artista: z.string().min(1, 'O nome do artista é obrigatório.'),
@@ -68,9 +67,8 @@ const transactionFormSchema = z.object({
 });
 
 
-// Helper to build event object from form data
 const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Partial<Omit<Event, 'id'>> => {
-    const event: Partial<Omit<Event, 'id'>> & { pagar?: any, receber?: any } = {
+    const eventUpdate: Partial<Omit<Event, 'id'>> = {
         date: data.date,
         hora: data.hora,
         contratante: data.contratante,
@@ -79,11 +77,10 @@ const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Partial<Om
         saida: data.saida,
         cidade: data.cidade,
         local: data.local,
-        status: 'pendente', // Default status on creation/update
+        status: 'pendente',
+        pagar: undefined,
+        receber: undefined,
     };
-    
-    // This approach ensures that we don't accidentally keep old financial data.
-    const eventUpdate: Partial<Omit<Event, 'id'>> = { ...event, pagar: undefined, receber: undefined };
 
     if (data.financeType === 'receber' && data.valor && data.status) {
         eventUpdate.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
@@ -156,6 +153,7 @@ export async function createContratanteAction(data: z.infer<typeof contratanteFo
     try {
         const newContratante = await dbAddContratante(validatedFields.data);
         revalidatePath('/contratantes');
+        revalidatePath('/'); // To refresh dashboard list
         return { success: true, message: 'Contratante criado!', data: newContratante };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao criar contratante.' };
@@ -190,6 +188,7 @@ export async function deleteContratanteAction(id: string): Promise<ActionRespons
         
         await dbDeleteContratante(id);
         revalidatePath('/contratantes');
+        revalidatePath('/');
         return { success: true, message: 'Contratante deletado.' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao deletar contratante.' };
@@ -206,6 +205,7 @@ export async function createArtistaAction(data: z.infer<typeof artistaFormSchema
     try {
         const newArtista = await dbAddArtista(validatedFields.data);
         revalidatePath('/artistas');
+        revalidatePath('/'); // To refresh dashboard list
         return { success: true, message: 'Artista criado!', data: newArtista };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao criar o artista.' };
@@ -239,6 +239,7 @@ export async function deleteArtistaAction(id: string): Promise<ActionResponse> {
         }
         await dbDeleteArtista(id);
         revalidatePath('/artistas');
+        revalidatePath('/');
         return { success: true, message: 'Artista deletado.' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao deletar artista.' };
@@ -262,10 +263,10 @@ export async function updateEventStatusAction(eventId: string, type: 'pagar' | '
         }
         await dbUpdateEvent(eventId, updateData);
         revalidatePath('/');
+        revalidatePath('/agenda');
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');
         revalidatePath(`/events/${eventId}`);
-        revalidatePath('/agenda');
         return { success: true, message: 'Status atualizado!' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao atualizar status.' };
@@ -278,10 +279,10 @@ export async function updateEventCompletionStatusAction(eventId: string): Promis
         if (!event) return { success: false, message: 'Evento não encontrado.' };
         await dbUpdateEvent(eventId, { status: 'realizado' });
         revalidatePath('/');
+        revalidatePath('/agenda');
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');
         revalidatePath(`/events/${eventId}`);
-        revalidatePath('/agenda');
         return { success: true, message: 'Evento marcado como "realizado"!' };
     } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : 'Falha ao atualizar status.' };
@@ -296,6 +297,7 @@ export async function createTransactionAction(data: z.infer<typeof transactionFo
         return { success: false, message: 'Dados inválidos.', errors: validatedFields.error.flatten().fieldErrors };
     }
     try {
+        // Transactions are always considered 'concluido' upon manual creation for simplicity
         const newTransaction = await dbAddTransaction({ ...validatedFields.data, status: 'concluido' });
         revalidatePath('/financeiro');
         revalidatePath('/transacoes');

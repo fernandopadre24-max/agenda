@@ -62,7 +62,7 @@ interface EventFormProps {
     contratantes: Contratante[];
 }
 
-export function EventForm({ event, onSave, onCancel, artistas = [], contratantes = [] }: EventFormProps) {
+export function EventForm({ event, onSave, onCancel, artistas, contratantes }: EventFormProps) {
   const isEditing = !!event;
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -112,13 +112,13 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid h-full grid-rows-[auto,1fr,auto]">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
         <SheetHeader>
             <SheetTitle className="font-headline">{isEditing ? 'Editar Evento' : 'Novo Evento'}</SheetTitle>
         </SheetHeader>
-        <ScrollArea>
+        <div className="flex-1 overflow-y-auto">
+          <ScrollArea className="h-full">
             <div className="space-y-6 p-6">
-                
                 <Card>
                     <CardHeader><CardTitle className="font-headline text-lg">Informações do Evento</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
@@ -131,12 +131,12 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder={contratantes.length === 0 ? "Nenhum contratante" : "Selecione um contratante"} />
+                                    <SelectValue placeholder={!contratantes || contratantes.length === 0 ? "Nenhum contratante" : "Selecione um contratante"} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {contratantes.map((c) => (
-                                    <SelectItem key={c.name} value={c.name}>
+                                  {contratantes?.map((c) => (
+                                    <SelectItem key={c.id} value={c.name}>
                                       {c.name}
                                     </SelectItem>
                                   ))}
@@ -155,12 +155,12 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder={artistas.length === 0 ? "Nenhum artista" : "Selecione um artista"} />
+                                    <SelectValue placeholder={!artistas || artistas.length === 0 ? "Nenhum artista" : "Selecione um artista"} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {artistas.map((a) => (
-                                    <SelectItem key={a.name} value={a.name}>
+                                  {artistas?.map((a) => (
+                                    <SelectItem key={a.id} value={a.name}>
                                       {a.name}
                                     </SelectItem>
                                   ))}
@@ -266,13 +266,13 @@ export function EventForm({ event, onSave, onCancel, artistas = [], contratantes
                         )}
                     </CardContent>
                 </Card>
-                
             </div>
-        </ScrollArea>
+          </ScrollArea>
+        </div>
         <SheetFooter>
           <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
           <Button type="submit" disabled={isPending} variant="default">
-            {isPending ? <Loader2 className="animate-spin" /> : 'Salvar Evento'}
+            {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Salvar Evento')}
           </Button>
         </SheetFooter>
       </form>
