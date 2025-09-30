@@ -29,7 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
-import { SheetHeader, SheetTitle } from './ui/sheet';
+import { SheetHeader, SheetTitle, SheetFooter } from './ui/sheet';
 
 const eventFormSchema = z.object({
   contratante: z.string().min(1, 'O nome do contratante é obrigatório.'),
@@ -152,12 +152,12 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-rows-[auto,1fr,auto] h-full">
-        <SheetHeader className="p-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid h-full grid-rows-[auto,1fr,auto]">
+        <SheetHeader>
             <SheetTitle className="font-headline">{isEditing ? 'Editar Evento' : 'Novo Evento'}</SheetTitle>
         </SheetHeader>
         <ScrollArea>
-            <div className="space-y-6 px-6 pr-7">
+            <div className="space-y-6 p-6">
                 
                 <Card>
                     <CardHeader><CardTitle className="font-headline text-lg">Informações do Evento</CardTitle></CardHeader>
@@ -312,12 +312,12 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
                 
             </div>
         </ScrollArea>
-        <div className="p-4 border-t flex justify-end gap-2 bg-background">
+        <SheetFooter>
           <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
           <Button type="submit" disabled={isPending || isLoading}>
             {isPending ? <Loader2 className="animate-spin" /> : 'Salvar Evento'}
           </Button>
-        </div>
+        </SheetFooter>
       </form>
     </Form>
   );

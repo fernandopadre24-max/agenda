@@ -32,7 +32,6 @@ export function EventCard({ event }: { event: Event }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
-  const [sheetKey, setSheetKey] = useState(Date.now());
   
   useEffect(() => {
     setIsMounted(true);
@@ -83,7 +82,6 @@ export function EventCard({ event }: { event: Event }) {
   }
   
   const handleOpenEdit = () => {
-    setSheetKey(Date.now()); // Garante que o form sempre tenha dados novos ao abrir
     setIsEditSheetOpen(true);
   }
 
@@ -222,8 +220,8 @@ export function EventCard({ event }: { event: Event }) {
                 </div>
             </div>
         </Card>
-        <Sheet key={sheetKey} open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-            <SheetContent className="p-0">
+        <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+            <SheetContent>
                 <EventForm
                     event={event}
                     onSave={handleSaveSuccess}

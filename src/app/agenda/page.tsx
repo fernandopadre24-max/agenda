@@ -3,7 +3,6 @@
 import { getArtistas, getContratantes, getEvents } from '@/lib/data';
 import { PageHeader } from '@/components/PageHeader';
 import { AgendaClientPage } from '@/components/AgendaClientPage';
-import { Event } from '@/lib/types';
 
 export default async function AgendaPage() {
   const [events, artistas, contratantes] = await Promise.all([
@@ -11,13 +10,6 @@ export default async function AgendaPage() {
     getArtistas(),
     getContratantes(),
   ]);
-
-  const pastEvents = events.map(
-    (e: Event) =>
-      `Evento para ${e.contratante} com ${e.artista} em ${new Date(
-        e.date
-      ).toLocaleDateString()} às ${e.hora}.`
-  );
 
   return (
     <div className="flex flex-col min-h-full bg-background">
@@ -27,7 +19,6 @@ export default async function AgendaPage() {
           initialEvents={events}
           initialArtistas={artistas}
           initialContratantes={contratantes}
-          pastEvents={pastEvents}
         />
       </main>
     </div>

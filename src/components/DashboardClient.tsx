@@ -38,7 +38,7 @@ export function DashboardClient({
       />
       
       <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
-        <SheetContent className="p-0">
+        <SheetContent>
           <EventForm
               onSave={handleSaveSuccess}
               onCancel={() => setIsCreateSheetOpen(false)}

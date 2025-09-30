@@ -93,7 +93,7 @@ export function EventActions({
         </div>
 
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-            <SheetContent className="p-0">
+            <SheetContent>
                 <EventForm
                     event={event}
                     onSave={handleSaveSuccess}

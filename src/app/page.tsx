@@ -6,13 +6,6 @@ import { DashboardClient } from '@/components/DashboardClient';
 export default async function HomePage() {
   const events = await getEvents();
   
-  const pastEventsStrings = events.map(
-    (e) =>
-      `Evento para ${e.contratante} com ${e.artista} em ${new Date(
-        e.date
-      ).toLocaleDateString()} às ${e.hora}.`
-  ) ?? [];
-
   return (
     <div className="flex flex-col flex-1">
       <AppHeader />

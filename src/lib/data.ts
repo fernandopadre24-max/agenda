@@ -47,23 +47,24 @@ export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id
     
     // Firestore's FieldValue.delete() is not applicable for in-memory, so we handle it manually.
     const updateData = { ...eventData };
+    
+    const newEventData = {...existingEvent, ...updateData};
+
     if ('receber' in updateData && updateData.receber === undefined) {
-      delete existingEvent.receber;
+      delete newEventData.receber;
     }
     if ('pagar' in updateData && updateData.pagar === undefined) {
-      delete existingEvent.pagar;
+      delete newEventData.pagar;
     }
-    
-    const updatedEvent = { ...existingEvent, ...updateData };
     
     // Ensure date is a Date object
-    if (updatedEvent.date) {
-        updatedEvent.date = updatedEvent.date instanceof Timestamp ? updatedEvent.date.toDate() : new Date(updatedEvent.date);
+    if (newEventData.date) {
+        newEventData.date = newEventData.date instanceof Timestamp ? newEventData.date.toDate() : new Date(newEventData.date);
     }
     
-    memoryDB.events[eventIndex] = updatedEvent;
+    memoryDB.events[eventIndex] = newEventData;
     
-    return updatedEvent;
+    return newEventData;
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {

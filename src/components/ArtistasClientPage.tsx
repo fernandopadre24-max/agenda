@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Mic, Mail, Phone, Music, Loader2 } from 'lucide-react';
 import { ArtistaActions } from '@/components/ArtistaActions';
 import { type Artista } from '@/lib/types';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
+import { Sheet, SheetContent } from './ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { createArtistaAction, updateArtistaAction } from '@/lib/actions';
 import { useForm } from 'react-hook-form';
@@ -15,6 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { useRouter } from 'next/navigation';
+import { SheetHeader, SheetTitle, SheetFooter } from './ui/sheet';
 
 const artistaFormSchema = z.object({
     name: z.string().min(1, 'O nome é obrigatório.'),
@@ -72,12 +73,12 @@ function ArtistaForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-rows-[auto,1fr,auto] h-full">
-        <SheetHeader className="p-6">
-            <SheetTitle className="font-headline">{isEditing ? 'Editar Artista' : 'Novo Artista'}</SheetTitle>
+       <form onSubmit={form.handleSubmit(onSubmit)} className="grid h-full grid-rows-[auto,1fr,auto]">
+        <SheetHeader>
+          <SheetTitle className="font-headline">{isEditing ? 'Editar Artista' : 'Novo Artista'}</SheetTitle>
         </SheetHeader>
         <ScrollArea>
-            <div className="space-y-4 px-6 pr-7">
+            <div className="space-y-4 px-6 py-4">
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
@@ -92,12 +93,12 @@ function ArtistaForm({
               )}/>
             </div>
         </ScrollArea>
-        <div className="p-4 border-t flex justify-end gap-2 bg-background">
+        <SheetFooter>
            <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
            <Button type="submit" disabled={isPending}>
             {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Artista')}
           </Button>
-        </div>
+        </SheetFooter>
       </form>
     </Form>
   );
@@ -111,7 +112,6 @@ export function ArtistasClientPage({
 }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingArtista, setEditingArtista] = useState<Artista | undefined>(undefined);
-  const router = useRouter();
 
   const handleSaveSuccess = () => {
     setIsSheetOpen(false);
@@ -190,7 +190,7 @@ export function ArtistasClientPage({
         </div>
       )}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent className="p-0">
+          <SheetContent>
               <ArtistaForm 
                   onSave={handleSaveSuccess} 
                   onCancel={handleCloseSheet} 
