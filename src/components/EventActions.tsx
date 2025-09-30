@@ -18,7 +18,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent } from './ui/sheet';
 import { EventForm } from './EventForm';
-import type { Event } from '@/lib/types';
+import type { Event, Artista, Contratante } from '@/lib/types';
+import { getArtistas, getContratantes } from '@/lib/data';
 
 
 export function EventActions({ 
@@ -30,6 +31,9 @@ export function EventActions({
   const router = useRouter();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
+
+  const [artistas, setArtistas] = useState<Artista[]>([]);
+  const [contratantes, setContratantes] = useState<Contratante[]>([]);
 
   const handleReminder = () => {
     toast({
@@ -58,10 +62,20 @@ export function EventActions({
     router.refresh();
   }
 
+  const handleOpenEdit = async () => {
+    const [fetchedArtistas, fetchedContratantes] = await Promise.all([
+      getArtistas(),
+      getContratantes()
+    ]);
+    setArtistas(fetchedArtistas);
+    setContratantes(fetchedContratantes);
+    setIsSheetOpen(true);
+  }
+
   return (
     <>
         <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setIsSheetOpen(true)}>
+            <Button variant="outline" onClick={handleOpenEdit}>
                 <Edit className="mr-2 h-4 w-4" /> Editar
             </Button>
             <Button variant="outline" onClick={handleReminder}>
@@ -98,6 +112,8 @@ export function EventActions({
                     event={event}
                     onSave={handleSaveSuccess}
                     onCancel={() => setIsSheetOpen(false)}
+                    artistas={artistas}
+                    contratantes={contratantes}
                 />
             </SheetContent>
       </Sheet>

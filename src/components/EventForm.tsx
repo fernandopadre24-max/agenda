@@ -22,7 +22,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { createEventAction, updateEventAction } from '@/lib/actions';
-import { getArtistas, getContratantes } from '@/lib/data';
 import type { Event, Contratante, Artista, ActionResponse } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -59,40 +58,14 @@ interface EventFormProps {
     event?: Event;
     onSave: () => void;
     onCancel: () => void;
+    artistas: Artista[];
+    contratantes: Contratante[];
 }
 
-export function EventForm({ event, onSave, onCancel }: EventFormProps) {
+export function EventForm({ event, onSave, onCancel, artistas, contratantes }: EventFormProps) {
   const isEditing = !!event;
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-
-  const [artistas, setArtistas] = useState<Artista[]>([]);
-  const [contratantes, setContratantes] = useState<Contratante[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
-      try {
-        const [fetchedArtistas, fetchedContratantes] = await Promise.all([
-          getArtistas(),
-          getContratantes(),
-        ]);
-        setArtistas(fetchedArtistas);
-        setContratantes(fetchedContratantes);
-      } catch (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Erro ao carregar dados.',
-          description: 'Não foi possível buscar artistas e contratantes.',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, [toast]);
-
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -168,10 +141,10 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Contratante</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
+                              <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder={isLoading ? "Carregando..." : "Selecione um contratante"} />
+                                    <SelectValue placeholder={contratantes.length === 0 ? "Nenhum contratante cadastrado" : "Selecione um contratante"} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -192,10 +165,10 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
                           render={({ field }) => (
                              <FormItem>
                               <FormLabel>Artista / Serviço</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
+                              <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder={isLoading ? "Carregando..." : "Selecione um artista"} />
+                                    <SelectValue placeholder={artistas.length === 0 ? "Nenhum artista cadastrado" : "Selecione um artista"} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -314,7 +287,7 @@ export function EventForm({ event, onSave, onCancel }: EventFormProps) {
         </ScrollArea>
         <SheetFooter>
           <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
-          <Button type="submit" disabled={isPending || isLoading}>
+          <Button type="submit" disabled={isPending}>
             {isPending ? <Loader2 className="animate-spin" /> : 'Salvar Evento'}
           </Button>
         </SheetFooter>

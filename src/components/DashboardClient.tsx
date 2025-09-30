@@ -6,12 +6,16 @@ import { Plus } from 'lucide-react';
 import { EventDashboard } from './EventDashboard';
 import { Sheet, SheetContent } from './ui/sheet';
 import { EventForm } from './EventForm';
-import { type Event } from '@/lib/types';
+import { type Event, type Artista, type Contratante } from '@/lib/types';
 
 export function DashboardClient({
   initialEvents,
+  artistas,
+  contratantes,
 }: {
   initialEvents: Event[];
+  artistas: Artista[];
+  contratantes: Contratante[];
 }) {
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
   const router = useRouter();
@@ -42,6 +46,8 @@ export function DashboardClient({
           <EventForm
               onSave={handleSaveSuccess}
               onCancel={() => setIsCreateSheetOpen(false)}
+              artistas={artistas}
+              contratantes={contratantes}
             />
         </SheetContent>
       </Sheet>

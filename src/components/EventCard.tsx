@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { type Event } from '@/lib/types';
+import { type Event, type Artista, type Contratante } from '@/lib/types';
 import { Briefcase, ArrowUp, ArrowDown, Edit, Trash2, Check, Mic, DollarSign, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent } from './ui/sheet';
 import { EventForm } from './EventForm';
+import { getArtistas, getContratantes } from '@/lib/data';
 
 
 export function EventCard({ event }: { event: Event }) {
@@ -32,6 +33,8 @@ export function EventCard({ event }: { event: Event }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [artistas, setArtistas] = useState<Artista[]>([]);
+  const [contratantes, setContratantes] = useState<Contratante[]>([]);
   
   useEffect(() => {
     setIsMounted(true);
@@ -81,7 +84,13 @@ export function EventCard({ event }: { event: Event }) {
     router.refresh();
   }
   
-  const handleOpenEdit = () => {
+  const handleOpenEdit = async () => {
+    const [fetchedArtistas, fetchedContratantes] = await Promise.all([
+      getArtistas(),
+      getContratantes()
+    ]);
+    setArtistas(fetchedArtistas);
+    setContratantes(fetchedContratantes);
     setIsEditSheetOpen(true);
   }
 
@@ -226,6 +235,8 @@ export function EventCard({ event }: { event: Event }) {
                     event={event}
                     onSave={handleSaveSuccess}
                     onCancel={() => setIsEditSheetOpen(false)}
+                    artistas={artistas}
+                    contratantes={contratantes}
                 />
             </SheetContent>
         </Sheet>
