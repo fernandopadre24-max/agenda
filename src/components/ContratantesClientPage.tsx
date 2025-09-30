@@ -131,9 +131,11 @@ export function ContratantesClientPage({ initialContratantes }: {
     setIsSheetOpen(true);
   }
   
-  const handleCloseSheet = () => {
-    setIsSheetOpen(false);
-    setEditingContratante(undefined);
+  const handleCloseSheet = (open: boolean) => {
+    if (!open) {
+        setEditingContratante(undefined);
+    }
+    setIsSheetOpen(open);
   }
 
   return (
@@ -201,11 +203,11 @@ export function ContratantesClientPage({ initialContratantes }: {
           </div>
         )}
         
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={handleCloseSheet}>
           <SheetContent>
             <ContratanteForm 
                 onSave={handleSaveSuccess} 
-                onCancel={handleCloseSheet}
+                onCancel={() => handleCloseSheet(false)}
                 initialData={editingContratante}
             />
           </SheetContent>
