@@ -6,6 +6,7 @@ import { Search, Loader2, ListFilter, Calendar as CalendarIcon, X } from 'lucide
 import { smartSearch } from '@/ai/flows/smart-search';
 import { EventList } from './EventList';
 import type { Event, Artista, Contratante } from '@/lib/types';
+import { getArtistas, getContratantes } from '@/lib/data';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,12 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 export function EventDashboard({ 
   initialEvents,
-  initialArtistas,
-  initialContratantes
 }: { 
   initialEvents: Event[],
-  initialArtistas: Artista[],
-  initialContratantes: Contratante[]
 }) {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -38,9 +35,20 @@ export function EventDashboard({
   const [selectedArtista, setSelectedArtista] = useState('all');
   const [selectedContratante, setSelectedContratante] = useState('all');
 
+  const [artistas, setArtistas] = useState<Artista[]>([]);
+  const [contratantes, setContratantes] = useState<Contratante[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
+    async function fetchData() {
+        const [fetchedArtistas, fetchedContratantes] = await Promise.all([
+            getArtistas(),
+            getContratantes()
+        ]);
+        setArtistas(fetchedArtistas);
+        setContratantes(fetchedContratantes);
+    }
+    fetchData();
   }, []);
 
   const handleSearch = async () => {
@@ -153,7 +161,7 @@ export function EventDashboard({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">Todos os Artistas</SelectItem>
-                        {initialArtistas.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
+                        {artistas.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Select value={selectedContratante} onValueChange={setSelectedContratante}>
@@ -162,7 +170,7 @@ export function EventDashboard({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">Todos os Contratantes</SelectItem>
-                        {initialContratantes.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        {contratantes.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
