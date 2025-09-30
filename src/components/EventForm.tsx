@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useTransition, useEffect } from 'react';
+import { useTransition } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -62,7 +62,7 @@ interface EventFormProps {
     contratantes: Contratante[];
 }
 
-export function EventForm({ event, onSave, onCancel, artistas, contratantes }: EventFormProps) {
+export function EventForm({ event, onSave, onCancel, artistas = [], contratantes = [] }: EventFormProps) {
   const isEditing = !!event;
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -85,12 +85,6 @@ export function EventForm({ event, onSave, onCancel, artistas, contratantes }: E
   });
 
   const financeType = form.watch('financeType');
-  
-  useEffect(() => {
-    if(financeType !== 'nenhum' && form.getValues('status') === undefined) {
-      form.setValue('status', 'pendente');
-    }
-  }, [financeType, form]);
   
   const onSubmit = async (data: EventFormValues) => {
     startTransition(async () => {
@@ -137,12 +131,12 @@ export function EventForm({ event, onSave, onCancel, artistas, contratantes }: E
                               <Select onValueChange={field.onChange} value={field.value} >
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder={contratantes.length === 0 ? "Nenhum contratante cadastrado" : "Selecione um contratante"} />
+                                    <SelectValue placeholder={contratantes.length === 0 ? "Nenhum contratante" : "Selecione um contratante"} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
                                   {contratantes.map((c) => (
-                                    <SelectItem key={c.id} value={c.name}>
+                                    <SelectItem key={c.name} value={c.name}>
                                       {c.name}
                                     </SelectItem>
                                   ))}
@@ -161,12 +155,12 @@ export function EventForm({ event, onSave, onCancel, artistas, contratantes }: E
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder={artistas.length === 0 ? "Nenhum artista cadastrado" : "Selecione um artista"} />
+                                    <SelectValue placeholder={artistas.length === 0 ? "Nenhum artista" : "Selecione um artista"} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
                                   {artistas.map((a) => (
-                                    <SelectItem key={a.id} value={a.name}>
+                                    <SelectItem key={a.name} value={a.name}>
                                       {a.name}
                                     </SelectItem>
                                   ))}
