@@ -72,22 +72,24 @@ function ArtistaForm({
         <SheetHeader>
           <SheetTitle className="font-headline">{isEditing ? 'Editar Artista' : 'Novo Artista'}</SheetTitle>
         </SheetHeader>
-        <ScrollArea className="flex-1 p-6">
-          <div className="space-y-4">
-            <FormField control={form.control} name="name" render={({ field }) => (
-              <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <FormField control={form.control} name="serviceType" render={({ field }) => (
-              <FormItem><FormLabel>Tipo de Serviço</FormLabel><FormControl><Input placeholder="Ex: Banda, DJ, Músico" {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <FormField control={form.control} name="email" render={({ field }) => (
-              <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <FormField control={form.control} name="phone" render={({ field }) => (
-              <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-          </div>
-        </ScrollArea>
+        <div className="p-6 flex-1">
+          <ScrollArea className="h-full">
+            <div className="space-y-4">
+              <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="serviceType" render={({ field }) => (
+                <FormItem><FormLabel>Tipo de Serviço</FormLabel><FormControl><Input placeholder="Ex: Banda, DJ, Músico" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="email" render={({ field }) => (
+                <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="phone" render={({ field }) => (
+                <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+            </div>
+          </ScrollArea>
+        </div>
         <SheetFooter>
            <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>Cancelar</Button>
            <Button type="submit" disabled={isPending} variant="default">

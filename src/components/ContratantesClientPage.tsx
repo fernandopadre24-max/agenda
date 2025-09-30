@@ -76,25 +76,27 @@ function ContratanteForm({
          <SheetHeader>
             <SheetTitle className="font-headline">{isEditing ? 'Editar Contratante' : 'Novo Contratante'}</SheetTitle>
         </SheetHeader>
-        <ScrollArea className="flex-1 p-6">
-          <div className="space-y-4">
-              <FormField control={form.control} name="name" render={({ field }) => (
-                  <FormItem><FormLabel>Nome do Contratante</FormLabel><FormControl><Input placeholder="Nome da empresa, evento ou pessoa" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-              <FormField control={form.control} name="responsibleName" render={({ field }) => (
-                  <FormItem><FormLabel>Nome do Responsável</FormLabel><FormControl><Input placeholder="Nome de quem te contratou" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-                <FormField control={form.control} name="category" render={({ field }) => (
-                  <FormItem><FormLabel>Categoria</FormLabel><FormControl><Input placeholder="Ex: Casamento, Corporativo" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-              <FormField control={form.control} name="email" render={({ field }) => (
-                  <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-              <FormField control={form.control} name="phone" render={({ field }) => (
-                  <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-          </div>
-        </ScrollArea>
+        <div className="p-6 flex-1">
+          <ScrollArea className="h-full">
+            <div className="space-y-4">
+                <FormField control={form.control} name="name" render={({ field }) => (
+                    <FormItem><FormLabel>Nome do Contratante</FormLabel><FormControl><Input placeholder="Nome da empresa, evento ou pessoa" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name="responsibleName" render={({ field }) => (
+                    <FormItem><FormLabel>Nome do Responsável</FormLabel><FormControl><Input placeholder="Nome de quem te contratou" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                  <FormField control={form.control} name="category" render={({ field }) => (
+                    <FormItem><FormLabel>Categoria</FormLabel><FormControl><Input placeholder="Ex: Casamento, Corporativo" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name="email" render={({ field }) => (
+                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name="phone" render={({ field }) => (
+                    <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+            </div>
+          </ScrollArea>
+        </div>
         <SheetFooter>
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>Cancelar</Button>
             <Button type="submit" disabled={isPending} variant="default">
