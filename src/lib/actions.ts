@@ -67,8 +67,8 @@ const transactionFormSchema = z.object({
 });
 
 
-const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Partial<Omit<Event, 'id'>> => {
-    const eventUpdate: Partial<Omit<Event, 'id'>> = {
+const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Omit<Event, 'id'> => {
+    const eventData: Omit<Event, 'id'> = {
         date: data.date,
         hora: data.hora,
         contratante: data.contratante,
@@ -77,18 +77,18 @@ const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Partial<Om
         saida: data.saida,
         cidade: data.cidade,
         local: data.local,
-        status: 'pendente',
+        status: 'pendente', // Default status for a new event
         pagar: undefined,
         receber: undefined,
     };
 
     if (data.financeType === 'receber' && data.valor && data.status) {
-        eventUpdate.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
+        eventData.receber = { valor: data.valor, status: data.status === 'concluido' ? 'recebido' : 'pendente' };
     } else if (data.financeType === 'pagar' && data.valor && data.status) {
-        eventUpdate.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
+        eventData.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
     }
 
-    return eventUpdate;
+    return eventData;
 }
 
 
@@ -99,7 +99,7 @@ export async function createEventAction(data: z.infer<typeof eventFormSchema>): 
     return { success: false, message: 'Dados inválidos.', errors: validatedFields.error.flatten().fieldErrors };
   }
   try {
-    const newEventData = buildEventDataObject(validatedFields.data) as Omit<Event, 'id'>;
+    const newEventData = buildEventDataObject(validatedFields.data);
     await dbAddEvent(newEventData);
     revalidatePath('/');
     revalidatePath('/agenda');
@@ -107,7 +107,9 @@ export async function createEventAction(data: z.infer<typeof eventFormSchema>): 
     revalidatePath('/transacoes');
     return { success: true, message: 'Evento criado!' };
   } catch (e) {
-    return { success: false, message: e instanceof Error ? e.message : 'Falha ao criar evento.' };
+    const errorMessage = e instanceof Error ? e.message : 'Falha ao criar evento.';
+    console.error('createEventAction Error:', errorMessage, e);
+    return { success: false, message: errorMessage };
   }
 }
 

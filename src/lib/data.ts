@@ -96,22 +96,28 @@ export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id
 
     const existingEvent = db.events[eventIndex];
     
-    const updatedEventData: Event = { ...existingEvent, ...eventData };
+    // Create the updated event object by merging
+    const updatedEvent: Event = { 
+        ...existingEvent, 
+        ...eventData 
+    };
 
+    // Ensure date is a Date object if provided
     if (eventData.date) {
-        updatedEventData.date = new Date(eventData.date);
+        updatedEvent.date = new Date(eventData.date);
     }
     
+    // Explicitly handle removal of financial info
     if (Object.prototype.hasOwnProperty.call(eventData, 'pagar') && eventData.pagar === undefined) {
-      delete (updatedEventData as Partial<Event>).pagar;
+      delete updatedEvent.pagar;
     }
     if (Object.prototype.hasOwnProperty.call(eventData, 'receber') && eventData.receber === undefined) {
-      delete (updatedEventData as Partial<Event>).receber;
+      delete updatedEvent.receber;
     }
     
-    db.events[eventIndex] = updatedEventData;
+    db.events[eventIndex] = updatedEvent;
     await writeDB(db);
-    return updatedEventData;
+    return updatedEvent;
 }
 
 

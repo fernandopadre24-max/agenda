@@ -117,10 +117,7 @@ export function EventForm({
       local: event?.local ?? '',
       financeType: event?.receber ? 'receber' : event?.pagar ? 'pagar' : 'nenhum',
       valor: event?.receber?.valor ?? event?.pagar?.valor,
-      status:
-        event?.receber?.status === 'recebido' || event?.pagar?.status === 'pago'
-          ? 'concluido'
-          : 'pendente',
+      status: event?.receber?.status === 'recebido' || event?.pagar?.status === 'pago' ? 'concluido' : 'pendente'
     },
   });
 
