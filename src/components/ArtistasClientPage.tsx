@@ -5,15 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Plus, Mic, Mail, Phone, Music, Loader2 } from 'lucide-react';
 import { ArtistaActions } from '@/components/ArtistaActions';
 import { type Artista } from '@/lib/types';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from './ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { createArtistaAction, updateArtistaAction } from '@/lib/actions';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
-import { Input } from './ui/input';
-import { ScrollArea } from './ui/scroll-area';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useRouter } from 'next/navigation';
 
 const artistaFormSchema = z.object({
@@ -72,8 +72,8 @@ function ArtistaForm({
         <SheetHeader>
           <SheetTitle className="font-headline">{isEditing ? 'Editar Artista' : 'Novo Artista'}</SheetTitle>
         </SheetHeader>
-        <ScrollArea className="flex-1">
-          <div className="space-y-4 p-6">
+        <ScrollArea className="flex-1 p-6">
+          <div className="space-y-4">
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do artista ou banda" {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
@@ -89,7 +89,7 @@ function ArtistaForm({
           </div>
         </ScrollArea>
         <SheetFooter>
-           <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
+           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>Cancelar</Button>
            <Button type="submit" disabled={isPending} variant="default">
             {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Artista')}
           </Button>
@@ -124,10 +124,10 @@ export function ArtistasClientPage({
   }
 
   const handleSheetOpenChange = (open: boolean) => {
+    setIsSheetOpen(open);
     if (!open) {
       setEditingArtista(undefined);
     }
-    setIsSheetOpen(open);
   }
   
   return (

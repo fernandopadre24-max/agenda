@@ -161,8 +161,8 @@ export function EventForm({
             {isEditing ? 'Editar Evento' : 'Novo Evento'}
           </SheetTitle>
         </SheetHeader>
-        <ScrollArea className="flex-1">
-          <div className="space-y-6 p-6">
+        <ScrollArea className="flex-1 p-6">
+          <div className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="font-headline text-lg">
@@ -183,7 +183,7 @@ export function EventForm({
                         >
                           <FormControl>
                             <SelectTrigger>
-                               <SelectValue placeholder={!contratantes || contratantes.length === 0 ? "Nenhum contratante cadastrado" : "Selecione um contratante"} />
+                               <SelectValue placeholder={!contratantes || contratantes.length === 0 ? "Nenhum contratante" : "Selecione um contratante"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -211,7 +211,7 @@ export function EventForm({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={!artistas || artistas.length === 0 ? "Nenhum artista cadastrado" : "Selecione um artista"} />
+                              <SelectValue placeholder={!artistas || artistas.length === 0 ? "Nenhum artista" : "Selecione um artista"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -459,6 +459,7 @@ export function EventForm({
             type="button"
             variant="outline"
             onClick={onCancel}
+            disabled={isPending}
           >
             Cancelar
           </Button>

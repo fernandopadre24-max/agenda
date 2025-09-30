@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, User, Mail, Phone, Tag, Briefcase, Loader2, Users } from 'lucide-react';
 import { ContratanteActions } from '@/components/ContratanteActions';
 import { type Contratante } from '@/lib/types';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from './ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { createContratanteAction, updateContratanteAction } from '@/lib/actions';
 import { Badge } from './ui/badge';
@@ -76,8 +76,8 @@ function ContratanteForm({
          <SheetHeader>
             <SheetTitle className="font-headline">{isEditing ? 'Editar Contratante' : 'Novo Contratante'}</SheetTitle>
         </SheetHeader>
-        <ScrollArea className="flex-1">
-          <div className="space-y-4 p-6">
+        <ScrollArea className="flex-1 p-6">
+          <div className="space-y-4">
               <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem><FormLabel>Nome do Contratante</FormLabel><FormControl><Input placeholder="Nome da empresa, evento ou pessoa" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
@@ -96,7 +96,7 @@ function ContratanteForm({
           </div>
         </ScrollArea>
         <SheetFooter>
-            <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>Cancelar</Button>
             <Button type="submit" disabled={isPending} variant="default">
                 {isPending ? <Loader2 className="animate-spin" /> : (isEditing ? 'Salvar Alterações' : 'Criar Contratante')}
             </Button>
@@ -128,10 +128,10 @@ export function ContratantesClientPage({ initialContratantes }: {
   }
 
   const handleSheetOpenChange = (open: boolean) => {
+    setIsSheetOpen(open);
     if (!open) {
       setEditingContratante(undefined);
     }
-    setIsSheetOpen(open);
   }
 
   return (
