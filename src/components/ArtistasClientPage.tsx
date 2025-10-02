@@ -2,7 +2,7 @@
 import { useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Mic, Mail, Phone, Music, Loader2 } from 'lucide-react';
+import { Plus, Mic, Mail, Phone, Music, Loader2, Users } from 'lucide-react';
 import { ArtistaActions } from '@/components/ArtistaActions';
 import { type Artista } from '@/lib/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
@@ -103,7 +103,7 @@ function ArtistaForm({
 
 
 export function ArtistasClientPage({ 
-    initialArtistas,
+    initialArtistas = [],
  }: { 
     initialArtistas: Artista[];
 }) {
@@ -181,7 +181,7 @@ export function ArtistasClientPage({
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-border rounded-xl">
-          <Mic className="mx-auto h-12 w-12" />
+          <Users className="mx-auto h-12 w-12" />
           <p className="mt-4">Nenhum artista cadastrado.</p>
            <Button onClick={handleAddNew} className="mt-4" variant="default">
               <Plus className="mr-2 h-4 w-4" /> Cadastrar Artista
