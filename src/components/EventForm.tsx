@@ -39,6 +39,8 @@ import {
 } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
 import { SheetHeader, SheetTitle, SheetFooter } from './ui/sheet';
+import { Textarea } from './ui/textarea';
+import { getEventSuggestions } from '@/ai/flows/intelligent-event-suggestions';
 
 const eventFormSchema = z
   .object({
@@ -103,6 +105,8 @@ export function EventForm({
   const isEditing = !!event;
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const [isSuggestionLoading, startSuggestionTransition] = useTransition();
+  const [suggestionInput, setSuggestionInput] = useState('');
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -129,6 +133,58 @@ export function EventForm({
       form.setValue('entrada', hora, { shouldValidate: true });
     }
   }, [hora, isEditing, form]);
+
+
+  const handleSuggestion = () => {
+    if (!suggestionInput) return;
+    startSuggestionTransition(async () => {
+      try {
+        const result = await getEventSuggestions({
+          partialEvent: suggestionInput,
+          pastEvents: [], // TODO: Populate with past events for better context
+        });
+
+        const suggestion = result.suggestions[0];
+        if (suggestion) {
+          const suggestionMap = new Map<string, string>();
+          suggestion.split(',').forEach(part => {
+            const [key, value] = part.split(':').map(s => s.trim());
+            if (key && value) {
+              suggestionMap.set(key, value);
+            }
+          });
+          
+          if (suggestionMap.has('artista')) form.setValue('artista', suggestionMap.get('artista')!);
+          if (suggestionMap.has('contratante')) form.setValue('contratante', suggestionMap.get('contratante')!);
+          if (suggestionMap.has('cidade')) form.setValue('cidade', suggestionMap.get('cidade')!);
+          if (suggestionMap.has('local')) form.setValue('local', suggestionMap.get('local')!);
+          if (suggestionMap.has('hora')) form.setValue('hora', suggestionMap.get('hora')!);
+          if (suggestionMap.has('data')) {
+            const [day, month, year] = suggestionMap.get('data')!.split('/');
+            if (day && month && year) {
+              form.setValue('date', new Date(`${year}-${month}-${day}T12:00:00Z`));
+            }
+          }
+          if (suggestionMap.has('valor')) {
+              const valor = parseFloat(suggestionMap.get('valor')!);
+              if (!isNaN(valor)) {
+                form.setValue('valor', valor);
+                if (valor > 0 && form.getValues('financeType') === 'nenhum') {
+                  form.setValue('financeType', 'receber');
+                }
+              }
+          }
+
+          toast({ title: "Sugestões aplicadas!", description: "Verifique os campos preenchidos." });
+        } else {
+           toast({ variant: 'destructive', title: "Não foi possível extrair informações.", description: "Tente descrever o evento com mais detalhes."});
+        }
+      } catch (error) {
+        console.error(error);
+        toast({ variant: 'destructive', title: "Erro ao buscar sugestões." });
+      }
+    });
+  }
 
 
   const onSubmit = async (data: EventFormValues) => {
@@ -169,6 +225,29 @@ export function EventForm({
         <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full p-6">
           <div className="space-y-6">
+              {!isEditing && (
+                 <Card>
+                  <CardHeader>
+                    <CardTitle className="font-headline text-lg">
+                      Preenchimento Inteligente (Beta)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Descreva o evento e deixe a IA preencher os campos para você.
+                      </p>
+                      <Textarea
+                        placeholder='Ex: Casamento Joana & Miguel com a Banda Sinfonia em São Paulo no Buffet Felicidade dia 15/12/2024 às 22:00, cachê de 3500'
+                        value={suggestionInput}
+                        onChange={(e) => setSuggestionInput(e.target.value)}
+                      />
+                       <Button type="button" variant="outline" size="sm" onClick={handleSuggestion} disabled={isSuggestionLoading}>
+                        {isSuggestionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Preencher com IA
+                      </Button>
+                  </CardContent>
+                </Card>
+              )}
               <Card>
                 <CardHeader>
                   <CardTitle className="font-headline text-lg">
@@ -470,7 +549,7 @@ export function EventForm({
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={isPending} variant="default">
+          <Button type="submit" disabled={isPending || isSuggestionLoading} variant="default">
             {isPending ? (
               <Loader2 className="animate-spin" />
             ) : isEditing ? (

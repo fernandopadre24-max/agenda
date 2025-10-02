@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useTransition } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Loader2, ListFilter, Calendar as CalendarIcon, X } from 'lucide-react';
@@ -28,7 +28,7 @@ export function EventDashboard({
   contratantes: Contratante[];
 }) {
   const [query, setQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, startSearchTransition] = useTransition();
   const [events, setEvents] = useState(initialEvents);
   const [aiResponse, setAiResponse] = useState('');
   const [filter, setFilter] = useState('upcoming');
@@ -43,36 +43,35 @@ export function EventDashboard({
     setEvents(initialEvents);
   }, [initialEvents]);
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     if (!query) {
       setEvents(initialEvents);
       setAiResponse('');
       return;
     }
-    setIsLoading(true);
-    setAiResponse('');
-    try {
-      const result = await smartSearch({ query });
-      if (result.eventDescription) {
-        setAiResponse(result.eventDescription);
+    startSearchTransition(async () => {
+      setAiResponse('');
+      try {
+        const result = await smartSearch({ query });
+        if (result.eventDescription) {
+          setAiResponse(result.eventDescription);
+        }
+
+        const filtered = initialEvents.filter(event =>
+          result.relevantEvents.some(
+            relevant =>
+              event.artista.toLowerCase().includes(relevant.toLowerCase()) ||
+              event.contratante.toLowerCase().includes(relevant.toLowerCase())
+          )
+        );
+
+        setEvents(filtered.length > 0 ? filtered : []);
+      } catch (error) {
+        console.error('Search failed:', error);
+        setAiResponse('Ocorreu um erro na busca. Tente novamente.');
+        setEvents([]);
       }
-
-      const filtered = initialEvents.filter(event =>
-        result.relevantEvents.some(
-          relevant =>
-            event.artista.toLowerCase().includes(relevant.toLowerCase()) ||
-            event.contratante.toLowerCase().includes(relevant.toLowerCase())
-        )
-      );
-
-      setEvents(filtered.length > 0 ? filtered : []);
-    } catch (error) {
-      console.error('Search failed:', error);
-      setAiResponse('Ocorreu um erro na busca. Tente novamente.');
-      setEvents([]);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   const displayedEvents = useMemo(() => {
@@ -129,6 +128,8 @@ export function EventDashboard({
     setAiResponse('');
   };
 
+  const hasActiveFilters = selectedDate || selectedArtista !== 'all' || selectedContratante !== 'all';
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -141,8 +142,8 @@ export function EventDashboard({
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
             className="bg-card flex-1"
           />
-          <Button onClick={handleSearch} disabled={isLoading} variant="default">
-            {isLoading ? <Loader2 className="animate-spin" /> : <Search />}
+          <Button onClick={handleSearch} disabled={isSearching} variant="default">
+            {isSearching ? <Loader2 className="animate-spin" /> : <Search />}
             <span className="sr-only">Buscar</span>
           </Button>
         </div>
@@ -237,9 +238,7 @@ export function EventDashboard({
         </Card>
       )}
 
-      {(selectedDate ||
-        selectedArtista !== 'all' ||
-        selectedContratante !== 'all') && (
+      {hasActiveFilters && (
         <div className="flex justify-start">
           <Button variant="ghost" size="sm" onClick={resetFilters}>
             <X className="mr-2 h-4 w-4" />

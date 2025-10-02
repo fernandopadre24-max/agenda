@@ -21,22 +21,25 @@ export function AppFooter() {
     <footer className="fixed bottom-0 left-0 right-0 h-16 bg-card/80 backdrop-blur-sm border-t border-border/50 z-30 max-w-lg mx-auto">
       <nav className="h-full">
         <ul className="flex justify-around items-center h-full">
-          {navItems.map(({ href, icon: Icon, label }) => (
-            <li key={href}>
-              <Link
-                href={href}
-                className={cn(
-                  'flex flex-col items-center gap-1 text-xs transition-colors w-16',
-                  pathname === href
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-primary'
-                )}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{label}</span>
-              </Link>
-            </li>
-          ))}
+          {navItems.map(({ href, icon: Icon, label }) => {
+            const isActive = (href === '/' && pathname === href) || (href !== '/' && pathname.startsWith(href));
+            return (
+              <li key={href}>
+                <Link
+                  href={href}
+                  className={cn(
+                    'flex flex-col items-center gap-1 text-xs transition-colors w-16',
+                    isActive
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-primary'
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{label}</span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
     </footer>

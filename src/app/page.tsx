@@ -15,9 +15,9 @@ export default async function HomePage() {
       <AppHeader />
       <main className="flex-1 p-4 md:p-6">
         <DashboardClient 
-          initialEvents={events}
-          artistas={artistas}
-          contratantes={contratantes}
+          initialEvents={events || []}
+          artistas={artistas || []}
+          contratantes={contratantes || []}
         />
       </main>
     </div>

@@ -34,9 +34,9 @@ export function DashboardClient({
       </div>
 
       <EventDashboard
-        initialEvents={initialEvents}
-        artistas={artistas}
-        contratantes={contratantes}
+        initialEvents={initialEvents || []}
+        artistas={artistas || []}
+        contratantes={contratantes || []}
       />
       
       <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
