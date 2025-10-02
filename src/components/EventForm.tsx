@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useTransition, useEffect } from 'react';
+import { useTransition, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -121,7 +121,7 @@ export function EventForm({
       local: event?.local ?? '',
       financeType: event?.receber ? 'receber' : event?.pagar ? 'pagar' : 'nenhum',
       valor: event?.receber?.valor ?? event?.pagar?.valor,
-      status: event?.receber?.status === 'recebido' || event?.pagar?.status === 'pago' ? 'concluido' : 'pendente'
+      status: event?.receber?.status === 'recebido' || event?.pagar?.status === 'pago' ? 'concluido' : 'pendente',
     },
   });
 
