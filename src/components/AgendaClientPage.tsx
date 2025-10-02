@@ -17,9 +17,9 @@ import {
 } from './ui/select';
 
 export function AgendaClientPage({
-  initialEvents,
-  initialArtistas,
-  initialContratantes,
+  initialEvents = [],
+  initialArtistas = [],
+  initialContratantes = [],
 }: {
   initialEvents: Event[];
   initialArtistas: Artista[];
@@ -138,7 +138,7 @@ export function AgendaClientPage({
         </div>
       )}
 
-      <EventList events={displayedEvents} />
+      <EventList events={displayedEvents} artistas={initialArtistas} contratantes={initialContratantes} />
     </div>
   );
 }

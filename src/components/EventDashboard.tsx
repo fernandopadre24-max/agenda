@@ -19,9 +19,9 @@ import { Card } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 export function EventDashboard({ 
-  initialEvents,
-  artistas,
-  contratantes
+  initialEvents = [],
+  artistas = [],
+  contratantes = []
 }: { 
   initialEvents: Event[],
   artistas: Artista[],
@@ -105,7 +105,7 @@ export function EventDashboard({
   }, [filter, events, isMounted, selectedDate, selectedArtista, selectedContratante]);
 
   const eventDates = useMemo(() => {
-    return initialEvents.map(event => new Date(event.date));
+    return (initialEvents || []).map(event => new Date(event.date));
   }, [initialEvents]);
 
    const resetFilters = () => {
@@ -168,7 +168,7 @@ export function EventDashboard({
                  <Select value={selectedContratante} onValueChange={setSelectedContratante}>
                     <SelectTrigger>
                         <SelectValue placeholder="Filtrar por contratante" />
-                    </SelectTrigger>
+                    </Trigger>
                     <SelectContent>
                         <SelectItem value="all">Todos os Contratantes</SelectItem>
                         {contratantes?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
