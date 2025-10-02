@@ -1,6 +1,5 @@
 'use server';
 
-import { unstable_noStore as noStore, revalidatePath } from 'next/cache';
 import { cache } from 'react';
 import { db } from './firebase-config';
 import {
@@ -27,8 +26,7 @@ import type { Event, Contratante, Artista, Transaction } from './types';
 const eventConverter: FirestoreDataConverter<Event> = {
   toFirestore: (event: Event): DocumentData => {
     const data: any = { ...event, date: Timestamp.fromDate(new Date(event.date)) };
-    if (data.pagar === undefined) delete data.pagar;
-    if (data.receber === undefined) delete data.receber;
+    // Firestore ignora campos 'undefined', então não precisamos deletá-los.
     return data;
   },
   fromFirestore: (snapshot: QueryDocumentSnapshot, options: SnapshotOptions): Event => {
@@ -98,8 +96,7 @@ export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
 
 export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id'>>): Promise<void> {
   const docRef = doc(db, 'events', id);
-  const cleanData = Object.fromEntries(Object.entries(eventData).filter(([_, v]) => v !== undefined));
-  await updateDoc(docRef, cleanData);
+  await updateDoc(docRef, eventData);
 }
 
 export async function deleteEvent(id: string): Promise<void> {
@@ -120,7 +117,8 @@ export async function addContratante(contratanteData: Omit<Contratante, 'id'>): 
 }
 
 export async function updateContratante(id: string, contratanteData: Partial<Omit<Contratante, 'id'>>): Promise<void> {
-  const oldContratanteSnapshot = await getDoc(doc(db, 'contratantes', id));
+  const contratanteRef = doc(db, 'contratantes', id).withConverter(contratanteConverter);
+  const oldContratanteSnapshot = await getDoc(contratanteRef);
   if (!oldContratanteSnapshot.exists()) {
     throw new Error("Contratante não encontrado");
   }
@@ -128,7 +126,6 @@ export async function updateContratante(id: string, contratanteData: Partial<Omi
   const newName = contratanteData.name;
 
   const batch = writeBatch(db);
-  const contratanteRef = doc(db, 'contratantes', id);
   batch.update(contratanteRef, contratanteData);
 
   if (newName && oldName && oldName !== newName) {
@@ -160,7 +157,8 @@ export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Arti
 }
 
 export async function updateArtista(id: string, artistaData: Partial<Omit<Artista, 'id'>>): Promise<void> {
-  const oldArtistaSnapshot = await getDoc(doc(db, 'artistas', id));
+  const artistaRef = doc(db, 'artistas', id).withConverter(artistaConverter);
+  const oldArtistaSnapshot = await getDoc(artistaRef);
    if (!oldArtistaSnapshot.exists()) {
     throw new Error("Artista não encontrado");
   }
@@ -168,7 +166,6 @@ export async function updateArtista(id: string, artistaData: Partial<Omit<Artist
   const newName = artistaData.name;
 
   const batch = writeBatch(db);
-  const artistaRef = doc(db, 'artistas', id);
   batch.update(artistaRef, artistaData);
 
   if (newName && oldName && oldName !== newName) {
@@ -201,11 +198,11 @@ export async function addTransaction(transactionData: Omit<Transaction, 'id'>): 
 
 export async function updateTransaction(id: string, transactionData: Partial<Omit<Transaction, 'id'>>): Promise<void> {
   const docRef = doc(db, 'transactions', id);
-  const cleanData = Object.fromEntries(Object.entries(transactionData).filter(([_, v]) => v !== undefined));
-  if (cleanData.date) {
-    cleanData.date = Timestamp.fromDate(new Date(cleanData.date));
+  const dataToUpdate: Partial<DocumentData> = { ...transactionData };
+  if (transactionData.date) {
+    dataToUpdate.date = Timestamp.fromDate(new Date(transactionData.date));
   }
-  await updateDoc(docRef, cleanData);
+  await updateDoc(docRef, dataToUpdate);
 }
 
 export async function deleteTransaction(id: string): Promise<void> {
