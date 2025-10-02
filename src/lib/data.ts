@@ -1,6 +1,7 @@
 'use server';
 
 import { unstable_noStore as noStore, revalidatePath } from 'next/cache';
+import { cache } from 'react';
 import { db } from './firebase-config';
 import {
   collection,
@@ -76,28 +77,22 @@ const contratantesCollection = collection(db, 'contratantes').withConverter(cont
 const artistasCollection = collection(db, 'artistas').withConverter(artistaConverter);
 const transactionsCollection = collection(db, 'transactions').withConverter(transactionConverter);
 
-// --- Caching ---
-// Using unstable_noStore to prevent caching of data fetches.
-// This is a dynamic application, so we want fresh data on each request.
 
 // --- Event Functions ---
-export async function getEvents(): Promise<Event[]> {
-  noStore();
+export const getEvents = cache(async (): Promise<Event[]> => {
   const q = query(eventsCollection, orderBy('date', 'desc'));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => doc.data());
-}
+});
 
-export async function getEventById(id: string): Promise<Event | undefined> {
-  noStore();
+export const getEventById = cache(async (id: string): Promise<Event | undefined> => {
   const docRef = doc(db, 'events', id).withConverter(eventConverter);
   const snapshot = await getDoc(docRef);
   return snapshot.exists() ? snapshot.data() : undefined;
-}
+});
 
 export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
   const docRef = await addDoc(eventsCollection, eventData as Event);
-  revalidatePath('/');
   return { id: docRef.id, ...eventData };
 }
 
@@ -105,33 +100,31 @@ export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id
   const docRef = doc(db, 'events', id);
   const cleanData = Object.fromEntries(Object.entries(eventData).filter(([_, v]) => v !== undefined));
   await updateDoc(docRef, cleanData);
-  revalidatePath('/');
-  revalidatePath(`/events/${id}`);
 }
 
 export async function deleteEvent(id: string): Promise<void> {
   const docRef = doc(db, 'events', id);
   await deleteDoc(docRef);
-  revalidatePath('/');
 }
 
 // --- Contratante Functions ---
-export async function getContratantes(): Promise<Contratante[]> {
-  noStore();
+export const getContratantes = cache(async (): Promise<Contratante[]> => {
   const q = query(contratantesCollection, orderBy('name'));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => doc.data());
-}
+});
 
 export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
   const docRef = await addDoc(contratantesCollection, contratanteData as Contratante);
-  revalidatePath('/contratantes');
   return { id: docRef.id, ...contratanteData };
 }
 
 export async function updateContratante(id: string, contratanteData: Partial<Omit<Contratante, 'id'>>): Promise<void> {
-  const oldContratante = await getDoc(doc(db, 'contratantes', id));
-  const oldName = oldContratante.data()?.name;
+  const oldContratanteSnapshot = await getDoc(doc(db, 'contratantes', id));
+  if (!oldContratanteSnapshot.exists()) {
+    throw new Error("Contratante não encontrado");
+  }
+  const oldName = oldContratanteSnapshot.data()?.name;
   const newName = contratanteData.name;
 
   const batch = writeBatch(db);
@@ -147,34 +140,31 @@ export async function updateContratante(id: string, contratanteData: Partial<Omi
     });
   }
   await batch.commit();
-  revalidatePath('/contratantes');
-  revalidatePath('/');
 }
 
 export async function deleteContratante(id: string): Promise<void> {
   const docRef = doc(db, 'contratantes', id);
   await deleteDoc(docRef);
-  revalidatePath('/contratantes');
-  revalidatePath('/');
 }
 
 // --- Artista Functions ---
-export async function getArtistas(): Promise<Artista[]> {
-  noStore();
+export const getArtistas = cache(async (): Promise<Artista[]> => {
   const q = query(artistasCollection, orderBy('name'));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => doc.data());
-}
+});
 
 export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Artista> {
   const docRef = await addDoc(artistasCollection, artistaData as Artista);
-  revalidatePath('/artistas');
   return { id: docRef.id, ...artistaData };
 }
 
 export async function updateArtista(id: string, artistaData: Partial<Omit<Artista, 'id'>>): Promise<void> {
-  const oldArtista = await getDoc(doc(db, 'artistas', id));
-  const oldName = oldArtista.data()?.name;
+  const oldArtistaSnapshot = await getDoc(doc(db, 'artistas', id));
+   if (!oldArtistaSnapshot.exists()) {
+    throw new Error("Artista não encontrado");
+  }
+  const oldName = oldArtistaSnapshot.data()?.name;
   const newName = artistaData.name;
 
   const batch = writeBatch(db);
@@ -190,29 +180,22 @@ export async function updateArtista(id: string, artistaData: Partial<Omit<Artist
     });
   }
   await batch.commit();
-  revalidatePath('/artistas');
-  revalidatePath('/');
 }
 
 export async function deleteArtista(id: string): Promise<void> {
   const docRef = doc(db, 'artistas', id);
   await deleteDoc(docRef);
-  revalidatePath('/artistas');
-  revalidatePath('/');
 }
 
 // --- Transaction Functions ---
-export async function getTransactions(): Promise<Transaction[]> {
-  noStore();
+export const getTransactions = cache(async (): Promise<Transaction[]> => {
   const q = query(transactionsCollection, orderBy('date', 'desc'));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => doc.data());
-}
+});
 
 export async function addTransaction(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
   const docRef = await addDoc(transactionsCollection, transactionData as Transaction);
-  revalidatePath('/transacoes');
-  revalidatePath('/financeiro');
   return { id: docRef.id, ...transactionData };
 }
 
@@ -223,13 +206,9 @@ export async function updateTransaction(id: string, transactionData: Partial<Omi
     cleanData.date = Timestamp.fromDate(new Date(cleanData.date));
   }
   await updateDoc(docRef, cleanData);
-  revalidatePath('/transacoes');
-  revalidatePath('/financeiro');
 }
 
 export async function deleteTransaction(id: string): Promise<void> {
   const docRef = doc(db, 'transactions', id);
   await deleteDoc(docRef);
-  revalidatePath('/transacoes');
-  revalidatePath('/financeiro');
 }
