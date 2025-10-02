@@ -263,7 +263,7 @@ export function EventForm({
                         <FormLabel>Contratante</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                           disabled={!contratantes || contratantes.length === 0}
                         >
                           <FormControl>
@@ -291,7 +291,7 @@ export function EventForm({
                         <FormLabel>Artista / Serviço</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                           disabled={!artistas || artistas.length === 0}
                         >
                           <FormControl>
