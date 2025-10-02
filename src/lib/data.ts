@@ -1,278 +1,224 @@
 'use server';
 
 import type { Event, Contratante, Artista, Transaction } from './types';
-import fs from 'fs/promises';
-import path from 'path';
+import { db } from './firebase-config';
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  writeBatch,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+  FirestoreDataConverter,
+  DocumentData,
+  QueryDocumentSnapshot,
+  SnapshotOptions,
+} from 'firebase/firestore';
 
-// --- JSON File Database ---
-const dbPath = path.resolve(process.cwd(), 'src', 'lib', 'db.json');
+// --- Converters for Firestore ---
+// This ensures that our data types are correctly handled to and from Firestore.
 
-type DB = {
-  events: Event[],
-  contratantes: Contratante[],
-  artistas: Artista[],
-  transactions: Transaction[],
-  nextId: number,
+const eventConverter: FirestoreDataConverter<Event> = {
+  toFirestore: (event: Event): DocumentData => {
+    const data: any = { ...event, date: Timestamp.fromDate(event.date) };
+    // Firestore doesn't like `undefined` values. We convert them to `null` or delete them.
+    if (data.pagar === undefined) delete data.pagar;
+    if (data.receber === undefined) delete data.receber;
+    return data;
+  },
+  fromFirestore: (
+    snapshot: QueryDocumentSnapshot,
+    options: SnapshotOptions
+  ): Event => {
+    const data = snapshot.data(options);
+    return {
+      ...data,
+      id: snapshot.id,
+      date: (data.date as Timestamp).toDate(),
+    } as Event;
+  },
 };
 
-async function readDB(): Promise<DB> {
-  try {
-    const data = await fs.readFile(dbPath, 'utf-8');
-    if (!data) {
-        // If the file is empty, create it with a default structure
-        const defaultDB: DB = {
-            events: [],
-            contratantes: [],
-            artistas: [],
-            transactions: [],
-            nextId: 1,
-        };
-        await writeDB(defaultDB);
-        return defaultDB;
-    }
-    const db = JSON.parse(data);
-    // Dates are stored as strings in JSON, so we need to convert them back to Date objects
-    if (db.events) {
-      db.events.forEach((event: Event) => event.date = new Date(event.date));
-    }
-    if (db.transactions) {
-      db.transactions.forEach((tx: Transaction) => tx.date = new Date(tx.date));
-    }
-    return db;
-  } catch (error) {
-    // If the file doesn't exist, create it with a default structure
-    const defaultDB: DB = {
-      events: [],
-      contratantes: [],
-      artistas: [],
-      transactions: [],
-      nextId: 1,
-    };
-    await writeDB(defaultDB);
-    return defaultDB;
-  }
-}
+const contratanteConverter: FirestoreDataConverter<Contratante> = {
+  toFirestore: (contratante: Contratante): DocumentData => contratante,
+  fromFirestore: (
+    snapshot: QueryDocumentSnapshot,
+    options: SnapshotOptions
+  ): Contratante => {
+    const data = snapshot.data(options);
+    return { ...data, id: snapshot.id } as Contratante;
+  },
+};
 
-async function writeDB(db: DB): Promise<void> {
-  await fs.writeFile(dbPath, JSON.stringify(db, null, 2), 'utf-8');
-}
+const artistaConverter: FirestoreDataConverter<Artista> = {
+  toFirestore: (artista: Artista): DocumentData => artista,
+  fromFirestore: (
+    snapshot: QueryDocumentSnapshot,
+    options: SnapshotOptions
+  ): Artista => {
+    const data = snapshot.data(options);
+    return { ...data, id: snapshot.id } as Artista;
+  },
+};
 
-const getNextId = (db: DB) => (db.nextId++).toString();
+const transactionConverter: FirestoreDataConverter<Transaction> = {
+    toFirestore: (transaction: Transaction): DocumentData => {
+        return { ...transaction, date: Timestamp.fromDate(transaction.date) };
+    },
+    fromFirestore: (snapshot: QueryDocumentSnapshot, options: SnapshotOptions): Transaction => {
+        const data = snapshot.data(options);
+        return {
+            ...data,
+            id: snapshot.id,
+            date: (data.date as Timestamp).toDate(),
+        } as Transaction;
+    }
+};
+
+
+// --- Collection References ---
+const eventsCollection = collection(db, 'events').withConverter(eventConverter);
+const contratantesCollection = collection(db, 'contratantes').withConverter(contratanteConverter);
+const artistasCollection = collection(db, 'artistas').withConverter(artistaConverter);
+const transactionsCollection = collection(db, 'transactions').withConverter(transactionConverter);
 
 
 // --- Event Functions ---
 export async function getEvents(): Promise<Event[]> {
-  const db = await readDB();
-  // Return a deep copy to prevent mutation issues with server-side caching
-  const events: Event[] = JSON.parse(JSON.stringify(db.events || []));
-  events.forEach(e => e.date = new Date(e.date));
-  return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const q = query(eventsCollection, orderBy('date', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => doc.data());
 }
 
 export async function getEventById(id: string): Promise<Event | undefined> {
-  const db = await readDB();
-  const event = (db.events || []).find(e => e.id === id);
-  if (!event) return undefined;
-  // Return a deep copy
-  const eventCopy: Event = JSON.parse(JSON.stringify(event));
-  eventCopy.date = new Date(eventCopy.date);
-  return eventCopy;
+  const docRef = doc(db, 'events', id).withConverter(eventConverter);
+  const snapshot = await getDoc(docRef);
+  return snapshot.exists() ? snapshot.data() : undefined;
 }
 
 export async function addEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
-  const db = await readDB();
-  const newId = getNextId(db);
-  const newEvent: Event = { ...eventData, id: newId, date: new Date(eventData.date) };
-  db.events = db.events || [];
-  db.events.push(newEvent);
-  await writeDB(db);
-  return newEvent;
+  const docRef = await addDoc(eventsCollection, eventData as Event);
+  return { id: docRef.id, ...eventData };
 }
 
-export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id'>>): Promise<Event | undefined> {
-    const db = await readDB();
-    const eventIndex = (db.events || []).findIndex(e => e.id === id);
-    if (eventIndex === -1) return undefined;
-
-    const existingEvent = db.events[eventIndex];
-    
-    // Create the updated event object by merging
-    const updatedEvent: Event = { 
-        ...existingEvent, 
-        ...eventData 
-    };
-
-    // Ensure date is a Date object if provided
-    if (eventData.date) {
-        updatedEvent.date = new Date(eventData.date);
-    }
-    
-    // Explicitly handle removal of financial info
-    if (Object.prototype.hasOwnProperty.call(eventData, 'pagar') && eventData.pagar === undefined) {
-      delete updatedEvent.pagar;
-    }
-    if (Object.prototype.hasOwnProperty.call(eventData, 'receber') && eventData.receber === undefined) {
-      delete updatedEvent.receber;
-    }
-    
-    db.events[eventIndex] = updatedEvent;
-    await writeDB(db);
-    return updatedEvent;
+export async function updateEvent(id: string, eventData: Partial<Omit<Event, 'id'>>): Promise<void> {
+  const docRef = doc(db, 'events', id);
+  // Firestore cannot handle 'undefined', so we must clean the object.
+  const cleanData = Object.fromEntries(Object.entries(eventData).filter(([_, v]) => v !== undefined));
+  await updateDoc(docRef, cleanData);
 }
 
-
-export async function deleteEvent(id: string): Promise<boolean> {
-  const db = await readDB();
-  if (!db.events) return false;
-  const initialLength = db.events.length;
-  db.events = db.events.filter(e => e.id !== id);
-  const success = db.events.length < initialLength;
-  if(success) await writeDB(db);
-  return success;
+export async function deleteEvent(id: string): Promise<void> {
+  const docRef = doc(db, 'events', id);
+  await deleteDoc(docRef);
 }
+
 
 // --- Contratante Functions ---
 export async function getContratantes(): Promise<Contratante[]> {
-  const db = await readDB();
-  // Return a deep copy
-  const contratantes: Contratante[] = JSON.parse(JSON.stringify(db.contratantes || []));
-  return contratantes.sort((a, b) => a.name.localeCompare(b.name));
+  const q = query(contratantesCollection, orderBy('name'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => doc.data());
 }
 
 export async function addContratante(contratanteData: Omit<Contratante, 'id'>): Promise<Contratante> {
-  const db = await readDB();
-  const newId = getNextId(db);
-  const newContratante: Contratante = { ...contratanteData, id: newId };
-  db.contratantes = db.contratantes || [];
-  db.contratantes.push(newContratante);
-  await writeDB(db);
-  return newContratante;
+  const docRef = await addDoc(contratantesCollection, contratanteData as Contratante);
+  return { id: docRef.id, ...contratanteData };
 }
 
-export async function updateContratante(id: string, contratanteData: Partial<Omit<Contratante, 'id'>>): Promise<Contratante | undefined> {
-    const db = await readDB();
-    const index = (db.contratantes || []).findIndex(c => c.id === id);
-    if (index === -1) return undefined;
+export async function updateContratante(id: string, contratanteData: Partial<Omit<Contratante, 'id'>>): Promise<void> {
+  const oldContratante = await getDoc(doc(db, 'contratantes', id));
+  const oldName = oldContratante.data()?.name;
+  const newName = contratanteData.name;
 
-    const oldName = db.contratantes[index].name;
-    const newName = contratanteData.name;
-    
-    db.contratantes[index] = { ...db.contratantes[index], ...contratanteData };
+  const batch = writeBatch(db);
+  const contratanteRef = doc(db, 'contratantes', id);
+  batch.update(contratanteRef, contratanteData);
 
-    if (newName && oldName !== newName) {
-      (db.events || []).forEach((event) => {
-        if (event.contratante === oldName) {
-          event.contratante = newName;
-        }
-      });
-    }
-
-    await writeDB(db);
-    return db.contratantes[index];
+  if (newName && oldName !== newName) {
+    const eventsQuery = query(eventsCollection, where('contratante', '==', oldName));
+    const eventsSnapshot = await getDocs(eventsQuery);
+    eventsSnapshot.forEach(eventDoc => {
+      const eventRef = doc(db, 'events', eventDoc.id);
+      batch.update(eventRef, { contratante: newName });
+    });
+  }
+  await batch.commit();
 }
 
-export async function deleteContratante(id: string): Promise<boolean> {
-    const db = await readDB();
-    if (!db.contratantes) return false;
-    const initialLength = db.contratantes.length;
-    db.contratantes = db.contratantes.filter(c => c.id !== id);
-    const success = db.contratantes.length < initialLength;
-    if(success) await writeDB(db);
-    return success;
+
+export async function deleteContratante(id: string): Promise<void> {
+  const docRef = doc(db, 'contratantes', id);
+  await deleteDoc(docRef);
 }
 
 
 // --- Artista Functions ---
 export async function getArtistas(): Promise<Artista[]> {
-  const db = await readDB();
-  // Return a deep copy
-  const artistas: Artista[] = JSON.parse(JSON.stringify(db.artistas || []));
-  return artistas.sort((a,b) => a.name.localeCompare(b.name));
+  const q = query(artistasCollection, orderBy('name'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => doc.data());
 }
 
 export async function addArtista(artistaData: Omit<Artista, 'id'>): Promise<Artista> {
-  const db = await readDB();
-  const newId = getNextId(db);
-  const newArtista: Artista = { ...artistaData, id: newId };
-  db.artistas = db.artistas || [];
-  db.artistas.push(newArtista);
-  await writeDB(db);
-  return newArtista;
+  const docRef = await addDoc(artistasCollection, artistaData as Artista);
+  return { id: docRef.id, ...artistaData };
 }
 
-export async function updateArtista(id: string, artistaData: Partial<Omit<Artista, 'id'>>): Promise<Artista | undefined> {
-    const db = await readDB();
-    const index = (db.artistas || []).findIndex(a => a.id === id);
-    if (index === -1) return undefined;
-    
-    const oldName = db.artistas[index].name;
+export async function updateArtista(id: string, artistaData: Partial<Omit<Artista, 'id'>>): Promise<void> {
+    const oldArtista = await getDoc(doc(db, 'artistas', id));
+    const oldName = oldArtista.data()?.name;
     const newName = artistaData.name;
 
-    db.artistas[index] = { ...db.artistas[index], ...artistaData };
-
-    if (newName && oldName !== newName) {
-      (db.events || []).forEach((event) => {
-        if (event.artista === oldName) {
-          event.artista = newName;
-        }
-      });
-    }
+    const batch = writeBatch(db);
+    const artistaRef = doc(db, 'artistas', id);
+    batch.update(artistaRef, artistaData);
     
-    await writeDB(db);
-    return db.artistas[index];
+    if (newName && oldName !== newName) {
+        const eventsQuery = query(eventsCollection, where('artista', '==', oldName));
+        const eventsSnapshot = await getDocs(eventsQuery);
+        eventsSnapshot.forEach(eventDoc => {
+            const eventRef = doc(db, 'events', eventDoc.id);
+            batch.update(eventRef, { artista: newName });
+        });
+    }
+    await batch.commit();
 }
 
-export async function deleteArtista(id: string): Promise<boolean> {
-    const db = await readDB();
-    if (!db.artistas) return false;
-    const initialLength = db.artistas.length;
-    db.artistas = db.artistas.filter(a => a.id !== id);
-    const success = db.artistas.length < initialLength;
-    if(success) await writeDB(db);
-    return success;
+export async function deleteArtista(id: string): Promise<void> {
+  const docRef = doc(db, 'artistas', id);
+  await deleteDoc(docRef);
 }
 
 
 // --- Transaction Functions ---
 export async function getTransactions(): Promise<Transaction[]> {
-    const db = await readDB();
-    // Return a deep copy
-    const transactions: Transaction[] = JSON.parse(JSON.stringify(db.transactions || []));
-    transactions.forEach(tx => tx.date = new Date(tx.date));
-    return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const q = query(transactionsCollection, orderBy('date', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data());
 }
 
 export async function addTransaction(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
-    const db = await readDB();
-    const newId = `trans-${getNextId(db)}`;
-    const newTransaction: Transaction = { ...transactionData, id: newId, date: new Date(transactionData.date) };
-    db.transactions = db.transactions || [];
-    db.transactions.push(newTransaction);
-    await writeDB(db);
-return newTransaction;
+    const docRef = await addDoc(transactionsCollection, transactionData as Transaction);
+    return { id: docRef.id, ...transactionData };
 }
 
-export async function updateTransaction(id: string, transactionData: Partial<Omit<Transaction, 'id'>>): Promise<Transaction | undefined> {
-    const db = await readDB();
-    const index = (db.transactions || []).findIndex(t => t.id === id);
-    if (index === -1) return undefined;
-
-    const update = { ...transactionData };
-    if (update.date) {
-        update.date = new Date(update.date);
+export async function updateTransaction(id: string, transactionData: Partial<Omit<Transaction, 'id'>>): Promise<void> {
+    const docRef = doc(db, 'transactions', id);
+    const cleanData = Object.fromEntries(Object.entries(transactionData).filter(([_, v]) => v !== undefined));
+    if (cleanData.date) {
+        cleanData.date = Timestamp.fromDate(new Date(cleanData.date));
     }
-    
-    db.transactions[index] = { ...db.transactions[index], ...update };
-    await writeDB(db);
-    return db.transactions[index];
+    await updateDoc(docRef, cleanData);
 }
 
-export async function deleteTransaction(id: string): Promise<boolean> {
-    const db = await readDB();
-    if (!db.transactions) return false;
-    const initialLength = db.transactions.length;
-    db.transactions = db.transactions.filter(t => t.id !== id);
-    const success = db.transactions.length < initialLength;
-    if(success) await writeDB(db);
-    return success;
+export async function deleteTransaction(id: string): Promise<void> {
+    const docRef = doc(db, 'transactions', id);
+    await deleteDoc(docRef);
 }

@@ -68,7 +68,7 @@ const transactionFormSchema = z.object({
 
 
 const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Omit<Event, 'id'> => {
-    const eventData: Omit<Event, 'id' | 'pagar' | 'receber'> & { pagar?: any; receber?: any } = {
+    const eventData: Omit<Event, 'id'> = {
         date: data.date,
         hora: data.hora,
         contratante: data.contratante,
@@ -88,7 +88,7 @@ const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Omit<Event
         eventData.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
     }
 
-    return eventData as Omit<Event, 'id'>;
+    return eventData;
 }
 
 
@@ -210,7 +210,8 @@ export async function createArtistaAction(data: z.infer<typeof artistaFormSchema
         revalidatePath('/');
         return { success: true, message: 'Artista criado!' };
     } catch (e) {
-        return { success: false, message: e instanceof Error ? e.message : 'Falha ao criar o artista.' };
+        const errorMessage = e instanceof Error ? e.message : 'Falha ao criar o artista.';
+        return { success: false, message: errorMessage };
     }
 }
 
