@@ -1,5 +1,22 @@
 {
-  "events": [],
+  "events": [
+    {
+      "date": "2025-10-02T12:49:16.398Z",
+      "hora": "19:00",
+      "contratante": "Botekão",
+      "artista": "Nilton Santos",
+      "entrada": "19:00",
+      "saida": "22:00",
+      "cidade": "BA",
+      "local": "Arembepe",
+      "status": "pendente",
+      "receber": {
+        "valor": 455,
+        "status": "pendente"
+      },
+      "id": "4"
+    }
+  ],
   "contratantes": [
     {
       "name": "Botekão",
@@ -18,7 +35,15 @@
       "id": "2"
     }
   ],
-  "artistas": [],
+  "artistas": [
+    {
+      "name": "Nilton Santos",
+      "email": "",
+      "phone": "",
+      "serviceType": "",
+      "id": "3"
+    }
+  ],
   "transactions": [],
-  "nextId": 3
+  "nextId": 5
 }

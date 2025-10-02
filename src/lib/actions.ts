@@ -68,7 +68,7 @@ const transactionFormSchema = z.object({
 
 
 const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Omit<Event, 'id'> => {
-    const eventData: Omit<Event, 'id'> = {
+    const eventData: Omit<Event, 'id' | 'pagar' | 'receber'> & { pagar?: any; receber?: any } = {
         date: data.date,
         hora: data.hora,
         contratante: data.contratante,
@@ -77,7 +77,7 @@ const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Omit<Event
         saida: data.saida,
         cidade: data.cidade,
         local: data.local,
-        status: 'pendente', // Default status for a new event
+        status: 'pendente',
         pagar: undefined,
         receber: undefined,
     };
@@ -88,7 +88,7 @@ const buildEventDataObject = (data: z.infer<typeof eventFormSchema>): Omit<Event
         eventData.pagar = { valor: data.valor, status: data.status === 'concluido' ? 'pago' : 'pendente' };
     }
 
-    return eventData;
+    return eventData as Omit<Event, 'id'>;
 }
 
 
