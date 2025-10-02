@@ -131,7 +131,7 @@ export async function updateContratante(id: string, contratanteData: Partial<Omi
   const contratanteRef = doc(db, 'contratantes', id);
   batch.update(contratanteRef, contratanteData);
 
-  if (newName && oldName !== newName) {
+  if (newName && oldName && oldName !== newName) {
     const eventsQuery = query(eventsCollection, where('contratante', '==', oldName));
     const eventsSnapshot = await getDocs(eventsQuery);
     eventsSnapshot.forEach(eventDoc => {
@@ -171,7 +171,7 @@ export async function updateArtista(id: string, artistaData: Partial<Omit<Artist
   const artistaRef = doc(db, 'artistas', id);
   batch.update(artistaRef, artistaData);
 
-  if (newName && oldName !== newName) {
+  if (newName && oldName && oldName !== newName) {
     const eventsQuery = query(eventsCollection, where('artista', '==', oldName));
     const eventsSnapshot = await getDocs(eventsQuery);
     eventsSnapshot.forEach(eventDoc => {
